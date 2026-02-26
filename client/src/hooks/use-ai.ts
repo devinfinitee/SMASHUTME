@@ -1,18 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
-import { api } from "@shared/routes";
 
 export function useExplain() {
   return useMutation({
     mutationFn: async ({ text, context }: { text: string; context?: string }) => {
-      const res = await fetch(api.ai.explain.path, {
-        method: api.ai.explain.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, context }),
-        credentials: "include",
-      });
+      // Simulate network delay  
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (!res.ok) throw new Error("Failed to get explanation");
-      return api.ai.explain.responses[200].parse(await res.json());
+      // Mock AI explanation response
+      const explanation = `Here's an explanation for "${text}": This is a detailed explanation that would normally come from an AI service. ${context ? `Given the context: ${context}. ` : ''}This is a mock response for demo purposes.`;
+      
+      return { explanation };
     },
   });
 }

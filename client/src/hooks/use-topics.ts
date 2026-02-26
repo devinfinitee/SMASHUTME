@@ -1,16 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl } from "@shared/routes";
 import { useToast } from "@/hooks/use-toast";
+import { mockTopics, mockQuestions } from "@/lib/mockData";
+import type { Topic, Question } from "../types";
 
 export function useTopic(slug: string) {
   return useQuery({
-    queryKey: [api.topics.get.path, slug],
-    queryFn: async () => {
-      const url = buildUrl(api.topics.get.path, { slug });
-      const res = await fetch(url, { credentials: "include" });
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error("Failed to fetch topic");
-      return api.topics.get.responses[200].parse(await res.json());
+    queryKey: ["/topics", slug],
+    queryFn: async (): Promise<Topic | null> => {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const topic = mockTopics.find(t => t.slug === slug);
+      return topic || null;
     },
     enabled: !!slug,
   });
@@ -22,20 +23,19 @@ export function useUpdateProgress() {
 
   return useMutation({
     mutationFn: async ({ topicId, status }: { topicId: number; status: "not_started" | "in_progress" | "completed" }) => {
-      const url = buildUrl(api.progress.update.path, { id: topicId });
-      const res = await fetch(url, {
-        method: api.progress.update.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to update progress");
-      return api.progress.update.responses[200].parse(await res.json());
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Mock successful update
+      return { success: true, topicId, status };
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: [api.subjects.list.path] });
-      // Also invalidate specific subject queries if we could get the slug, 
-      // but list invalidation is safe enough for dashboard updates.
+      queryClient.invalidateQueries({ queryKey: ["/subjects"] });
+      toast({
+        title: "Progress Updated",
+        description: `Topic marked as ${variables.status.replace('_', ' ')}`,
+        variant: "default",
+      });
     },
     onError: () => {
       toast({
@@ -53,24 +53,46 @@ export function useSubmitQuiz() {
 
   return useMutation({
     mutationFn: async ({ topicId, score, totalQuestions }: { topicId: number; score: number; totalQuestions: number }) => {
-      const url = buildUrl(api.quiz.submit.path, { id: topicId });
-      const res = await fetch(url, {
-        method: api.quiz.submit.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ score, totalQuestions }),
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to submit quiz");
-      return api.quiz.submit.responses[201].parse(await res.json());
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Mock successful submission
+      return { 
+        success: true, 
+        topicId, 
+        score, 
+        totalQuestions,
+        percentage: Math.round((score / totalQuestions) * 100)
+      };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Quiz Completed!",
-        description: "Your results have been saved.",
+        description: `You scored ${data.score}/${data.totalQuestions} (${data.percentage}%)`,
         variant: "default",
       });
-      // Invalidate to refresh progress if quiz completion affects it
-      queryClient.invalidateQueries({ queryKey: [api.subjects.list.path] });
+      // Invalidate to refresh progress
+      queryClient.invalidateQueries({ queryKey: ["/subjects"] });
     },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to submit quiz. Please try again.",
+        variant: "destructive",  
+      });
+    },
+  });
+}
+
+export function useTopicQuestions(topicId: number) {
+  return useQuery({
+    queryKey: ["/topics", topicId, "questions"],
+    queryFn: async (): Promise<Question[]> => {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      return mockQuestions.filter(q => q.topicId === topicId);
+    },
+    enabled: !!topicId,
   });
 }

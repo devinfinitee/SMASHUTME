@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Progress } from "@/components/ui/progress";
 import { ArrowRight, Book, Calculator, FlaskConical, Globe, Microscope, Palette, Quote } from "lucide-react";
-import type { Subject } from "@shared/schema";
+import type { Subject } from "../types";
 
 // Map icons
 const iconMap: Record<string, any> = {

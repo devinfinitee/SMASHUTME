@@ -1,27 +1,38 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl } from "@shared/routes";
 import { useToast } from "@/hooks/use-toast";
+import { mockSubjects, mockTopics } from "@/lib/mockData";
+import type { Subject } from "../types";
 
 export function useSubjects() {
   return useQuery({
-    queryKey: [api.subjects.list.path],
-    queryFn: async () => {
-      const res = await fetch(api.subjects.list.path, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to fetch subjects");
-      return api.subjects.list.responses[200].parse(await res.json());
+    queryKey: ["/subjects"],
+    queryFn: async (): Promise<Subject[]> => {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Add topics to each subject
+      return mockSubjects.map(subject => ({
+        ...subject,
+        topics: mockTopics.filter(topic => topic.subjectId === subject.id),
+      }));
     },
   });
 }
 
 export function useSubject(slug: string) {
   return useQuery({
-    queryKey: [api.subjects.get.path, slug],
-    queryFn: async () => {
-      const url = buildUrl(api.subjects.get.path, { slug });
-      const res = await fetch(url, { credentials: "include" });
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error("Failed to fetch subject");
-      return api.subjects.get.responses[200].parse(await res.json());
+    queryKey: ["/subjects", slug],
+    queryFn: async (): Promise<Subject | null> => {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const subject = mockSubjects.find(s => s.slug === slug);
+      if (!subject) return null;
+      
+      return {
+        ...subject,
+        topics: mockTopics.filter(topic => topic.subjectId === subject.id),
+      };
     },
     enabled: !!slug,
   });
