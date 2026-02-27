@@ -13,12 +13,19 @@ import Quiz from "@/pages/quiz";
 import Profile from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
+import SignUp from "@/pages/signup";
+import Login from "@/pages/login";
+import ResetPassword from "@/pages/reset-password";
 
 function Router() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Dashboard} />
+        <Route path="/" component={Landing} />
+        <Route path="/signup" component={SignUp} />
+        <Route path="/login" component={Login} />
+        <Route path="/reset-password" component={ResetPassword} />
+        <Route path ="/dashboard" component={Dashboard}/>
         <Route path="/subjects/:slug" component={SubjectDetail} />
         <Route path="/topics/:slug" component={TopicStudy} />
         <Route path="/topics/:slug/quiz" component={Quiz} />

@@ -43,7 +43,7 @@ export default function Dashboard() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-500/20">
+        <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-6 text-primary-foreground shadow-xl shadow-primary/25">
           <div className="flex items-center space-x-3 mb-2">
             <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
               <Target className="w-5 h-5" />
@@ -54,15 +54,15 @@ export default function Dashboard() {
           <p className="text-sm opacity-75 mt-1">Completion across all subjects</p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-          <div className="flex items-center space-x-3 mb-2 text-foreground">
-            <div className="p-2 bg-secondary/10 text-secondary rounded-lg">
+        <div className="bg-gradient-to-br from-secondary to-secondary/80 rounded-2xl p-6 text-secondary-foreground shadow-xl shadow-secondary/25">
+          <div className="flex items-center space-x-3 mb-2">
+            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
               <Award className="w-5 h-5" />
             </div>
-            <span className="font-medium text-muted-foreground">Topics Mastered</span>
+            <span className="font-medium opacity-90">Topics Mastered</span>
           </div>
-          <div className="text-3xl font-bold font-display text-foreground">18</div>
-          <p className="text-sm text-muted-foreground mt-1">Keep pushing for 20!</p>
+          <div className="text-3xl font-bold font-display">18</div>
+          <p className="text-sm opacity-75 mt-1">Keep pushing for 20!</p>
         </div>
         
         {/* Placeholder for future stat */}

@@ -6,21 +6,21 @@ import {
   LayoutDashboard, 
   LogOut, 
   Menu, 
-  GraduationCap,
   User,
-  X
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import smashutmeLogo from "@/assets/smashutme-logo.png";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const isDashboardPage = location === "/dashboard";
 
   const navigation = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Subjects", href: "/subjects", icon: BookOpen },
     { name: "Profile", href: "/profile", icon: User },
   ];
@@ -28,11 +28,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const NavContent = () => (
     <div className="flex flex-col h-full bg-sidebar-background">
       <div className="p-6 border-b border-sidebar-border">
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="font-display font-bold text-xl text-sidebar-foreground">SmashUTME</span>
+        <Link href="/dashboard" className="flex items-center overflow-visible py-4">
+          <img src={smashutmeLogo} alt="SmashUTME" className="w-12 h-12 object-left-top object-cover scale-[6] origin-left" />
         </Link>
       </div>
 
@@ -45,8 +42,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 className={`
                   flex items-center px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer group
                   ${isActive 
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 font-semibold" 
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 font-semibold scale-[1.02]" 
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground hover:scale-[1.01]"
                   }
                 `}
                 onClick={() => setIsMobileOpen(false)}
@@ -60,7 +57,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">
-        <div className="bg-card rounded-xl p-4 shadow-sm border border-border mb-4">
+        <div className="bg-card rounded-2xl p-4 shadow-md border border-border mb-4 hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center space-x-3">
             <Avatar>
               <AvatarImage src={user?.profileImageUrl || undefined} />
@@ -88,7 +85,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     </div>
   );
 
-  if (!user) return <>{children}</>;
+  if (!user || !isDashboardPage) return <>{children}</>;
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -99,9 +96,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 z-30">
-        <Link href="/" className="flex items-center space-x-2">
-          <GraduationCap className="w-6 h-6 text-primary" />
-          <span className="font-display font-bold text-lg">SmashUTME</span>
+        <Link href="/dashboard" className="flex items-center">
+          <img src={smashutmeLogo} alt="SmashUTME" className="w-10 h-10 object-left-top object-cover scale-[6] origin-left" />
         </Link>
         <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
           <SheetTrigger asChild>
