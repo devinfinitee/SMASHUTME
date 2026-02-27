@@ -2,12 +2,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSubjects } from "@/hooks/use-subjects";
 import { SubjectCard } from "@/components/subject-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Award, Target, Flame } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Award, Target, Flame, Shield } from "lucide-react";
+import { useLocation } from "wouter";
 import Landing from "./landing";
 
 export default function Dashboard() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const { data: subjects, isLoading: subjectsLoading } = useSubjects();
+  const [, setLocation] = useLocation();
 
   if (authLoading) {
     return (
@@ -33,11 +36,19 @@ export default function Dashboard() {
             Let's keep up the momentum. You're making great progress.
           </p>
         </div>
-        <div className="hidden md:block">
+        <div className="flex items-center gap-3">
           <div className="inline-flex items-center px-4 py-2 bg-accent/10 text-accent rounded-full text-sm font-medium">
             <Flame className="w-4 h-4 mr-2" />
             3 Day Streak
           </div>
+          <Button 
+            onClick={() => setLocation("/admin/dashboard")} 
+            variant="outline" 
+            className="rounded-full"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            Admin
+          </Button>
         </div>
       </div>
 

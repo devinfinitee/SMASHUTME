@@ -14,9 +14,17 @@ export default function Landing() {
           <div className="flex items-center overflow-visible py-4">
             <img src={smashutmeLogo} alt="SmashUTME" className="w-12 h-12 object-left-top object-cover scale-[6] origin-left" />
           </div>
-          <Button onClick={() => setLocation("/signup")} className="rounded-full">
-            Start Preparing Free
-          </Button>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setLocation("/about")} className="text-sm font-medium text-muted-foreground hover:text-foreground hidden sm:block">
+              About
+            </button>
+            <button onClick={() => setLocation("/contact")} className="text-sm font-medium text-muted-foreground hover:text-foreground hidden sm:block">
+              Contact
+            </button>
+            <Button onClick={() => setLocation("/signup")} className="rounded-full">
+              Start Preparing Free
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -215,11 +223,11 @@ export default function Landing() {
           <div>
             <h4 className="font-semibold text-foreground mb-3">Quick Links</h4>
             <div className="space-y-2">
+              <button onClick={() => setLocation("/about")} className="block hover:text-foreground">About Us</button>
+              <button onClick={() => setLocation("/contact")} className="block hover:text-foreground">Contact</button>
               <a href="#subjects" className="block hover:text-foreground">Subjects</a>
-              <a href="#subjects" className="block hover:text-foreground">Practice Questions</a>
-              <a href="#subjects" className="block hover:text-foreground">CBT Simulation</a>
-              <a href="/api/login" className="block hover:text-foreground">Login</a>
-              <a href="/api/login" className="block hover:text-foreground">Sign Up</a>
+              <button onClick={() => setLocation("/login")} className="block hover:text-foreground">Login</button>
+              <button onClick={() => setLocation("/signup")} className="block hover:text-foreground">Sign Up</button>
             </div>
           </div>
           <div>
