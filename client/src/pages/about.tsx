@@ -28,7 +28,7 @@ export default function About() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="pt-20 pb-16 bg-gradient-to-b from-primary/5 to-background">
+        <section className="pt-20 pb-16 bg-muted/30">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-4xl md:text-5xl font-display font-bold mb-6">
               About SmashUTME
@@ -62,33 +62,33 @@ export default function About() {
                 </p>
               </div>
               <div className="relative">
-                <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-8 shadow-2xl shadow-primary/25">
-                  <div className="space-y-6 text-white">
+                <div className="bg-primary rounded-2xl p-8 shadow-2xl shadow-primary/25">
+                  <div className="space-y-6 text-primary-foreground">
                     <div className="flex items-start gap-4">
-                      <div className="bg-white/20 rounded-lg p-2">
+                      <div className="bg-primary-foreground/20 rounded-lg p-2">
                         <Target className="w-6 h-6" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-lg mb-1">Focused Learning</h3>
-                        <p className="text-white/90">Master one topic at a time with our structured approach</p>
+                        <p className="text-primary-foreground/90">Master one topic at a time with our structured approach</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
-                      <div className="bg-white/20 rounded-lg p-2">
+                      <div className="bg-primary-foreground/20 rounded-lg p-2">
                         <Zap className="w-6 h-6" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-lg mb-1">Smart Practice</h3>
-                        <p className="text-white/90">AI-powered questions that adapt to your level</p>
+                        <p className="text-primary-foreground/90">AI-powered questions that adapt to your level</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
-                      <div className="bg-white/20 rounded-lg p-2">
+                      <div className="bg-primary-foreground/20 rounded-lg p-2">
                         <Award className="w-6 h-6" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-lg mb-1">Proven Results</h3>
-                        <p className="text-white/90">Join thousands scoring 250+ in UTME</p>
+                        <p className="text-primary-foreground/90">Join thousands scoring 250+ in UTME</p>
                       </div>
                     </div>
                   </div>
@@ -167,12 +167,12 @@ export default function About() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-br from-primary to-primary/80">
+        <section className="py-20 bg-primary">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-6">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground mb-6">
               Ready to Transform Your UTME Preparation?
             </h2>
-            <p className="text-xl text-white/90 mb-8">
+            <p className="text-xl text-primary-foreground/90 mb-8">
               Join thousands of students who are preparing smarter, not harder.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -189,7 +189,7 @@ export default function About() {
                 onClick={() => setLocation("/contact")} 
                 size="lg" 
                 variant="outline"
-                className="rounded-full bg-white/10 text-white border-white/20 hover:bg-white/20"
+                className="rounded-full bg-background text-foreground border-border hover:bg-muted"
               >
                 Contact Us
               </Button>

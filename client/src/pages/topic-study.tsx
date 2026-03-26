@@ -52,7 +52,7 @@ export default function TopicStudy() {
           {topic.name}
         </h1>
         {topic.isHighYield && (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-secondary/15 text-secondary-foreground border border-secondary/30">
             High Yield Topic
           </span>
         )}

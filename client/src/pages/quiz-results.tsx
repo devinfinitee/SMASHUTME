@@ -154,8 +154,8 @@ export default function QuizResults() {
       value: "68.5%",
       change: "+5.2% this month",
       icon: TrendingUp,
-      color: "text-green-600",
-      bgColor: "bg-green-100",
+      color: "text-primary",
+      bgColor: "bg-primary/10",
     },
     {
       title: "Active Students",
@@ -320,9 +320,9 @@ export default function QuizResults() {
                           <p className="text-xs text-muted-foreground">avg score</p>
                         </div>
                         {student.trend === "up" ? (
-                          <TrendingUp className="w-5 h-5 text-green-600" />
+                          <TrendingUp className="w-5 h-5 text-primary" />
                         ) : (
-                          <TrendingDown className="w-5 h-5 text-red-600" />
+                          <TrendingDown className="w-5 h-5 text-secondary" />
                         )}
                       </div>
                     </div>
@@ -355,7 +355,7 @@ export default function QuizResults() {
                       </div>
                       <div className="h-3 bg-muted rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                          className="h-full bg-primary rounded-full"
                           style={{ width: `${subject.avgScore}%` }}
                         />
                       </div>
@@ -374,17 +374,17 @@ export default function QuizResults() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Passed</span>
-                      <span className="font-semibold text-green-600">8,593 (68.5%)</span>
+                      <span className="font-semibold text-primary">8,593 (68.5%)</span>
                     </div>
                     <div className="h-3 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-green-600 rounded-full" style={{ width: "68.5%" }} />
+                      <div className="h-full bg-primary rounded-full" style={{ width: "68.5%" }} />
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Failed</span>
-                      <span className="font-semibold text-red-600">3,950 (31.5%)</span>
+                      <span className="font-semibold text-secondary">3,950 (31.5%)</span>
                     </div>
                     <div className="h-3 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-red-600 rounded-full" style={{ width: "31.5%" }} />
+                      <div className="h-full bg-secondary rounded-full" style={{ width: "31.5%" }} />
                     </div>
                   </div>
                 </CardContent>

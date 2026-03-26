@@ -146,11 +146,11 @@ export default function Quiz() {
             
             if (showResult) {
               if (isCorrect) {
-                cardClass = "bg-green-500/10 border-green-500 text-green-700 dark:text-green-300";
-                icon = <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />;
+                cardClass = "bg-primary/10 border-primary text-primary";
+                icon = <CheckCircle className="w-6 h-6 text-primary" />;
               } else if (isSelected) {
-                cardClass = "bg-red-500/10 border-red-500 text-red-700 dark:text-red-300";
-                icon = <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />;
+                cardClass = "bg-secondary/15 border-secondary text-secondary-foreground";
+                icon = <XCircle className="w-6 h-6 text-secondary" />;
               }
             } else if (isSelected) {
               cardClass = "bg-primary/5 border-primary ring-1 ring-primary";

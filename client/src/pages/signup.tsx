@@ -183,7 +183,7 @@ export default function SignUp() {
     if (password.length < 8) return { strength: "Weak", color: "text-destructive" };
     if (!/[A-Z]/.test(password) || !/[0-9]/.test(password))
       return { strength: "Medium", color: "text-secondary" };
-    return { strength: "Strong", color: "text-green-600" };
+    return { strength: "Strong", color: "text-primary" };
   };
 
   const passwordStrength = getPasswordStrength();

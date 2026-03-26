@@ -140,8 +140,8 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-3 h-3 text-green-600" />
-                  <span className="text-green-600 font-medium">{stat.change}</span> from
+                  <TrendingUp className="w-3 h-3 text-primary" />
+                  <span className="text-primary font-medium">{stat.change}</span> from
                   last month
                 </p>
               </CardContent>

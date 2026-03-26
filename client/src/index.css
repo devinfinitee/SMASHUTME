@@ -99,13 +99,8 @@
 }
 
 .button-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  background-size: 1000px 100%;
+  background: hsl(var(--primary) / 0.15);
+  background-size: auto;
   animation: shimmer 3s infinite;
 }
 
