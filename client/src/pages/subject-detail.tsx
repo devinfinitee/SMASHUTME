@@ -98,11 +98,11 @@ export default function SubjectDetail() {
       {highYieldTopics.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-4">
-            <Trophy className="w-5 h-5 text-amber-500" />
+            <Trophy className="w-5 h-5 text-secondary" />
             <h2 className="text-xl font-bold font-display">High Yield Topics</h2>
           </div>
-          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-2xl p-6">
-            <p className="text-amber-800 dark:text-amber-200 text-sm mb-4 font-medium">
+          <div className="bg-secondary/10 dark:bg-secondary/5 border border-secondary/20 dark:border-secondary/30 rounded-2xl p-6">
+            <p className="text-secondary-foreground text-sm mb-4 font-medium">
               These topics appear frequently in JAMB exams. Master them first!
             </p>
             <TopicList topics={highYieldTopics} />

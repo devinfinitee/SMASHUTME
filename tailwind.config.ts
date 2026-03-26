@@ -11,6 +11,8 @@ export default {
         sm: ".1875rem", /* 3px */
       },
       colors: {
+        "brand-blue": "#2B0AFA",
+        "brand-gold": "#FAB10A",
         // Flat / base colors (regular buttons)
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",
