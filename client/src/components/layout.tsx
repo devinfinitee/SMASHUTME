@@ -11,7 +11,7 @@ import {
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import smashutmeLogo from "@/assets/smashutme-logo.png";
+import smashutmeLogo from "@/assets/smashutme-logo.webp";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();

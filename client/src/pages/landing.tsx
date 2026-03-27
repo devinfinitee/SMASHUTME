@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ShieldCheck, FileCheck, MonitorSmartphone, Stethoscope, Users, Filter, Timer, Brain, Map, Lock, MessageSquare, Rocket } from "lucide-react";
 import { useLocation } from "wouter";
-import smashutmeLogo from "@/assets/smashutme-logo.png";
-import heroImage from "@/assets/hero.png";
+import smashutmeLogo from "@/assets/smashutme-logo.webp";
+import heroImage from "@/assets/hero.webp";
 import { CurriculumPreview } from "@/components/curriculum-preview";
 
 export default function Landing() {

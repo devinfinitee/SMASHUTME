@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, MessageSquare, Phone, MapPin, CheckCircle2 } from "lucide-react";
-import smashutmeLogo from "@/assets/smashutme-logo.png";
+import smashutmeLogo from "@/assets/smashutme-logo.webp";
 
 interface ContactFormData {
   name: string;

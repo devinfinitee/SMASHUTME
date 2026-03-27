@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import smashutmeLogo from "@/assets/smashutme-logo.png";
+import smashutmeLogo from "@/assets/smashutme-logo.webp";
 
 interface LoginFormData {
   email: string;

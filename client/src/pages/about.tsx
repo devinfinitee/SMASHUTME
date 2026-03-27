@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { Target, Users, Zap, Award, ArrowRight } from "lucide-react";
-import smashutmeLogo from "@/assets/smashutme-logo.png";
+import smashutmeLogo from "@/assets/smashutme-logo.webp";
 
 export default function About() {
   const [, setLocation] = useLocation();
