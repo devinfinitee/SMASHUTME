@@ -31,7 +31,7 @@ function Router() {
         <Route path="/signup" component={SignUp} />
         <Route path="/login" component={Login} />
         <Route path="/reset-password" component={ResetPassword} />
-        <Route path ="/dashboard" component={DashboardNew}/>
+        <Route path="/dashboard" component={DashboardNew} />
         <Route path="/admin/dashboard" component={AdminDashboard} />
         <Route path="/admin/content-management" component={ContentManagement} />
         <Route path="/admin/quiz-results" component={QuizResults} />
