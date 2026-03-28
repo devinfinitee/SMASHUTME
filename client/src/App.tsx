@@ -3,10 +3,10 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Layout from "@/components/layout";
+// import Layout from "@/components/layout";
 
 // Pages
-import Dashboard from "@/pages/dashboard";
+import DashboardNew from "@/pages/dashboard-new";
 import SubjectDetail from "@/pages/subject-detail";
 import TopicStudy from "@/pages/topic-study";
 import Quiz from "@/pages/quiz";
@@ -24,7 +24,6 @@ import QuizResults from "@/pages/quiz-results";
 
 function Router() {
   return (
-    <Layout>
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/about" component={About} />
@@ -32,7 +31,7 @@ function Router() {
         <Route path="/signup" component={SignUp} />
         <Route path="/login" component={Login} />
         <Route path="/reset-password" component={ResetPassword} />
-        <Route path ="/dashboard" component={Dashboard}/>
+        <Route path ="/dashboard" component={DashboardNew}/>
         <Route path="/admin/dashboard" component={AdminDashboard} />
         <Route path="/admin/content-management" component={ContentManagement} />
         <Route path="/admin/quiz-results" component={QuizResults} />
@@ -42,7 +41,6 @@ function Router() {
         <Route path="/profile" component={Profile} />
         <Route component={NotFound} />
       </Switch>
-    </Layout>
   );
 }
 

@@ -129,17 +129,23 @@ export default function SignUp() {
 
   return (
     <main className="h-screen flex flex-col md:flex-row overflow-hidden bg-slate-50">
-      <section className="hidden md:flex md:w-1/2 h-full bg-brand-blue relative flex-col items-center justify-start px-8 py-12 lg:px-12 overflow-hidden">
+      <section className="hidden md:flex md:w-1/2 h-full bg-brand-blue relative flex-col items-center justify-start px-8 pt-8 pb-4 lg:px-12 lg:pt-10 lg:pb-4 overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:36px_36px] pointer-events-none" />
         <div className="absolute -top-20 -left-20 w-80 h-80 bg-brand-blue/60 blur-[120px] rounded-full" />
         <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-brand-gold/40 blur-[120px] rounded-full" />
 
-        <div className="relative z-10 w-full flex flex-col items-center gap-5">
-          <img
-            src={smashutmeLogo}
-            alt="SmashUTME"
-            className="h-20 w-auto"
-          />
+        <div className="relative z-10 w-full flex flex-col items-center gap-2">
+          <div className="flex items-center justify-center">
+            <div className="bg-white/95 rounded-2xl border border-white/80 px-4 py-0.5 shadow-2xl">
+              <div className="relative w-[320px] h-[64px] overflow-hidden flex items-center justify-center">
+                <img
+                  src={smashutmeLogo}
+                  alt="SmashUTME"
+                  className="absolute left-1/2 -translate-x-1/2 -top-[118px] h-[320px] w-[320px] max-w-none"
+                />
+              </div>
+            </div>
+          </div>
 
           <div className="inline-flex items-center gap-3 px-5 py-2 bg-white/10 rounded-full border border-white/20">
             <span className="flex -space-x-2">
@@ -159,7 +165,7 @@ export default function SignUp() {
             />
           </div>
 
-          <blockquote className="border-l-4 border-brand-gold pl-6 text-center max-w-md">
+          <blockquote className="border-l-4 border-brand-gold pl-6 text-left max-w-md">
             <p className="text-xl font-light text-white leading-relaxed italic">
               "Join the students mastering the 80/20 syllabus."
             </p>
@@ -170,15 +176,19 @@ export default function SignUp() {
         </div>
       </section>
 
-      <section className="flex-1 h-full bg-white flex flex-col justify-center px-5 py-6 md:px-12 lg:px-16 overflow-hidden">
+      <section className="flex-1 h-full bg-white flex flex-col justify-center px-5 py-4 md:px-12 lg:px-16 overflow-hidden">
         <div className="w-full max-w-xl mx-auto">
-          <div className="md:hidden mb-8 text-center">
-            <div className="flex justify-center mb-8">
-              <img
-                src={smashutmeLogo}
-                alt="SmashUTME"
-                className="h-16 w-auto"
-              />
+          <div className="md:hidden mb-4 text-center">
+            <div className="flex justify-center mb-3">
+              <div className="bg-white rounded-2xl border border-slate-200 px-3 py-1 shadow-md">
+                <div className="relative w-[270px] h-[56px] overflow-hidden flex items-center justify-center">
+                  <img
+                    src={smashutmeLogo}
+                    alt="SmashUTME"
+                    className="absolute left-1/2 -translate-x-1/2 -top-[98px] h-[270px] w-[270px] max-w-none"
+                  />
+                </div>
+              </div>
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight text-brand-blue mb-2">SmashUTME</h1>
           </div>
