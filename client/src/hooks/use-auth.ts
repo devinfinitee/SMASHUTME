@@ -1,22 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User } from "../types";
-
-// Mock user for demo purposes  
-const mockUser: User = {
-  id: "demo-user",
-  name: "Demo User",
-  email: "demo@example.com",
-};
+import {
+  clearCurrentAuthUser,
+  getCurrentAuthUser,
+  loginLocalUser,
+  registerLocalUser,
+  setCurrentAuthUser,
+} from "@/lib/local-auth";
 
 async function fetchUser(): Promise<User | null> {
-  // Simulate a delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return mockUser;
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  return getCurrentAuthUser();
 }
 
 async function logout(): Promise<void> {
-  // For demo purposes, just reload the page
-  window.location.reload();
+  clearCurrentAuthUser();
 }
 
 interface SignUpData {
@@ -37,30 +35,25 @@ interface ResetPasswordData {
 }
 
 async function signUp(data: SignUpData): Promise<User> {
-  // TODO: Replace with actual API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Mock implementation - return a new user
-  return {
-    id: `user-${Date.now()}`,
-    name: data.fullName,
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const user = registerLocalUser({
+    fullName: data.fullName,
     email: data.email,
-  };
+    password: data.password,
+  });
+  setCurrentAuthUser(user);
+  return user;
 }
 
 async function login(data: LoginData): Promise<User> {
-  // TODO: Replace with actual API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Mock implementation - return mock user
-  return mockUser;
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const user = loginLocalUser({ email: data.email, password: data.password });
+  setCurrentAuthUser(user);
+  return user;
 }
 
 async function resetPassword(data: ResetPasswordData): Promise<void> {
-  // TODO: Replace with actual API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // No return value - just simulate sending email
+  await new Promise((resolve) => setTimeout(resolve, 600));
 }
 
 export function useAuth() {

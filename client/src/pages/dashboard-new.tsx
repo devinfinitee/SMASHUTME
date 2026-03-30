@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { User } from "@/types";
 import {
   BookOpen,
@@ -10,23 +10,16 @@ import {
   Clock,
   Flame,
   Award,
-  Settings,
-  LogOut,
-  Search,
-  Bell,
   Lightbulb,
+  Brain,
   Send,
   Play,
   BarChart3,
-  Users,
-  Brain,
-  Menu,
-  X,
 } from "lucide-react";
-import smashutmeLogo from "@/assets/smashutme-logo.webp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
+import { AppShell } from "@/components/app-shell";
 
 interface SubjectCard {
   id: string;
@@ -37,45 +30,6 @@ interface SubjectCard {
   color: string;
   bgColor: string;
 }
-
-const SUBJECTS: SubjectCard[] = [
-  {
-    id: "english",
-    name: "Use of English",
-    icon: BookOpen,
-    proficiency: 81,
-    status: "compulsory",
-    color: "text-brand-blue",
-    bgColor: "bg-brand-blue/10",
-  },
-  {
-    id: "math",
-    name: "Mathematics",
-    icon: Calculator,
-    proficiency: 94,
-    status: "mastered",
-    color: "text-purple-600",
-    bgColor: "bg-purple-600/10",
-  },
-  {
-    id: "physics",
-    name: "Physics",
-    icon: Zap,
-    proficiency: 62,
-    status: "weak",
-    color: "text-red-600",
-    bgColor: "bg-red-600/10",
-  },
-  {
-    id: "chemistry",
-    name: "Chemistry",
-    icon: Beaker,
-    proficiency: 78,
-    status: "on-track",
-    color: "text-amber-600",
-    bgColor: "bg-amber-600/10",
-  },
-];
 
 const RECENT_ACTIVITIES = [
   {
@@ -96,122 +50,47 @@ const RECENT_ACTIVITIES = [
   },
 ];
 
-const Sidebar = () => {
-  const { user, logout } = useAuth();
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+function parseStorage<T>(key: string): T | null {
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
 
-  const navItems = [
-    { label: "Dashboard", icon: TrendingUp, active: true },
-    { label: "Syllabus", icon: BookOpen, active: false },
-    { label: "CBT Practice", icon: BarChart3, active: false },
-    { label: "AI Review", icon: Brain, active: false },
-    { label: "Performance", icon: TrendingUp, active: false },
-    { label: "Study Room", icon: Users, active: false },
-    { label: "Settings", icon: Settings, active: false },
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function iconForSubject(subjectName: string): typeof BookOpen {
+  const normalized = subjectName.toLowerCase();
+  if (normalized.includes("math")) return Calculator;
+  if (normalized.includes("physics")) return Zap;
+  if (normalized.includes("chem")) return Beaker;
+  if (normalized.includes("econom")) return TrendingUp;
+  if (normalized.includes("government") || normalized.includes("history") || normalized.includes("civic")) return Target;
+  if (normalized.includes("commerce") || normalized.includes("account")) return BarChart3;
+  if (normalized.includes("agric")) return Flame;
+  return BookOpen;
+}
+
+function buildSubjectCards(subjects: string[]): SubjectCard[] {
+  const colors = [
+    { color: "text-brand-blue", bgColor: "bg-brand-blue/10" },
+    { color: "text-purple-600", bgColor: "bg-purple-600/10" },
+    { color: "text-red-600", bgColor: "bg-red-600/10" },
+    { color: "text-amber-600", bgColor: "bg-amber-600/10" },
   ];
 
-  return (
-    <>
-      {/* Mobile Toggle */}
-      <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="fixed top-4 right-4 z-50 md:hidden bg-brand-blue text-white p-2 rounded-lg"
-      >
-        {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-      </button>
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-slate-50 dark:bg-slate-900 flex flex-col py-8 px-4 z-40 transition-transform md:translate-x-0 ${
-          isMobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="mb-10 px-4">
-          <div className="flex items-center mb-2 overflow-hidden">
-            <img src={smashutmeLogo} alt="SmashUTME" className="h-28 w-28 object-cover object-center scale-[2] mx-12 -my-10" />
-          </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-            Personalised Dashboard
-          </p>
-        </div>
-
-        <nav className="flex-1 space-y-1">
-          {navItems.map((item) => (
-            <button
-              key={item.label}
-              className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all ${
-                item.active
-                  ? "text-brand-blue dark:text-brand-blue bg-white dark:bg-white/5 border-r-4 border-brand-blue"
-                  : "text-slate-600 dark:text-slate-400 hover:text-brand-blue dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800"
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              {item.label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="mt-auto px-4 space-y-4 pt-6 border-t border-slate-200 dark:border-slate-700">
-          <Button className="w-full bg-brand-blue text-white hover:bg-brand-blue/90">
-            Start Mock Exam
-          </Button>
-
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-brand-gold text-white flex items-center justify-center font-bold text-sm">
-              {user?.name?.[0]}
-            </div>
-            <div className="overflow-hidden flex-1">
-              <p className="text-sm font-bold truncate">{user?.name}</p>
-              <p className="text-xs text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                ID: 2024/JAMB/081
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => logout()}
-            className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:text-red-600 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </button>
-        </div>
-      </aside>
-    </>
-  );
-};
-
-const TopNavBar = () => {
-  return (
-    <header className="fixed top-0 right-0 left-0 md:left-64 h-16 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-100/50 dark:border-slate-800/50 flex justify-between items-center px-4 md:px-8 gap-4">
-      <div className="flex-1 min-w-0">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <Input
-            placeholder="Search..."
-            className="w-full bg-slate-100 dark:bg-slate-800 border-none pl-10 pr-4 text-sm focus-visible:ring-2 focus-visible:ring-brand-blue/20"
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-        <button className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all relative">
-          <Flame className="w-5 h-5 text-brand-gold" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-brand-gold rounded-full"></span>
-        </button>
-
-        <button className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all relative">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
-
-        <button className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
-          <Target className="w-5 h-5" />
-        </button>
-      </div>
-    </header>
-  );
-};
+  return subjects.slice(0, 4).map((subject, index) => ({
+    id: subject.toLowerCase(),
+    name: subject,
+    icon: iconForSubject(subject),
+    proficiency: Math.max(52, 88 - index * 9),
+    status: index === 0 ? "compulsory" : index === 1 ? "mastered" : index === 2 ? "weak" : "on-track",
+    color: colors[index % colors.length].color,
+    bgColor: colors[index % colors.length].bgColor,
+  }));
+}
 
 const CircularProgress = ({ percentage }: { percentage: number }) => {
   const radius = 45;
@@ -263,8 +142,39 @@ const CircularProgress = ({ percentage }: { percentage: number }) => {
 };
 
 const MainContent = ({ user }: { user?: User | null }) => {
+  const targetData = useMemo(
+    () => parseStorage<{ institution?: string; course?: string }>("smashutme-onboarding-target"),
+    [],
+  );
+  const subjectsData = useMemo(
+    () => parseStorage<{ selectedLabels?: string[]; selected?: string[] }>("smashutme-onboarding-subjects"),
+    [],
+  );
+  const baselineData = useMemo(
+    () => parseStorage<{ studyTime?: string }>("smashutme-onboarding-baseline"),
+    [],
+  );
+
+  const selectedSubjects = useMemo(() => {
+    const labels = subjectsData?.selectedLabels;
+    if (Array.isArray(labels) && labels.length > 0) {
+      return ["Use of English", ...labels];
+    }
+
+    const raw = subjectsData?.selected;
+    if (Array.isArray(raw) && raw.length > 0) {
+      return ["Use of English", ...raw.map((item) => item.charAt(0).toUpperCase() + item.slice(1))];
+    }
+
+    return ["Use of English", "Mathematics", "Physics", "Chemistry"];
+  }, [subjectsData]);
+
+  const subjectCards = useMemo(() => buildSubjectCards(selectedSubjects), [selectedSubjects]);
+  const targetInstitution = targetData?.institution || "University of Ibadan";
+  const targetCourse = targetData?.course || "Medicine and Surgery";
+
   return (
-    <main className="pl-0 md:pl-64 pt-20 md:pt-16 min-h-screen bg-slate-50 dark:bg-slate-950">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6 md:space-y-10">
         {/* Greeting & Hero Section */}
         <section className="grid grid-cols-12 gap-4 md:gap-8 items-start">
@@ -285,8 +195,8 @@ const MainContent = ({ user }: { user?: User | null }) => {
                 Welcome back, {user?.name || "Scholar"}
               </h2>
               <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 mt-2 leading-relaxed max-w-md">
-                Your projected score is currently in the top 5th percentile for MBBS candidates.
-                Focus on Physics calculations today.
+                Your projected score is currently in the top 5th percentile for {targetCourse} candidates.
+                Focus on your weakest subject to improve quickly.
               </p>
             </header>
 
@@ -341,12 +251,14 @@ const MainContent = ({ user }: { user?: User | null }) => {
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-widest">
                     Target
                   </p>
-                  <p className="font-bold text-base md:text-lg leading-tight text-slate-900 dark:text-white truncate">University of Ibadan</p>
-                  <p className="text-xs md:text-sm text-slate-800 dark:text-slate-200 font-semibold">Medicine & Surgery</p>
+                  <p className="font-bold text-base md:text-lg leading-tight text-slate-900 dark:text-white truncate">{targetInstitution}</p>
+                  <p className="text-xs md:text-sm text-slate-800 dark:text-slate-200 font-semibold">{targetCourse}</p>
                 </div>
               </div>
               <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-slate-400/30 flex justify-between items-center gap-2">
-                <span className="text-xs text-slate-800 dark:text-slate-200 font-medium">Rating</span>
+                <span className="text-xs text-slate-800 dark:text-slate-200 font-medium">
+                  Study Time: {baselineData?.studyTime || "1-2"}
+                </span>
                 <span className="bg-red-600 text-white text-xs font-black px-2 py-0.5 rounded-md shadow-md">
                   HIGHLY COMP.
                 </span>
@@ -395,8 +307,8 @@ const MainContent = ({ user }: { user?: User | null }) => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-6">
-            {SUBJECTS.map((subject) => (
-              <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
+            {subjectCards.map((subject) => (
+              <div key={subject.id} className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
                 <div className="flex justify-between items-start mb-3 md:mb-6">
                   <div className={`p-2 md:p-3 ${subject.bgColor} ${subject.color} rounded-lg`}>
                     <subject.icon className="w-4 md:w-5 h-4 md:h-5" />
@@ -499,7 +411,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
               <div className="space-y-2 mb-6">
                 <div className="bg-white/10 hover:bg-white/20 p-2 md:p-3 rounded border border-white/10 cursor-pointer transition-all">
                   <p className="text-xs font-bold text-white/60 uppercase mb-1">Question</p>
-                  <p className="text-xs md:text-sm line-clamp-1">Best subjects for Pharmacy?</p>
+                  <p className="text-xs md:text-sm line-clamp-1">Best strategy for {targetCourse}?</p>
                 </div>
               </div>
             </div>
@@ -545,10 +457,8 @@ export default function DashboardNew() {
   }
 
   return (
-    <div>
-      <Sidebar />
-      <TopNavBar />
+    <AppShell searchPlaceholder="Search dashboard insights...">
       <MainContent user={user} />
-    </div>
+    </AppShell>
   );
 }

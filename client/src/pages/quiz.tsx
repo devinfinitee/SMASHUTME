@@ -3,14 +3,15 @@ import { Link, useRoute } from "wouter";
 import { useTopic, useSubmitQuiz } from "@/hooks/use-topics";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, CheckCircle, XCircle, ArrowRight, RotateCcw } from "lucide-react";
+import { CheckCircle, XCircle, ArrowRight, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import confetti from "canvas-confetti";
+import { AppShell } from "@/components/app-shell";
 
 export default function Quiz() {
   const [, params] = useRoute("/topics/:slug/quiz");
   const { data: topic, isLoading } = useTopic(params?.slug || "");
-  const { mutate: submitQuiz, isPending: isSubmitting } = useSubmitQuiz();
+  const { mutate: submitQuiz } = useSubmitQuiz();
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -18,8 +19,22 @@ export default function Quiz() {
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
 
-  if (isLoading) return <div className="flex justify-center pt-20"><Skeleton className="h-96 w-full max-w-2xl rounded-2xl" /></div>;
-  if (!topic || !topic.questions || topic.questions.length === 0) return <div className="text-center pt-20">No questions available for this quiz.</div>;
+  if (isLoading) {
+    return (
+      <AppShell searchPlaceholder="Search quiz concepts...">
+        <div className="flex justify-center pt-20 px-4">
+          <Skeleton className="h-96 w-full max-w-2xl rounded-2xl" />
+        </div>
+      </AppShell>
+    );
+  }
+  if (!topic || !topic.questions || topic.questions.length === 0) {
+    return (
+      <AppShell searchPlaceholder="Search quiz concepts...">
+        <div className="text-center pt-20">No questions available for this quiz.</div>
+      </AppShell>
+    );
+  }
 
   const currentQuestion = topic.questions[currentQuestionIndex];
   const totalQuestions = topic.questions.length;
@@ -80,35 +95,38 @@ export default function Quiz() {
     const percentage = Math.round((finalScore / totalQuestions) * 100);
 
     return (
-      <div className="max-w-md mx-auto pt-10 text-center animate-slide-in">
-        <div className="bg-card border border-border rounded-3xl p-8 shadow-xl">
-          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-4xl font-bold text-primary">{percentage}%</span>
-          </div>
-          <h2 className="text-2xl font-bold font-display mb-2">Quiz Completed!</h2>
-          <p className="text-muted-foreground mb-8">
-            You scored {finalScore} out of {totalQuestions}
-          </p>
-          
-          <div className="space-y-3">
-            <Link href={`/topics/${topic.slug}`}>
-              <Button variant="outline" className="w-full h-12 rounded-xl">
-                Review Topic
-              </Button>
-            </Link>
-            <Link href={`/subjects/${topic.subject.slug}`}>
-              <Button className="w-full h-12 rounded-xl">
-                Back to Subject
-              </Button>
-            </Link>
+      <AppShell searchPlaceholder="Search quiz concepts...">
+        <div className="max-w-md mx-auto pt-10 text-center animate-slide-in px-4">
+          <div className="bg-card border border-border rounded-3xl p-8 shadow-xl">
+            <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl font-bold text-primary">{percentage}%</span>
+            </div>
+            <h2 className="text-2xl font-bold font-display mb-2">Quiz Completed!</h2>
+            <p className="text-muted-foreground mb-8">
+              You scored {finalScore} out of {totalQuestions}
+            </p>
+
+            <div className="space-y-3">
+              <Link href={`/topics/${topic.slug}`}>
+                <Button variant="outline" className="w-full h-12 rounded-xl">
+                  Review Topic
+                </Button>
+              </Link>
+              <Link href={`/subjects/${topic.subject.slug}`}>
+                <Button className="w-full h-12 rounded-xl">
+                  Back to Subject
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      </AppShell>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto pb-20">
+    <AppShell searchPlaceholder="Search quiz concepts...">
+      <div className="max-w-2xl mx-auto pb-20 px-4 md:px-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <Link href={`/topics/${topic.slug}`}>
@@ -210,6 +228,7 @@ export default function Quiz() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </AppShell>
   );
 }

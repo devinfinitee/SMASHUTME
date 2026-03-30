@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
 import heroImage from "@/assets/hero.webp";
+import { registerLocalUser, setCurrentAuthUser } from "@/lib/local-auth";
 
 interface SignUpFormData {
   fullName: string;
@@ -18,6 +19,7 @@ interface FormErrors {
   email?: string;
   password?: string;
   terms?: string;
+  general?: string;
 }
 
 export default function SignUp() {
@@ -96,15 +98,41 @@ export default function SignUp() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        if (error.message?.includes("email")) {
-          setErrors({ email: "Email is already registered." });
-        }
-        throw new Error(error.message || "Sign up failed");
+        throw new Error("Backend unavailable");
       }
 
-      setLocation("/dashboard");
+      let userFromApi: { id?: string; name?: string; fullName?: string; email?: string } | null = null;
+      try {
+        userFromApi = await response.json();
+      } catch {
+        userFromApi = null;
+      }
+
+      setCurrentAuthUser({
+        id: userFromApi?.id ?? `local-${Date.now()}`,
+        name: userFromApi?.name ?? userFromApi?.fullName ?? formData.fullName,
+        email: userFromApi?.email ?? formData.email.toLowerCase(),
+      });
+
+      setLocation("/onboarding/target");
     } catch (error) {
+      try {
+        const localUser = registerLocalUser({
+          fullName: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+        });
+        setCurrentAuthUser(localUser);
+        setLocation("/onboarding/target");
+      } catch (localError) {
+        const message = localError instanceof Error ? localError.message : "Sign up failed.";
+        if (message.toLowerCase().includes("email")) {
+          setErrors({ email: "Email is already registered." });
+        } else {
+          setErrors({ general: message });
+        }
+      }
+
       console.error("Sign up error:", error);
     } finally {
       setIsLoading(false);
@@ -199,6 +227,12 @@ export default function SignUp() {
           </header>
 
           <form onSubmit={handleSubmit} className="space-y-5 w-full" noValidate>
+            {errors.general && (
+              <div className="rounded-md border border-brand-gold/40 bg-brand-gold/10 p-3 text-sm text-brand-gold">
+                {errors.general}
+              </div>
+            )}
+
             <div className="relative">
               <Input
                 id="fullName"

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
 import heroImage from "@/assets/hero.webp";
+import { loginLocalUser, setCurrentAuthUser } from "@/lib/local-auth";
 
 interface LoginFormData {
   email: string;
@@ -77,17 +78,38 @@ export default function Login() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        if (error.message?.toLowerCase().includes("password")) {
-          setErrors({ password: "Incorrect password." });
-        } else {
-          setErrors({ general: error.message || "Login failed. Please try again." });
-        }
-        throw new Error(error.message || "Login failed");
+        throw new Error("Backend unavailable");
       }
 
+      let userFromApi: { id?: string; name?: string; fullName?: string; email?: string } | null = null;
+      try {
+        userFromApi = await response.json();
+      } catch {
+        userFromApi = null;
+      }
+
+      setCurrentAuthUser({
+        id: userFromApi?.id ?? `local-${Date.now()}`,
+        name: userFromApi?.name ?? userFromApi?.fullName ?? formData.email.split("@")[0],
+        email: userFromApi?.email ?? formData.email.toLowerCase(),
+      });
       setLocation("/dashboard");
     } catch (error) {
+      try {
+        const user = loginLocalUser({ email: formData.email, password: formData.password });
+        setCurrentAuthUser(user);
+        setLocation("/dashboard");
+      } catch (localError) {
+        const message = localError instanceof Error ? localError.message : "Login failed. Please try again.";
+        if (message.toLowerCase().includes("password")) {
+          setErrors({ password: "Incorrect password." });
+        } else if (message.toLowerCase().includes("account")) {
+          setErrors({ email: "No account found with this email." });
+        } else {
+          setErrors({ general: message });
+        }
+      }
+
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);

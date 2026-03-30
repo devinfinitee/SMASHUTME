@@ -1,25 +1,28 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { Target, Users, Zap, Award, ArrowRight } from "lucide-react";
+import { Filter, Brain, Clock, ArrowRight } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
 
 export default function About() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col">
       {/* Navigation */}
-      <header className="border-b border-border/50 sticky top-0 bg-background/95 backdrop-blur-lg z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <button onClick={() => setLocation("/")} className="flex items-center overflow-visible py-4">
-            <img src={smashutmeLogo} alt="SmashUTME" className="w-12 h-12 object-left-top object-cover scale-[6] origin-left" />
+      <header className="border-b border-slate-200 dark:border-slate-800 sticky top-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-lg z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+          <button onClick={() => setLocation("/")} className="flex items-center overflow-visible py-2 sm:py-3" aria-label="Go to home">
+            <img
+              src={smashutmeLogo}
+              alt="SmashUTME"
+              className="w-10 h-10 sm:w-12 sm:h-12 object-left-top object-cover scale-[3.8] sm:scale-[4.8] lg:scale-[6] origin-left"
+            />
           </button>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => setLocation("/contact")} className="rounded-full">
+            <Button variant="ghost" onClick={() => setLocation("/contact")} className="text-slate-900 dark:text-white">
               Contact Us
             </Button>
-            <Button onClick={() => setLocation("/signup")} className="rounded-full">
+            <Button onClick={() => setLocation("/signup")} className="bg-brand-blue hover:bg-blue-700 text-white">
               Get Started
             </Button>
           </div>
@@ -27,171 +30,106 @@ export default function About() {
       </header>
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="pt-20 pb-16 bg-muted/30">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl md:text-5xl font-display font-bold mb-6">
-              About SmashUTME
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Empowering Nigerian students to ace their UTME exams through structured, 
-              intelligent preparation that actually works.
-            </p>
+        {/* Section 1: Mission Hero */}
+        <section className="pt-12 pb-14 md:pt-16 md:pb-16 px-6 md:px-8 text-center max-w-5xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-gold/20 text-brand-gold font-bold text-xs uppercase tracking-widest mb-8">
+            <span>🎯</span>
+            Our Mission
           </div>
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 dark:text-white mb-8 leading-tight">
+            A smarter way to <span className="text-brand-blue">prepare</span> for UTME.
+          </h1>
+          <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed font-light">
+            SmashUTME was built from a simple idea — students should not have to read everything to succeed. With the right structure and focus, preparing for UTME can be clearer, lighter, and more effective.
+          </p>
         </section>
 
-        {/* Mission Section */}
-        <section className="py-16">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-3xl font-display font-bold mb-6">Our Mission</h2>
-                <p className="text-lg text-muted-foreground mb-4">
-                  Every year, thousands of bright Nigerian students struggle with UTME preparation —
-                  not because they lack intelligence, but because they lack structure, focus, and 
-                  personalized guidance.
-                </p>
-                <p className="text-lg text-muted-foreground mb-4">
-                  SmashUTME was built to change that. We provide a structured, topic-by-topic 
-                  learning path that breaks down the JAMB syllabus into manageable, high-yield 
-                  study sessions.
-                </p>
-                <p className="text-lg text-muted-foreground">
-                  Our goal is simple: help every student reach their full potential and gain 
-                  admission into their dream institution.
-                </p>
+        {/* Section 2: Founder's Story */}
+        <section className="py-24 px-8 bg-slate-50 dark:bg-slate-900">
+          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+            <div className="relative group">
+              <div className="absolute -inset-4 bg-brand-blue/10 rounded-2xl transition-all duration-300 group-hover:scale-105"></div>
+              <div className="relative bg-white dark:bg-slate-800 border-l-4 border-brand-blue p-6 rounded-2xl shadow-lg overflow-hidden">
+                <img 
+                  className="w-full h-full object-cover rounded-lg" 
+                  alt="Founder" 
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCH8n0YjIcv_Ucuss0Rqd398WKaGHZnKumTajxa7jI0g-5pcnWHSfltL8VLE3LYxfoYBpVLXx2sO8bqTH4nTzTQWCnk-KFo8PPcub66ji2eA7mhl_fAe_20EGfjinDVkiADBq0nqZU41cKXeZS4NBM5JTYJDViULddPxr631Hmsd5UTiYoSjld6UXPMdZ62uCuETralKhTItDCg38uivOlayyk6278yWj0AxNtJu-ExIXBUms7Ta29jZ6zuLKTIiAoodKo3LQ4RNQQ"
+                />
               </div>
-              <div className="relative">
-                <div className="bg-primary rounded-2xl p-8 shadow-2xl shadow-primary/25">
-                  <div className="space-y-6 text-primary-foreground">
-                    <div className="flex items-start gap-4">
-                      <div className="bg-primary-foreground/20 rounded-lg p-2">
-                        <Target className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg mb-1">Focused Learning</h3>
-                        <p className="text-primary-foreground/90">Master one topic at a time with our structured approach</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <div className="bg-primary-foreground/20 rounded-lg p-2">
-                        <Zap className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg mb-1">Smart Practice</h3>
-                        <p className="text-primary-foreground/90">AI-powered questions that adapt to your level</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <div className="bg-primary-foreground/20 rounded-lg p-2">
-                        <Award className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg mb-1">Proven Results</h3>
-                        <p className="text-primary-foreground/90">Join thousands scoring 250+ in UTME</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            </div>
+            <div className="space-y-8">
+              <h2 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">"I wanted something better."</h2>
+              <div className="space-y-6 text-slate-600 dark:text-slate-400 leading-relaxed text-lg">
+                <p>For years, I watched students struggle under the weight of massive textbooks, trying to memorize everything from cover to cover. It was exhausting, inefficient, and often resulted in burnout before the exam even started.</p>
+                <p>I realized that the secret wasn't in working harder, but in focusing on high-yield material—the concepts that actually drive scores. That realization became the foundation of SmashUTME.</p>
+                <p>We've stripped away the noise to give you a surgical focus on what truly matters. We are not just a test prep platform; we are your diagnostic toolkit for academic excellence.</p>
+              </div>
+              <div className="pt-6">
+                <p className="italic text-2xl text-brand-blue font-semibold">Victor (Infinite)</p>
+                <p className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mt-2">Founder, SmashUTME</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Values Section */}
-        <section className="py-16 bg-muted/30">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-display font-bold text-center mb-12">Our Core Values</h2>
+        {/* Section 3: Core Approach */}
+        <section className="py-24 px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white mb-4">Our JAMB Strategy</h2>
+              <div className="h-1 w-20 bg-brand-blue mx-auto"></div>
+              <p className="mt-6 max-w-3xl mx-auto text-base md:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+                JAMB success is not about reading everything. It is about reading the right topics,
+                practicing with real exam pressure, and improving weak points before exam day.
+                That is the system we built for Nigerian students.
+              </p>
+            </div>
             <div className="grid md:grid-cols-3 gap-8">
-              <Card className="border-2 hover:border-primary transition-colors">
-                <CardContent className="pt-6">
-                  <div className="bg-secondary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                    <Users className="w-6 h-6 text-secondary" />
-                  </div>
-                  <h3 className="text-xl font-display font-semibold mb-2">Student-Centered</h3>
-                  <p className="text-muted-foreground">
-                    Every feature we build starts with one question: "How does this help the student?"
-                  </p>
-                </CardContent>
-              </Card>
+              {/* Pillar 1 */}
+              <div className="group p-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:border-brand-blue transition-all duration-300 hover:shadow-2xl hover:shadow-brand-blue/10">
+                <div className="w-12 h-12 rounded-lg bg-brand-blue/10 flex items-center justify-center mb-6 group-hover:bg-brand-blue group-hover:text-white transition-all">
+                  <Filter className="w-6 h-6 text-brand-blue group-hover:text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Target High-Yield JAMB Topics</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">We map each subject to the official JAMB syllabus and past question patterns, so you spend more time on topics that repeatedly appear and less time on distractions.</p>
+              </div>
 
-              <Card className="border-2 hover:border-primary transition-colors">
-                <CardContent className="pt-6">
-                  <div className="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                    <Target className="w-6 h-6 text-primary" />
-                  </div>
-                  <h3 className="text-xl font-display font-semibold mb-2">Quality First</h3>
-                  <p className="text-muted-foreground">
-                    We don't cut corners. Every topic, question, and explanation meets our high standards.
-                  </p>
-                </CardContent>
-              </Card>
+              {/* Pillar 2 */}
+              <div className="group p-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:border-brand-blue transition-all duration-300 hover:shadow-2xl hover:shadow-brand-blue/10">
+                <div className="w-12 h-12 rounded-lg bg-brand-gold/10 flex items-center justify-center mb-6 group-hover:bg-brand-gold group-hover:text-white transition-all">
+                  <Brain className="w-6 h-6 text-brand-gold group-hover:text-slate-900" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Master Concepts the JAMB Way</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">Instead of cramming, we break topics into clear explanations, worked examples, and likely question angles so you can answer unfamiliar questions with confidence.</p>
+              </div>
 
-              <Card className="border-2 hover:border-primary transition-colors">
-                <CardContent className="pt-6">
-                  <div className="bg-secondary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
-                    <Zap className="w-6 h-6 text-secondary" />
-                  </div>
-                  <h3 className="text-xl font-display font-semibold mb-2">Innovation</h3>
-                  <p className="text-muted-foreground">
-                    We leverage AI and modern learning science to give you an edge in your preparation.
-                  </p>
-                </CardContent>
-              </Card>
+              {/* Pillar 3 */}
+              <div className="group p-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:border-brand-blue transition-all duration-300 hover:shadow-2xl hover:shadow-brand-blue/10">
+                <div className="w-12 h-12 rounded-lg bg-brand-blue/10 flex items-center justify-center mb-6 group-hover:bg-brand-blue group-hover:text-white transition-all">
+                  <Clock className="w-6 h-6 text-brand-blue group-hover:text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Train for CBT Speed and Accuracy</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">Our timed drills and mock sessions simulate real JAMB CBT pressure, helping you improve speed, reduce careless mistakes, and build stamina for the full exam.</p>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Story Section */}
-        <section className="py-16">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-display font-bold text-center mb-8">Our Story</h2>
-            <div className="prose prose-lg max-w-none">
-              <p className="text-muted-foreground text-lg leading-relaxed mb-4">
-                SmashUTME was born from a simple observation: most UTME prep platforms overwhelm 
-                students with thousands of random questions but provide little structure or guidance 
-                on what to study and when.
-              </p>
-              <p className="text-muted-foreground text-lg leading-relaxed mb-4">
-                Our founders, having gone through the UTME journey themselves, knew there had to be 
-                a better way. They envisioned a platform that would break down the massive JAMB 
-                syllabus into bite-sized, manageable topics — making exam preparation less 
-                overwhelming and more effective.
-              </p>
-              <p className="text-muted-foreground text-lg leading-relaxed">
-                Today, SmashUTME serves thousands of students across Nigeria, helping them transform 
-                their UTME preparation from chaotic cramming to structured, confident learning.
-              </p>
-            </div>
+        {/* Section 4: Vision */}
+        <section className="py-32 px-8 bg-brand-blue relative overflow-hidden">
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-0 left-0 w-96 h-96 bg-white blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute bottom-0 right-0 w-96 h-96 bg-brand-gold blur-3xl translate-x-1/2 translate-y-1/2"></div>
           </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-20 bg-primary">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-primary-foreground mb-6">
-              Ready to Transform Your UTME Preparation?
-            </h2>
-            <p className="text-xl text-primary-foreground/90 mb-8">
-              Join thousands of students who are preparing smarter, not harder.
+          <div className="relative max-w-4xl mx-auto text-center space-y-8">
+            <h2 className="text-white text-4xl md:text-5xl font-black tracking-tight leading-tight">Building the future of academic clarity.</h2>
+            <p className="text-blue-100 text-xl leading-relaxed font-light">
+              Our vision is to empower every student with the structure and confidence they need to excel. We are building more than a platform—we are fostering a new standard of academic preparation where clarity replaces confusion and mastery is within everyone's reach.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button 
-                onClick={() => setLocation("/signup")} 
-                size="lg" 
-                variant="secondary"
-                className="rounded-full"
-              >
-                Start Free Today
+            <div className="pt-8">
+              <Button onClick={() => setLocation("/signup")} className="bg-white text-brand-blue hover:bg-slate-100 px-10 py-4 font-bold text-lg">
+                Join the Movement
                 <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button 
-                onClick={() => setLocation("/contact")} 
-                size="lg" 
-                variant="outline"
-                className="rounded-full bg-background text-foreground border-border hover:bg-muted"
-              >
-                Contact Us
               </Button>
             </div>
           </div>
@@ -199,23 +137,73 @@ export default function About() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 py-8 bg-muted/30">
+      <footer className="bg-slate-50 border-t border-slate-200 pt-12 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © 2026 SmashUTME. All rights reserved.
-            </p>
-            <div className="flex gap-6 text-sm">
-              <button onClick={() => setLocation("/")} className="text-muted-foreground hover:text-foreground">
-                Home
-              </button>
-              <button onClick={() => setLocation("/about")} className="text-muted-foreground hover:text-foreground">
-                About
-              </button>
-              <button onClick={() => setLocation("/contact")} className="text-muted-foreground hover:text-foreground">
-                Contact
-              </button>
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-md mb-8">
+            <div className="grid lg:grid-cols-[1.2fr,1fr] gap-6 lg:gap-10 items-start">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-gold mb-3">SmashUTME Pioneer Circle</p>
+                <h3 className="font-display font-bold text-2xl text-slate-900 mb-3">This is an admission movement, not just an app.</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  SmashUTME exists for students who are serious about Medicine, Law, Engineering, and competitive admission paths. We train strategy, speed, and confidence with high-yield focus.
+                </p>
+                <p className="mt-4 text-sm text-slate-500">
+                  Built and reviewed by an MBBS candidate who has already passed through the same pressure.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-sm font-semibold text-slate-900 mb-2">Pioneer Access Status</p>
+                <p className="text-3xl font-display font-bold text-brand-blue">64 / 100</p>
+                <p className="text-sm text-slate-500 mt-1 mb-4">Spots already claimed for the 2026 cohort.</p>
+                <Button onClick={() => setLocation("/signup")} className="w-full rounded-full bg-brand-blue text-white hover:bg-brand-blue/90">
+                  Claim My Pioneer Spot
+                </Button>
+              </div>
             </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3">Start Here</h4>
+              <div className="space-y-2 text-slate-500">
+                <button onClick={() => setLocation("/signup")} className="block hover:text-brand-blue">Create Free Account</button>
+                <button onClick={() => setLocation("/login")} className="block hover:text-brand-blue">Continue Learning</button>
+                <button onClick={() => setLocation("/dashboard")} className="block hover:text-brand-blue">Open Dashboard</button>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3">Program</h4>
+              <div className="space-y-2 text-slate-500">
+                <a href="#" className="block hover:text-brand-blue">High-Yield Method</a>
+                <a href="#" className="block hover:text-brand-blue">CBT Speed Framework</a>
+                <a href="#" className="block hover:text-brand-blue">Pioneer Benefits</a>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3">Company</h4>
+              <div className="space-y-2 text-slate-500">
+                <button onClick={() => setLocation("/about")} className="block hover:text-brand-blue">About SmashUTME</button>
+                <button onClick={() => setLocation("/contact")} className="block hover:text-brand-blue">Contact Team</button>
+                <a href="#" className="block hover:text-brand-blue">Founder Story</a>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-slate-900 mb-3">Legal</h4>
+              <div className="space-y-2 text-slate-500">
+                <a href="#" className="block hover:text-brand-blue">Terms of Use</a>
+                <a href="#" className="block hover:text-brand-blue">Privacy Policy</a>
+                <a href="#" className="block hover:text-brand-blue">Exam Disclaimer</a>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-slate-500">
+            <p>© 2026 SmashUTME. All rights reserved.</p>
+            <p>Built in Nigeria for ambitious UTME candidates.</p>
           </div>
         </div>
       </footer>
