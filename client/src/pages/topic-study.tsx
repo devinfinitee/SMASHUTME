@@ -41,8 +41,9 @@ export default function TopicStudy() {
   return (
     <AppShell searchPlaceholder="Search topic notes...">
       <div className="relative max-w-3xl mx-auto pb-24 p-4 md:p-8">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-brand-blue/10 to-transparent blur-3xl" />
       {/* Navigation Header */}
-      <div className="mb-8 border-b border-[#2B0AFA]/25 pb-6">
+      <div className="mb-8 rounded-3xl border border-slate-200/80 bg-white/90 p-5 md:p-8 shadow-[0_20px_40px_rgba(11,28,48,0.05)] backdrop-blur">
         <Link href={`/subjects/${topic.subject.slug}`}>
           <Button variant="ghost" className="pl-0 hover:bg-transparent text-[#2B0AFA] hover:text-[#2408CF] mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -64,14 +65,16 @@ export default function TopicStudy() {
       </div>
 
       {/* Content */}
-      <div className="prose prose-lg dark:prose-invert max-w-none mb-12">
-        <ReactMarkdown>
-          {topic.content || "No content available for this topic yet."}
-        </ReactMarkdown>
+      <div className="mb-12 overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-[0_20px_40px_rgba(11,28,48,0.05)] backdrop-blur">
+        <div className="prose prose-lg dark:prose-invert max-w-none p-5 md:p-8">
+          <ReactMarkdown>
+            {topic.content || "No content available for this topic yet."}
+          </ReactMarkdown>
+        </div>
       </div>
 
       {/* Action Footer */}
-      <div className="bg-white border border-[#2B0AFA]/20 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+      <div className="rounded-3xl border border-[#2B0AFA]/15 bg-gradient-to-br from-white to-slate-50 p-8 shadow-[0_20px_40px_rgba(11,28,48,0.05)] flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
           <h3 className="text-lg font-bold mb-1">Ready to test your knowledge?</h3>
           <p className="text-muted-foreground text-sm">Take a quick quiz to cement what you've learned.</p>

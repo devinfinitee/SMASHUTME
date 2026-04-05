@@ -1,257 +1,377 @@
 <!DOCTYPE html>
 
-<html lang="en"><head>
+<html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Support Desk - SmashUTME Admin</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              "outline": "#767589",
-              "tertiary-fixed-dim": "#ffba35",
-              "surface-container-highest": "#d3e4fe",
-              "on-secondary-container": "#2a278b",
-              "on-background": "#0b1c30",
-              "error-container": "#ffdad6",
-              "tertiary-fixed": "#ffdeac",
-              "on-secondary-fixed": "#0b006b",
-              "surface-container-high": "#dce9ff",
-              "inverse-surface": "#213145",
-              "primary": "#1c00bc",
-              "on-secondary-fixed-variant": "#3a399b",
-              "primary-fixed": "#e2dfff",
-              "on-tertiary-container": "#fbb20d",
-              "on-tertiary": "#ffffff",
-              "surface-container": "#e5eeff",
-              "surface-bright": "#f8f9ff",
-              "surface-variant": "#d3e4fe",
-              "on-primary-fixed": "#0b006b",
-              "on-surface": "#0b1c30",
-              "surface-container-lowest": "#ffffff",
-              "on-error-container": "#93000a",
-              "on-surface-variant": "#464557",
-              "tertiary": "#4c3300",
-              "surface-tint": "#4238ff",
-              "on-primary": "#ffffff",
-              "outline-variant": "#c6c4da",
-              "secondary-fixed": "#e2dfff",
-              "secondary-container": "#9696fd",
-              "inverse-on-surface": "#eaf1ff",
-              "on-tertiary-fixed": "#281900",
-              "tertiary-container": "#694800",
-              "secondary-fixed-dim": "#c2c1ff",
-              "on-primary-fixed-variant": "#2500e8",
-              "on-error": "#ffffff",
-              "inverse-primary": "#c2c1ff",
-              "surface-dim": "#cbdbf5",
-              "surface": "#f8f9ff",
-              "on-tertiary-fixed-variant": "#5f4100",
-              "background": "#f8f9ff",
-              "on-primary-container": "#bab9ff",
-              "error": "#ba1a1a",
-              "primary-fixed-dim": "#c2c1ff",
-              "primary-container": "#2b0afa",
-              "secondary": "#5352b5",
-              "on-secondary": "#ffffff",
-              "surface-container-low": "#eff4ff"
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "tertiary-fixed": "#ffdeac",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface": "#0b1c30",
+                        "inverse-primary": "#c2c1ff",
+                        "surface-dim": "#cbdbf5",
+                        "surface-container": "#e5eeff",
+                        "tertiary-fixed-dim": "#ffba35",
+                        "on-surface-variant": "#464557",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#dae2fd",
+                        "inverse-surface": "#213145",
+                        "on-tertiary-fixed-variant": "#5f4100",
+                        "outline": "#767589",
+                        "on-tertiary-fixed": "#281900",
+                        "surface-container-low": "#eff4ff",
+                        "primary-fixed": "#e2dfff",
+                        "on-primary-fixed-variant": "#2500e8",
+                        "surface-tint": "#4238ff",
+                        "tertiary": "#4c3300",
+                        "secondary-fixed-dim": "#bec6e0",
+                        "secondary-container": "#dae2fd",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#694800",
+                        "surface-variant": "#d3e4fe",
+                        "surface-container-high": "#dce9ff",
+                        "background": "#f8f9ff",
+                        "secondary": "#565e74",
+                        "primary": "#1c00bc",
+                        "on-primary-fixed": "#0b006b",
+                        "surface-container-highest": "#d3e4fe",
+                        "error-container": "#ffdad6",
+                        "on-error": "#ffffff",
+                        "on-primary-container": "#bab9ff",
+                        "on-background": "#0b1c30",
+                        "on-secondary-container": "#5c647a",
+                        "on-secondary-fixed-variant": "#3f465c",
+                        "surface": "#f8f9ff",
+                        "on-secondary-fixed": "#131b2e",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#fbb20d",
+                        "outline-variant": "#c6c4da",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#2b0afa",
+                        "inverse-on-surface": "#eaf1ff",
+                        "surface-bright": "#f8f9ff",
+                        "on-primary": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
             },
-            fontFamily: {
-              "headline": ["Inter"],
-              "body": ["Inter"],
-              "label": ["Inter"]
-            },
-            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
-          },
-        },
-      }
+        }
     </script>
 <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-        .glass-header {
-            background: rgba(255, 255, 255, 0.8);
+        .glass-panel {
+            background: rgba(239, 244, 255, 0.8);
             backdrop-filter: blur(12px);
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
         }
     </style>
 </head>
-<body class="bg-surface font-body text-on-surface antialiased">
-<main class="pt-32 pb-24 px-8 md:px-24 max-w-7xl mx-auto space-y-24">
-<!-- Section 1: Hero -->
-<section class="flex flex-col md:flex-row items-center gap-12">
-<div class="w-full md:w-1/2 space-y-6">
-<h1 class="text-5xl md:text-7xl font-black tracking-tight text-on-background leading-tight">
-                    We’re here <br/><span class="text-primary">to help.</span>
-</h1>
-<p class="text-lg text-on-surface-variant max-w-md leading-relaxed">
-                    If you have questions, feedback, or need guidance, feel free to reach out. Every message matters.
-                </p>
-<div class="flex items-center gap-4 pt-4">
-<div class="flex -space-x-3">
-<img class="w-10 h-10 rounded-full border-2 border-white" data-alt="Portrait of a friendly customer support representative" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmW3-yxSnb6i3OiSHYaJdyQ15n0QhUg3cdLycoG2qnW5h1YGAziNayRlBRb47K9oxQtVlXzz_jIrXi_7Er-QiGU__etE__G2DyYim341dbw0l9Hz1XSrfQZe1OSE7_E52jkKFH-XfgTmlPSDIX89KvYjJ5aohX1Cx5rKyygy5pCyt3oqDk1A_DRE5lY136TvQ0twNshkYsQuoSPn3tezgtvdaj2lM7PdbDEye53tGO9d3FUxDhO_uOpmzypSSTQUCbHrpEV3PhLCk"/>
-<img class="w-10 h-10 rounded-full border-2 border-white" data-alt="Portrait of a clinical academic advisor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDX2xSFquvEAKObJ0xkY5ZelGtRpCy5wm7OkRzfK3z6FNImt552K2ckNNsRIe0lOd0S4slC_AbKhQ_QCg7XCmmTIPQbXrMljBKt6HqBwaO8Fm_3vqghUn_eoutdHmScOGwxgfAeosl9O2-LQmg1m18avX5QL4Khe2QLUURUayHm4yQ86lraO1QsCHd8q69IEJzvdIVW_dZVz5YDgjxEObTxrqlfAiXb1syg8xpp_wOSFm38oyTTRs4BWpSjo3bhw-ZBKtsTSht5aEI"/>
-<img class="w-10 h-10 rounded-full border-2 border-white" data-alt="Portrait of a technical specialist" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBepi2F70IStluem5iqXVhaD7kCCleiQ2gE7LMOeXCyUwbJmU24ao2GsYYuQjR-WvQYqse-Ysq8PJ8r0kyulqHN6mH8TJN4CSzK9bFaFe3q3JZrw1ByL8M-giIMDZEUevnvapJXmf6cD4Ii-toK3DI4Nh_Polh-aE4FuKMOxXx1kiwqG3ibGB4g7Bg3CwD58m0SnxIGzoMZABM6tGHOMTMn2ytf748Jod2EPLdO_HZ09JLHd1kDYZ0n1BLSNgNifRjUJl3lM61LP7k"/>
-</div>
-<span class="text-label-sm text-on-surface-variant font-medium tracking-wide">Our support team is online</span>
+<body class="bg-background font-body text-on-surface antialiased overflow-hidden h-screen">
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full w-64 border-r-0 bg-indigo-950 flex flex-col py-6 px-4 z-50">
+<div class="flex items-center gap-3 mb-10 px-2">
+<img alt="SmashUTME logo" class="w-10 h-10 object-contain" data-alt="Official SmashUTME logo, professional academic brand mark with a shield and book motif in indigo and gold" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaJMlEYl8XngZ-zlw2Zs5CUpGtY-Jq60XE8kDTr6_a1C4d3tsfSJY9KNcWlWSfMPGj_UjWFzrGVpcBYxEUUKlsXMzFQCcloyRfuqCCrFzIHyvhWXVsBJku42rFvRk3w0PDOtP2JEyzh3oNSUWmim1VgG5w5_IViu4mLyQ0Sxg3ZSzf-JiB7QFT5x6R9KL7L6cL2Wv57pKPufIE9EH1AxjXDAwnFIRz3ia04Kq3zBkyXxzD8diDZxS-at_dXNahLTLOQiP42wFDtUQ"/>
+<div class="flex flex-col">
+<span class="text-indigo-50 font-extrabold tracking-tight text-xl font-headline">SmashUTME</span>
+<span class="text-indigo-300/70 text-[10px] uppercase tracking-[0.2em] font-bold">Command Center</span>
 </div>
 </div>
-<div class="w-full md:w-1/2 relative">
-<div class="aspect-square bg-surface-container-low rounded-xl overflow-hidden shadow-2xl">
-<img class="w-full h-full object-cover mix-blend-multiply opacity-80" data-alt="Students collaborating in a bright modern digital lab environment with laptops and focused expressions" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSocXMLgUfJx68uiix3_rIxokm2IWpHCiMY5QYtQdi2qaDanudYSQDpZHswyCWkTY9NJSahbpNLzP2ClTeBqhNVtAEpaRtPYb1eR6mgpBfSRTqspQr-mGNYPRvTLZZiMgB8Sj7211B2QpDfV-XBglcjYdpaYFYUubq4rU3-02KZrVRZt9y5bqebNw-iP6DdrIu6-mENp3xKDi3WILTxBJiH_DJFBQRqBfDgJaUfkobrbValM-2MBAUP856_a0l9N5IonIuIYWLDVo"/>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-indigo-300/70 hover:text-white transition-all duration-200 rounded-xl hover:bg-indigo-800/20 font-manrope tracking-wide text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-indigo-300/70 hover:text-white transition-all duration-200 rounded-xl hover:bg-indigo-800/20 font-manrope tracking-wide text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span>Syllabus</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-indigo-300/70 hover:text-white transition-all duration-200 rounded-xl hover:bg-indigo-800/20 font-manrope tracking-wide text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="quiz">quiz</span>
+<span>Question Bank</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-indigo-300/70 hover:text-white transition-all duration-200 rounded-xl hover:bg-indigo-800/20 font-manrope tracking-wide text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Candidates</span>
+</a>
+<!-- Active Navigation -->
+<a class="flex items-center gap-3 px-3 py-2.5 text-white bg-indigo-800/40 border-l-4 border-amber-500 font-bold rounded-r-none rounded-xl font-manrope tracking-wide text-sm" href="#">
+<span class="material-symbols-outlined" data-icon="support_agent">support_agent</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-indigo-300/70 hover:text-white transition-all duration-200 rounded-xl hover:bg-indigo-800/20 font-manrope tracking-wide text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+<span>AI Engine</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 text-indigo-300/70 hover:text-white transition-colors font-manrope tracking-wide text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 text-indigo-300/70 hover:text-white transition-colors font-manrope tracking-wide text-sm font-medium" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span>Logout</span>
+</a>
 </div>
-<div class="absolute -bottom-6 -left-6 bg-white p-6 rounded-xl shadow-lg flex items-center gap-4">
-<div class="w-12 h-12 bg-tertiary-fixed-dim rounded-full flex items-center justify-center">
-<span class="material-symbols-outlined text-tertiary">bolt</span>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100/50 flex justify-between items-center px-8 h-16 ml-64">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 font-body placeholder:text-slate-500" placeholder="Search support tickets or candidates..." type="text"/>
 </div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-slate-500">
+<button class="hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+<div class="h-8 w-px bg-slate-200"></div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface font-headline leading-tight">Admin User</p>
+<p class="text-[10px] text-on-surface-variant font-medium">Lead Support Specialist</p>
+</div>
+<img alt="Admin User" class="w-10 h-10 rounded-full border-2 border-primary/10 object-cover" data-alt="professional male portrait with confident expression, neutral gray background, soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqHhvB4b9kjTFq51tfWS8QW3M8_MQPpBWW-Bvuh9LjBQQZNX97j6KKctdmu1_LUv3NQoK2wbp18HXqRV6Dt4XpnCZKNSZNCLM9DoaBUAdswFDGZXmRWYp0xfd5EI4oE1MbbVBQjvfCbrv6_3SLFvpUelHiuGQcXXj3-HfNZUigsowx25vshcWmc4tp0pBw1E6uJmCZgMloYYxXfI7aElRzGagIbeOFkJDE3J7mJAkvQfpHR60F8x-ZsVMPhx8UMZbbvoRifFmyo-4"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-16 h-[calc(100vh-4rem)] flex overflow-hidden">
+<!-- Ticket List (Left Pane) -->
+<section class="w-[400px] flex-shrink-0 flex flex-col bg-surface-container-low/30 border-r border-outline-variant/15">
+<div class="p-6 pb-4">
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-headline font-bold text-xl tracking-tight text-on-surface">Support Inbox</h2>
+<span class="bg-primary-container text-primary text-[11px] font-bold px-2 py-1 rounded-full">12 New</span>
+</div>
+<div class="flex gap-2 mb-2 overflow-x-auto pb-2 scrollbar-hide">
+<button class="bg-primary text-on-primary text-[11px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap">All Tickets</button>
+<button class="bg-white text-on-surface-variant border border-outline-variant/30 text-[11px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-surface-container">Question Errors</button>
+<button class="bg-white text-on-surface-variant border border-outline-variant/30 text-[11px] font-medium px-3 py-1.5 rounded-full whitespace-nowrap hover:bg-surface-container">Payments</button>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto px-4 space-y-2">
+<!-- Ticket Card (Active) -->
+<div class="p-4 bg-surface-container-lowest rounded-xl border-l-4 border-amber-500 shadow-sm transition-all duration-200 cursor-pointer">
+<div class="flex justify-between items-start mb-1">
+<span class="font-headline font-bold text-sm text-on-surface">Chidimma Okafor</span>
+<span class="text-[10px] text-on-surface-variant font-medium">2m ago</span>
+</div>
+<div class="flex gap-2 mb-2">
+<span class="bg-amber-100 text-amber-800 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded tracking-tighter">Question Error</span>
+<span class="bg-indigo-100 text-indigo-700 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded tracking-tighter">Physics</span>
+</div>
+<p class="text-xs text-on-surface-variant line-clamp-2 leading-relaxed">Hello, I believe the option provided for question ID #4429 regarding Thermodynamics is incorrect. The calculation...</p>
+</div>
+<!-- Ticket Card -->
+<div class="p-4 bg-transparent hover:bg-surface-container-low/50 rounded-xl transition-all duration-200 cursor-pointer group">
+<div class="flex justify-between items-start mb-1">
+<span class="font-headline font-semibold text-sm text-on-surface group-hover:text-primary">Tunde Bakare</span>
+<span class="text-[10px] text-on-surface-variant font-medium">14m ago</span>
+</div>
+<div class="flex gap-2 mb-2">
+<span class="bg-blue-100 text-blue-800 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded tracking-tighter">Admission Advice</span>
+</div>
+<p class="text-xs text-on-surface-variant line-clamp-2 leading-relaxed">I have an aggregate of 285. Do you think I stand a chance for Computer Science at UNILAG? Also what...</p>
+</div>
+<!-- Ticket Card -->
+<div class="p-4 bg-transparent hover:bg-surface-container-low/50 rounded-xl transition-all duration-200 cursor-pointer group">
+<div class="flex justify-between items-start mb-1">
+<span class="font-headline font-semibold text-sm text-on-surface group-hover:text-primary">Fatima Yusuf</span>
+<span class="text-[10px] text-on-surface-variant font-medium">1h ago</span>
+</div>
+<div class="flex gap-2 mb-2">
+<span class="bg-emerald-100 text-emerald-800 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded tracking-tighter">Payment Issue</span>
+</div>
+<p class="text-xs text-on-surface-variant line-clamp-2 leading-relaxed">I paid for the Premium package but my dashboard still says Basic. I have attached the receipt of...</p>
+</div>
+<!-- Ticket Card -->
+<div class="p-4 bg-transparent hover:bg-surface-container-low/50 rounded-xl transition-all duration-200 cursor-pointer group">
+<div class="flex justify-between items-start mb-1">
+<span class="font-headline font-semibold text-sm text-on-surface group-hover:text-primary">Samuel Okoro</span>
+<span class="text-[10px] text-on-surface-variant font-medium">3h ago</span>
+</div>
+<div class="flex gap-2 mb-2">
+<span class="bg-amber-100 text-amber-800 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded tracking-tighter">Question Error</span>
+<span class="bg-indigo-100 text-indigo-700 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded tracking-tighter">English</span>
+</div>
+<p class="text-xs text-on-surface-variant line-clamp-2 leading-relaxed">The passage in Use of English Comprehension 2 has a typo that makes the second question ambiguous. Please check...</p>
+</div>
+</div>
+</section>
+<!-- Message Viewer (Right Pane) -->
+<section class="flex-1 flex overflow-hidden">
+<div class="flex-1 flex flex-col bg-surface">
+<!-- Message Header -->
+<div class="px-10 py-6 bg-surface-bright flex justify-between items-center border-b border-outline-variant/15">
 <div>
-<p class="text-sm font-bold">Fast Response</p>
-<p class="text-xs text-on-surface-variant">Avg. time: 2 hours</p>
+<h1 class="font-headline font-extrabold text-2xl text-on-surface mb-1">Question Error: ID #4429</h1>
+<div class="flex items-center gap-3">
+<span class="flex items-center gap-1 text-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="person">person</span>
+                                Chidimma Okafor
+                            </span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="flex items-center gap-1 text-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]" data-icon="calendar_today">calendar_today</span>
+                                Oct 24, 2023 at 10:42 AM
+                            </span>
 </div>
 </div>
-</div>
-</section>
-<!-- Section 2: Quick Connect Options -->
-<section class="grid grid-cols-1 md:grid-cols-3 gap-8">
-<!-- Email -->
-<div class="group bg-surface-container-low p-8 rounded-xl transition-all duration-300 hover:bg-white hover:shadow-[0_32px_64px_rgba(28,0,188,0.06)]">
-<div class="w-14 h-14 bg-primary rounded-lg flex items-center justify-center mb-6 shadow-lg shadow-primary/20">
-<span class="material-symbols-outlined text-white" data-icon="mail">mail</span>
-</div>
-<h3 class="text-xl font-bold mb-2">Email Us</h3>
-<p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Direct support for technical issues and account inquiries.</p>
-<a class="text-primary font-bold inline-flex items-center gap-2 group-hover:gap-4 transition-all" href="mailto:support@smashutme.com">
-                    support@smashutme.com
-                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
-</a>
-</div>
-<!-- WhatsApp -->
-<div class="group bg-surface-container-low p-8 rounded-xl transition-all duration-300 hover:bg-white hover:shadow-[0_32px_64px_rgba(250,177,10,0.06)]">
-<div class="w-14 h-14 bg-tertiary-fixed-dim rounded-lg flex items-center justify-center mb-6 shadow-lg shadow-tertiary-fixed-dim/20">
-<span class="material-symbols-outlined text-tertiary" data-icon="chat">chat</span>
-</div>
-<h3 class="text-xl font-bold mb-2">WhatsApp</h3>
-<p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Instant messaging for quick guidance and mentorship.</p>
-<a class="text-tertiary-container font-bold inline-flex items-center gap-2 group-hover:gap-4 transition-all" href="#">
-                    Chat with an Advisor
-                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
-</a>
-</div>
-<!-- Social -->
-<div class="group bg-surface-container-low p-8 rounded-xl transition-all duration-300 hover:bg-white hover:shadow-[0_32px_64px_rgba(11,28,48,0.06)]">
-<div class="w-14 h-14 bg-on-background rounded-lg flex items-center justify-center mb-6 shadow-lg shadow-on-background/20">
-<span class="material-symbols-outlined text-white" data-icon="share">share</span>
-</div>
-<h3 class="text-xl font-bold mb-2">Social Media</h3>
-<p class="text-on-surface-variant text-sm mb-6 leading-relaxed">Follow us on Twitter/X for latest updates and study tips.</p>
-<a class="text-on-background font-bold inline-flex items-center gap-2 group-hover:gap-4 transition-all" href="#">
-                    @SmashUTME
-                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
-</a>
-</div>
-</section>
-<!-- Section 3: Contact Form -->
-<section class="max-w-4xl mx-auto">
-<div class="bg-surface-container-lowest rounded-xl p-8 md:p-16 shadow-[0_32px_128px_rgba(11,28,48,0.05)] relative overflow-hidden">
-<!-- Medical Strip Accent -->
-<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-<div class="mb-12">
-<h2 class="text-3xl font-black tracking-tight mb-2">Send a Message</h2>
-<p class="text-on-surface-variant">Complete the form below and our diagnostic team will get back to you.</p>
-</div>
-<form class="space-y-8">
-<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-<div class="space-y-2">
-<label class="text-[11px] uppercase tracking-widest font-bold text-outline">Full Name</label>
-<input class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:ring-0 focus:border-primary px-4 py-3 text-on-surface transition-all placeholder:text-outline-variant" placeholder="Dr. Jane Doe" type="text"/>
-</div>
-<div class="space-y-2">
-<label class="text-[11px] uppercase tracking-widest font-bold text-outline">Email Address</label>
-<input class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:ring-0 focus:border-primary px-4 py-3 text-on-surface transition-all placeholder:text-outline-variant" placeholder="jane@example.com" type="email"/>
-</div>
-</div>
-<div class="space-y-2">
-<label class="text-[11px] uppercase tracking-widest font-bold text-outline">Inquiry Category</label>
-<select class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:ring-0 focus:border-primary px-4 py-3 text-on-surface transition-all">
-<option>General Inquiry</option>
-<option>Technical Issue</option>
-<option>Feedback</option>
-<option>Mentorship</option>
-<option>Collaboration</option>
-</select>
-</div>
-<div class="space-y-2">
-<label class="text-[11px] uppercase tracking-widest font-bold text-outline">Message</label>
-<textarea class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:ring-0 focus:border-primary px-4 py-3 text-on-surface transition-all placeholder:text-outline-variant resize-none" placeholder="How can we help you achieve excellence?" rows="4"></textarea>
-</div>
-<div class="pt-4">
-<button class="w-full md:w-auto bg-primary text-on-primary px-12 py-4 rounded-md font-bold flex items-center justify-center gap-3 hover:bg-on-primary-fixed-variant transition-colors group">
-                            Send Message 🚀
+<div class="flex gap-2">
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant/30 rounded-xl text-sm font-semibold text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-lg" data-icon="archive">archive</span>
+                            Archive
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
+<span class="material-symbols-outlined text-lg" data-icon="check">check</span>
+                            Mark Resolved
                         </button>
 </div>
-</form>
 </div>
-</section>
-<!-- Section 4: Mini FAQ Accordion -->
-<section class="max-w-3xl mx-auto space-y-12">
-<div class="text-center space-y-4">
-<h2 class="text-3xl font-black tracking-tight">Frequently Asked Questions</h2>
-<div class="w-16 h-1 bg-tertiary-fixed-dim mx-auto"></div>
+<!-- Message Content Area -->
+<div class="flex-1 overflow-y-auto px-10 py-8 space-y-8">
+<!-- Message Bubble: Candidate -->
+<div class="flex gap-4 max-w-3xl">
+<img class="w-10 h-10 rounded-full object-cover mt-1" data-alt="Young African woman with a serious yet friendly expression, natural lighting, soft academic library background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBozrVDu908dC1L87Ft0xA8ukUtS50aSWxaLxli3fUxYgBv4MW-5qZHCjePEfJEbecq8D5779i4taJfBFk0RJGXxZgRrkcKTY9ejUuhDUpY1frLQZisdcNXQBJTe1yUbTeXL2krlB4RbiETZYRS9KUpzM-2hVtTcLtsnwi5VO2PVqx3AB4MvtfFJmam4RLrQaRPIe7R6_UTK3FXapgbCam5ndYWAjTXJOmJXdHUkbM_U3Hjh7p6yl43keYrNNU9St1pIjgx6jLwio"/>
+<div class="flex-1">
+<div class="bg-surface-container-lowest p-6 rounded-2xl rounded-tl-none shadow-sm border border-outline-variant/10">
+<p class="text-on-surface leading-relaxed font-body">
+                                    Hello SmashUTME Team,<br/><br/>
+                                    I am writing to report an issue with Physics Question ID #4429. The question asks for the efficient work done in a thermodynamic cycle, but according to the values given (P1=200kPa, V1=0.2m³), the resulting answer should be 40kJ, not 25kJ as listed in your answer key.<br/><br/>
+                                    I have double-checked the formulas for isothermal expansion and it seems the constant is being misapplied. Could you please review this so it doesn't affect my mock exam score?
+                                </p>
+<div class="mt-6 pt-6 border-t border-outline-variant/10 flex items-center gap-4">
+<div class="p-3 bg-surface-container-low rounded-xl flex items-center gap-3 cursor-pointer hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-amber-600" data-icon="description">description</span>
+<div>
+<p class="text-[11px] font-bold text-on-surface">calculation_steps.jpg</p>
+<p class="text-[9px] text-on-surface-variant">420 KB • Image</p>
 </div>
-<div class="space-y-4">
-<!-- Accordion Item 1 -->
-<details class="group bg-surface-container-lowest rounded-xl overflow-hidden" open="">
-<summary class="flex items-center justify-between p-6 cursor-pointer list-none">
-<span class="font-bold text-on-background">Is SmashUTME free to use?</span>
-<span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
-</summary>
-<div class="px-6 pb-6 text-on-surface-variant leading-relaxed text-sm">
-                        SmashUTME offers a comprehensive free tier that includes foundational practice exams and core study modules. For students seeking advanced diagnostic tools and full simulated mock exams, we offer a premium Precision Plan.
-                    </div>
-</details>
-<!-- Accordion Item 2 -->
-<details class="group bg-surface-container-lowest rounded-xl overflow-hidden">
-<summary class="flex items-center justify-between p-6 cursor-pointer list-none">
-<span class="font-bold text-on-background">How do I get started?</span>
-<span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
-</summary>
-<div class="px-6 pb-6 text-on-surface-variant leading-relaxed text-sm">
-                        Simply click the "Get Started" button in the navigation bar. You'll create a clinical profile where you can select your target subjects and set your UTME goal score.
-                    </div>
-</details>
-<!-- Accordion Item 3 -->
-<details class="group bg-surface-container-lowest rounded-xl overflow-hidden">
-<summary class="flex items-center justify-between p-6 cursor-pointer list-none">
-<span class="font-bold text-on-background">Will more subjects be added?</span>
-<span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
-</summary>
-<div class="px-6 pb-6 text-on-surface-variant leading-relaxed text-sm">
-                        Yes, our engineering team is constantly calibrating new subject modules. We follow the official JAMB syllabus strictly to ensure clinical accuracy in all our practice material.
-                    </div>
-</details>
 </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Reply Box (Fixed at Bottom) -->
+<div class="px-10 py-6 bg-surface-bright border-t border-outline-variant/15">
+<div class="glass-panel p-4 rounded-2xl border border-outline-variant/20 shadow-xl">
+<div class="flex items-center gap-4 mb-3 border-b border-outline-variant/10 pb-3">
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="format_bold">format_bold</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="format_italic">format_italic</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="link">link</span></button>
+<button class="text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="attach_file">attach_file</span></button>
+<div class="ml-auto">
+<select class="bg-transparent border-none text-[11px] font-bold text-primary focus:ring-0 cursor-pointer">
+<option>Select Canned Response</option>
+<option>Confirm Question Error</option>
+<option>Request Screenshot</option>
+</select>
+</div>
+</div>
+<textarea class="w-full bg-transparent border-none focus:ring-0 p-0 text-sm font-body resize-none placeholder:text-on-surface-variant/50" placeholder="Type your response to Chidimma..." rows="4"></textarea>
+<div class="flex justify-between items-center mt-4">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">AI</div>
+<span class="ml-4 text-[10px] text-on-surface-variant font-medium italic">AI is suggesting a correction for ID #4429...</span>
+</div>
+<button class="bg-primary text-on-primary px-8 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-primary/20 hover:opacity-90 flex items-center gap-2 group">
+                                Send Reply
+                                <span class="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform" data-icon="send">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Context Panel (Rightmost) -->
+<aside class="w-80 bg-surface-container-low/50 border-l border-outline-variant/15 flex flex-col p-6 overflow-y-auto">
+<h3 class="font-headline font-bold text-sm text-on-surface-variant uppercase tracking-widest mb-6">Candidate Profile</h3>
+<div class="text-center mb-8">
+<div class="relative inline-block mb-3">
+<img class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md mx-auto" data-alt="Candidate profile headshot, natural aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWEgYOJMKqZdd-gUcMU0h1gNVI_nQLkdBYJt2IGNtIS4RqifmrCeqPX0mcHnBxuxwjLMnhbFdVlfS8Kg9GRLLZ7nU-8S35icnwT9CATys7RMZ6UgQxpjPHReSAj_iOzDxdScMYhAYrJWDDPTmHMLXcEpcSRrKi9jV1uPFedMjq9UUzMF-GUTGcv7jjJhFBBsJf5hPIvdTP12bADgUFhv_8yNtom8ER-YU9igJkzXXZD695LwMoNVAGZNkPsLWqsUkrovOfQ0fSAlk"/>
+<span class="absolute bottom-1 right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full"></span>
+</div>
+<h4 class="font-headline font-extrabold text-lg text-on-surface leading-tight">Chidimma Okafor</h4>
+<p class="text-xs text-primary font-bold">Premium Member</p>
+</div>
+<div class="space-y-6">
+<!-- Academic Context -->
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase mb-3 opacity-60">Academic Context</p>
+<div class="space-y-3">
+<div class="bg-white/60 p-3 rounded-xl border border-outline-variant/10">
+<p class="text-[10px] text-on-surface-variant font-medium">Target School</p>
+<p class="text-sm font-bold text-on-surface">University of Ibadan (UI)</p>
+</div>
+<div class="bg-white/60 p-3 rounded-xl border border-outline-variant/10">
+<p class="text-[10px] text-on-surface-variant font-medium">Desired Course</p>
+<p class="text-sm font-bold text-on-surface">Medicine &amp; Surgery</p>
+</div>
+</div>
+</div>
+<!-- Performance Stats -->
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase mb-3 opacity-60">Mock Performance</p>
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-white/60 p-3 rounded-xl border-l-2 border-primary">
+<p class="text-lg font-extrabold text-on-surface leading-none">294</p>
+<p class="text-[9px] text-on-surface-variant font-medium">Avg Aggregate</p>
+</div>
+<div class="bg-white/60 p-3 rounded-xl border-l-2 border-on-tertiary-container">
+<p class="text-lg font-extrabold text-on-surface leading-none">82%</p>
+<p class="text-[9px] text-on-surface-variant font-medium">Percentile</p>
+</div>
+</div>
+</div>
+<!-- Ticket History -->
+<div>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase mb-3 opacity-60">Support History</p>
+<div class="space-y-2">
+<div class="flex items-center gap-3 p-2 bg-white/40 rounded-lg text-[11px]">
+<span class="material-symbols-outlined text-sm text-slate-400" data-icon="history">history</span>
+<span class="text-on-surface-variant">Payment Failed</span>
+<span class="ml-auto text-[9px] font-bold text-emerald-600">Resolved</span>
+</div>
+<div class="flex items-center gap-3 p-2 bg-white/40 rounded-lg text-[11px]">
+<span class="material-symbols-outlined text-sm text-slate-400" data-icon="history">history</span>
+<span class="text-on-surface-variant">App Crash</span>
+<span class="ml-auto text-[9px] font-bold text-emerald-600">Resolved</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-6">
+<button class="w-full py-3 bg-surface-container-highest text-primary font-bold text-xs rounded-xl hover:bg-surface-variant transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-lg" data-icon="visibility">visibility</span>
+                        View Full Candidate Profile
+                    </button>
+</div>
+</aside>
 </section>
 </main>
-<!-- Footer -->
-<footer class="w-full py-12 border-t border-[#c6c4da]/15 bg-[#f8f9ff] dark:bg-slate-950">
-<div class="flex flex-col md:flex-row justify-between items-center px-8 md:px-24 gap-6 max-w-full mx-auto">
-<div class="flex flex-col gap-2 items-center md:items-start">
-<span class="text-lg font-bold text-[#0b1c30] dark:text-white">SmashUTME</span>
-<p class="text-[11px] uppercase tracking-[0.05em] font-medium text-[#464557] opacity-80">© 2024 SmashUTME. Precision Engineering for Academic Excellence.</p>
-</div>
-<div class="flex gap-8">
-<a class="text-[11px] uppercase tracking-[0.05em] font-medium text-[#464557] hover:text-[#1c00bc] transition-all hover:underline" href="#">Privacy Policy</a>
-<a class="text-[11px] uppercase tracking-[0.05em] font-medium text-[#464557] hover:text-[#1c00bc] transition-all hover:underline" href="#">Terms of Service</a>
-<a class="text-[11px] uppercase tracking-[0.05em] font-medium text-[#464557] hover:text-[#1c00bc] transition-all hover:underline" href="#">Help Center</a>
-<a class="text-[11px] uppercase tracking-[0.05em] font-medium text-[#464557] hover:text-[#1c00bc] transition-all hover:underline" href="#">Career</a>
-</div>
-</div>
-</footer>
+<!-- Contextual FAB (Suppressing on Support details as per guidelines, but adding here as a template if user were on home) -->
+<!-- Suppressed: Only Home/Dashboard -->
 </body></html>

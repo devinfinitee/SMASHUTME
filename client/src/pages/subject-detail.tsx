@@ -91,7 +91,9 @@ export default function SubjectDetail() {
 
   return (
     <AppShell searchPlaceholder="Search topics, concepts, or formulas...">
-      <div className="p-6 md:p-12 max-w-7xl mx-auto">
+      <div className="relative p-6 md:p-12 max-w-7xl mx-auto">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-brand-blue/10 to-transparent blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 top-20 h-72 w-72 rounded-full bg-brand-gold/10 blur-3xl" />
         <div className="mb-10 flex flex-col md:flex-row md:justify-between md:items-end gap-4">
           <div>
             <nav className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
@@ -108,7 +110,7 @@ export default function SubjectDetail() {
             </p>
           </div>
 
-          <div className="bg-slate-100 p-1.5 rounded-xl flex flex-col sm:flex-row gap-1 w-full md:w-auto">
+          <div className="w-full rounded-2xl border border-slate-200/70 bg-white/80 p-1.5 shadow-sm backdrop-blur md:w-auto flex flex-col sm:flex-row gap-1">
             <button
               onClick={() => setShowHighYieldOnly(false)}
               className={`px-4 sm:px-6 py-2.5 rounded-lg text-sm font-bold transition-all text-left sm:text-center ${
@@ -129,20 +131,20 @@ export default function SubjectDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-[0_20px_40px_rgba(11,28,48,0.05)] backdrop-blur">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.05em] mb-1">Time to Mastery</p>
             <p className="text-2xl font-black text-slate-900">{Math.max(6, totalTopics * 1.8).toFixed(1)} hrs</p>
             <div className="mt-4 h-1.5 bg-slate-200 rounded-full overflow-hidden">
               <div className="h-full bg-[#2B0AFA]" style={{ width: formatPercent(totalProgress) }}></div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-[0_20px_40px_rgba(11,28,48,0.05)] backdrop-blur">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.05em] mb-1">Avg. Quiz Score</p>
             <p className="text-2xl font-black text-slate-900">{avgQuiz}%</p>
             <p className="text-[10px] text-[#FAB100] font-bold mt-2 uppercase tracking-tighter">+5% from last week</p>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-[0_20px_40px_rgba(11,28,48,0.05)] backdrop-blur">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.05em] mb-1">High-Yield Coverage</p>
             <p className="text-2xl font-black text-slate-900">
               {topicRows.filter((row) => row.topic.isHighYield && row.progress >= 60).length}/{highYieldTopics.length}
@@ -151,14 +153,14 @@ export default function SubjectDetail() {
               {Math.max(0, highYieldTopics.length - topicRows.filter((row) => row.topic.isHighYield && row.progress >= 60).length)} priority remaining
             </p>
           </div>
-          <div className="bg-[#2B0AFA] border border-[#FAB100]/50 p-6 rounded-2xl shadow-lg shadow-[#2B0AFA]/20">
+          <div className="rounded-2xl border border-[#FAB100]/50 bg-gradient-to-br from-[#2B0AFA] to-[#2408CF] p-6 shadow-lg shadow-[#2B0AFA]/20">
             <p className="text-[10px] font-bold text-white/70 uppercase tracking-[0.05em] mb-1">Upcoming Exam</p>
             <p className="text-2xl font-black text-white">UTME 2024</p>
             <p className="text-[10px] text-white font-bold mt-2 uppercase tracking-tighter">42 Days to go</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden">
+        <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.06)] backdrop-blur">
           <div className="hidden md:grid grid-cols-12 px-8 py-5 border-b border-slate-100 bg-slate-50/70">
             <div className="col-span-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Topic Subject</div>
             <div className="col-span-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Weightage</div>

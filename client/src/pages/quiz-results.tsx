@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocation } from "wouter";
+import { AdminShell } from "@/components/admin-shell";
 import {
   Trophy,
   TrendingUp,
@@ -168,17 +169,18 @@ export default function QuizResults() {
   ];
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <AdminShell searchPlaceholder="Search quiz results, students, or subjects...">
+      <div className="min-h-[calc(100vh-5rem)] bg-background p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto space-y-6 pb-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-display font-bold">Quiz Results</h1>
             <p className="text-muted-foreground">
               Monitor student performance and quiz analytics
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" className="rounded-full">
               <Download className="w-4 h-4 mr-2" />
               Export
@@ -211,7 +213,7 @@ export default function QuizResults() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="recent" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto gap-2 sm:gap-0 bg-transparent sm:bg-muted p-0 sm:p-1">
             <TabsTrigger value="recent">Recent Results</TabsTrigger>
             <TabsTrigger value="students">Top Students</TabsTrigger>
             <TabsTrigger value="subjects">Subject Performance</TabsTrigger>
@@ -221,9 +223,9 @@ export default function QuizResults() {
           <TabsContent value="recent" className="space-y-4">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   <CardTitle>Recent Quiz Results</CardTitle>
-                  <div className="relative w-64">
+                  <div className="relative w-full md:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       placeholder="Search results..."
@@ -235,6 +237,7 @@ export default function QuizResults() {
                 </div>
               </CardHeader>
               <CardContent>
+                <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -280,6 +283,7 @@ export default function QuizResults() {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -295,7 +299,7 @@ export default function QuizResults() {
                   {topStudents.map((student, index) => (
                     <div
                       key={student.name}
-                      className="flex items-center justify-between p-4 rounded-xl border-2 border-border hover:border-primary transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl border-2 border-border hover:border-primary transition-colors"
                     >
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${
@@ -312,7 +316,7 @@ export default function QuizResults() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 sm:ml-auto">
                         <div className="text-right">
                           <p className="text-2xl font-bold text-primary">
                             {student.avgScore}%
@@ -365,7 +369,7 @@ export default function QuizResults() {
               </CardContent>
             </Card>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Pass/Fail Distribution</CardTitle>
@@ -430,6 +434,7 @@ export default function QuizResults() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+      </div>
+    </AdminShell>
   );
 }

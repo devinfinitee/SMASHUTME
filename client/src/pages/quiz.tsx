@@ -126,9 +126,11 @@ export default function Quiz() {
 
   return (
     <AppShell searchPlaceholder="Search quiz concepts...">
-      <div className="max-w-2xl mx-auto pb-20 px-4 md:px-8">
+      <div className="relative max-w-2xl mx-auto pb-20 px-4 md:px-8">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-brand-blue/10 to-transparent blur-3xl" />
+        <div className="relative">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-8 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm backdrop-blur">
         <Link href={`/topics/${topic.slug}`}>
           <Button variant="ghost" size="sm" className="text-muted-foreground">
             <XCircle className="w-5 h-5 mr-2" />
@@ -207,7 +209,7 @@ export default function Quiz() {
             </Button>
           ) : (
             <div className="space-y-4">
-              <div className="bg-muted/50 p-4 rounded-xl border border-border animate-slide-in">
+              <div className="rounded-xl border border-slate-200/80 bg-white/90 p-4 shadow-sm animate-slide-in backdrop-blur">
                 <p className="font-semibold mb-1">Explanation:</p>
                 <p className="text-muted-foreground text-sm">
                   {currentQuestion.explanation || "No explanation provided."}
@@ -227,6 +229,7 @@ export default function Quiz() {
             </div>
           )}
         </div>
+      </div>
       </div>
       </div>
     </AppShell>

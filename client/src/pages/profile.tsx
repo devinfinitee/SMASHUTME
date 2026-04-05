@@ -19,10 +19,12 @@ export default function Profile() {
 
   return (
     <AppShell searchPlaceholder="Search profile settings...">
-      <div className="max-w-2xl mx-auto py-8 px-4 md:px-8">
+      <div className="relative max-w-4xl mx-auto py-8 px-4 md:px-8">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-brand-blue/10 to-transparent blur-3xl" />
+        <div className="relative">
         <h1 className="text-3xl font-display font-bold mb-8">My Profile</h1>
 
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-sm mb-8">
+        <div className="mb-8 rounded-3xl border border-slate-200/80 bg-white/90 p-8 shadow-[0_20px_40px_rgba(11,28,48,0.05)] backdrop-blur">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <Avatar className="w-24 h-24 border-4 border-background shadow-xl">
               <AvatarImage src={undefined} />
@@ -43,7 +45,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="bg-destructive/5 border border-destructive/20 rounded-2xl p-6">
+        <div className="rounded-3xl border border-destructive/20 bg-destructive/5 p-6 shadow-sm">
           <h3 className="text-lg font-bold text-destructive mb-2">Account Actions</h3>
           <p className="text-muted-foreground text-sm mb-4">
             Need to take a break? You can log out of your account here.
@@ -52,6 +54,7 @@ export default function Profile() {
             <LogOut className="w-4 h-4 mr-2" />
             Log Out
           </Button>
+        </div>
         </div>
       </div>
     </AppShell>

@@ -1,23 +1,28 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AppShell } from "@/components/app-shell";
+import { useExplain } from "@/hooks/use-ai";
+import { useSubjects } from "@/hooks/use-subjects";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
   ChevronRight,
+  Flame,
   Lightbulb,
   Send,
   Share2,
   Sparkles,
-  Target,
   Timer,
   TrendingUp,
   XCircle,
-  CheckCircle2,
   LifeBuoy,
-  ArrowRight,
 } from "lucide-react";
-import { useExplain } from "@/hooks/use-ai";
-import { AppShell } from "@/components/app-shell";
+import type { Subject } from "@/types";
 
 type ReviewOption = {
   key: string;
@@ -28,7 +33,6 @@ type ReviewQuestion = {
   id: string;
   subject: string;
   topic: string;
-  trail: string[];
   prompt: string;
   options: ReviewOption[];
   chosen: string;
@@ -46,7 +50,6 @@ const REVIEW_QUESTIONS: ReviewQuestion[] = [
     id: "bio-cell-14",
     subject: "Biology",
     topic: "Cell Theory",
-    trail: ["Biology", "Cell Theory", "Question 14 Analysis"],
     prompt:
       "Which of the following cellular components is responsible for the synthesis of adenosine triphosphate (ATP) via oxidative phosphorylation?",
     options: [
@@ -70,7 +73,6 @@ const REVIEW_QUESTIONS: ReviewQuestion[] = [
     id: "chem-eq-07",
     subject: "Chemistry",
     topic: "Chemical Equilibrium",
-    trail: ["Chemistry", "Chemical Equilibrium", "Question 7 Analysis"],
     prompt:
       "When pressure is increased in the Haber process, the equilibrium shifts toward which side of the reaction?",
     options: [
@@ -92,6 +94,11 @@ const REVIEW_QUESTIONS: ReviewQuestion[] = [
   },
 ];
 
+type StoredSubjects = {
+  selectedLabels?: string[];
+  selected?: string[];
+};
+
 function parseStorage<T>(key: string): T | null {
   const raw = localStorage.getItem(key);
   if (!raw) return null;
@@ -102,27 +109,141 @@ function parseStorage<T>(key: string): T | null {
   }
 }
 
+function normalizeLabel(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function slugToLabel(slug: string) {
+  return slug
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function getTopicProgress(index: number, isHighYield: boolean) {
+  if (isHighYield) {
+    const values = [72, 0, 45, 31, 64, 12, 85];
+    return values[index % values.length];
+  }
+
+  const values = [100, 78, 56, 43, 88, 67, 52];
+  return values[index % values.length];
+}
+
+function getSubjectMastery(slug: string) {
+  const masteryBySlug: Record<string, number> = {
+    "use-of-english": 72,
+    chemistry: 45,
+    physics: 38,
+    biology: 52,
+    mathematics: 48,
+    economics: 41,
+    government: 36,
+    "literature-in-english": 44,
+  };
+
+  return masteryBySlug[slug] ?? 35;
+}
+
 export default function AiReviewPage() {
   const [, setLocation] = useLocation();
+  const { data: subjects, isLoading } = useSubjects();
+  const { mutate: explain, isPending } = useExplain();
+
+  const [selectedSubjectSlug, setSelectedSubjectSlug] = useState<string | null>(null);
+  const [selectedTopicSlug, setSelectedTopicSlug] = useState<string | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [followUp, setFollowUp] = useState("");
   const [savedCount, setSavedCount] = useState(() => Number(localStorage.getItem("smashutme-ai-saved-insights") ?? 0));
   const [customReply, setCustomReply] = useState<string | null>(null);
-  const { mutate: explain, isPending } = useExplain();
 
-  const onboardedSubjects = useMemo(() => {
-    const data = parseStorage<{ selectedLabels?: string[]; selected?: string[] }>("smashutme-onboarding-subjects");
-    if (Array.isArray(data?.selectedLabels) && data.selectedLabels.length > 0) {
-      return ["Use of English", ...data.selectedLabels];
+  const preferredSubjects = useMemo(() => {
+    const storage = parseStorage<StoredSubjects>("smashutme-onboarding-subjects");
+
+    if (Array.isArray(storage?.selectedLabels) && storage.selectedLabels.length > 0) {
+      return ["Use of English", ...storage.selectedLabels];
     }
-    if (Array.isArray(data?.selected) && data.selected.length > 0) {
-      return ["Use of English", ...data.selected.map((s) => s.charAt(0).toUpperCase() + s.slice(1))];
+
+    if (Array.isArray(storage?.selected) && storage.selected.length > 0) {
+      return ["Use of English", ...storage.selected.map(slugToLabel)];
     }
+
     return ["Use of English", "Biology", "Chemistry", "Physics"];
   }, []);
 
-  const current = REVIEW_QUESTIONS[questionIndex % REVIEW_QUESTIONS.length];
-  const recommendedSubject = onboardedSubjects.find((s) => s.toLowerCase().includes(current.subject.toLowerCase())) ?? onboardedSubjects[1] ?? current.subject;
+  const aiSubjects = useMemo(() => {
+    if (!subjects || subjects.length === 0) return [];
+
+    const picked = preferredSubjects
+      .map((label) =>
+        subjects.find((subject) => normalizeLabel(subject.name) === normalizeLabel(label)),
+      )
+      .filter((subject): subject is Subject => Boolean(subject));
+
+    if (picked.length > 0) return picked;
+    return subjects.slice(0, 4);
+  }, [preferredSubjects, subjects]);
+
+  const selectedSubject = useMemo(() => {
+    if (!subjects || !selectedSubjectSlug) return null;
+    return subjects.find((subject) => subject.slug === selectedSubjectSlug) ?? null;
+  }, [subjects, selectedSubjectSlug]);
+
+  const selectedTopics = selectedSubject?.topics ?? [];
+
+  const selectedTopic = useMemo(() => {
+    if (!selectedTopicSlug) return null;
+    return selectedTopics.find((topic) => topic.slug === selectedTopicSlug) ?? null;
+  }, [selectedTopicSlug, selectedTopics]);
+
+  const topicRows = useMemo(() => {
+    return selectedTopics.map((topic, index) => {
+      const progress = getTopicProgress(index, topic.isHighYield);
+      const masteryState =
+        progress === 100
+          ? "Mastered"
+          : progress === 0
+            ? "Not Started"
+            : progress >= 60
+              ? "Mastery Imminent"
+              : "Reading";
+
+      return { topic, progress, masteryState };
+    });
+  }, [selectedTopics]);
+
+  const reviewQuestions = useMemo(() => {
+    if (!selectedSubject) return REVIEW_QUESTIONS;
+
+    const bySubject = REVIEW_QUESTIONS.filter(
+      (question) => normalizeLabel(question.subject) === normalizeLabel(selectedSubject.name),
+    );
+
+    if (selectedTopic) {
+      const byTopic = bySubject.filter(
+        (question) => normalizeLabel(question.topic) === normalizeLabel(selectedTopic.name),
+      );
+      if (byTopic.length > 0) return byTopic;
+    }
+
+    if (bySubject.length > 0) return bySubject;
+    return REVIEW_QUESTIONS;
+  }, [selectedSubject, selectedTopic]);
+
+  useEffect(() => {
+    setQuestionIndex(0);
+    setFollowUp("");
+    setCustomReply(null);
+  }, [selectedSubjectSlug, selectedTopicSlug]);
+
+  const current = reviewQuestions[questionIndex % reviewQuestions.length];
+  const trail = [
+    selectedSubject?.name ?? current.subject,
+    selectedTopic?.name ?? current.topic,
+    "AI Review",
+  ];
+
+  const step = !selectedSubjectSlug ? 1 : !selectedTopicSlug ? 2 : 3;
 
   const handleSaveInsight = () => {
     const next = savedCount + 1;
@@ -132,6 +253,7 @@ export default function AiReviewPage() {
 
   const handleAskAi = () => {
     if (!followUp.trim()) return;
+
     explain(
       {
         text: followUp,
@@ -145,283 +267,462 @@ export default function AiReviewPage() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <AppShell searchPlaceholder="Search subjects, topics, or AI insights...">
+        <div className="p-6 md:p-12 space-y-6">
+          <Skeleton className="h-12 w-80" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Skeleton className="h-60 rounded-xl" />
+            <Skeleton className="h-60 rounded-xl" />
+            <Skeleton className="h-60 rounded-xl" />
+            <Skeleton className="h-60 rounded-xl" />
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
-    <AppShell searchPlaceholder="Search topics, questions, or AI insights...">
-      <main className="pb-12 px-4 md:px-12 min-h-screen">
-        <div className="mb-8 flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4">
-          <div className="min-w-0">
-            <nav className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-2">
-              {current.trail.map((crumb, index) => (
-                <div key={`${crumb}-${index}`} className="flex items-center gap-2">
-                  <span className={index === current.trail.length - 1 ? "text-brand-blue" : ""}>{crumb}</span>
-                  {index < current.trail.length - 1 ? <ChevronRight className="w-3.5 h-3.5" /> : null}
+    <AppShell searchPlaceholder="Search subjects, topics, or AI insights...">
+      {step === 1 ? (
+        <main className="p-6 md:p-12 max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div>
+              <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">AI Review Subject Picker</h1>
+              <p className="text-slate-600 font-medium">Choose the subject you want AI to review first, then pick a topic.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+            {aiSubjects.length === 0 ? (
+              <div className="col-span-full rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
+                Subjects are unavailable right now. Please refresh and try again.
+              </div>
+            ) : null}
+
+            {aiSubjects.map((subject) => {
+              const mastery = getSubjectMastery(subject.slug);
+              const topicCount = subject.topics?.length ?? 0;
+              const highYieldCount = subject.topics?.filter((topic) => topic.isHighYield).length ?? 0;
+
+              return (
+                <button
+                  key={subject.id}
+                  onClick={() => {
+                    setSelectedSubjectSlug(subject.slug);
+                    setSelectedTopicSlug(null);
+                  }}
+                  className="group text-left bg-white rounded-xl border border-slate-100 shadow-[0_4px_32px_rgba(28,0,188,0.04)] p-6 hover:translate-y-[-4px] transition-all"
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="p-3 bg-[#2B0AFA]/10 rounded-lg text-[#2B0AFA]">
+                      <BookOpen className="w-6 h-6" />
+                    </div>
+                    <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full bg-[#FAB100]/20 text-[#8A5C00]">
+                      {topicCount} Topics
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl font-bold text-slate-900 mb-4">{subject.name}</h3>
+
+                  <div className="space-y-2 mb-6">
+                    <div className="flex justify-between text-xs font-bold text-slate-500">
+                      <span>READINESS</span>
+                      <span>{mastery}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-[#2B0AFA]" style={{ width: `${mastery}%` }} />
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] font-bold text-amber-700 flex items-center gap-2">
+                    <Flame className="w-3.5 h-3.5" /> {highYieldCount} high-yield topics available.
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </main>
+      ) : null}
+
+      {step === 2 && selectedSubject ? (
+        <main className="p-6 md:p-12 max-w-7xl mx-auto">
+          <div className="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <nav className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                <span>AI Review</span>
+                <ChevronRight className="w-3 h-3" />
+                <span className="text-[#2B0AFA]">{selectedSubject.name}</span>
+              </nav>
+              <h2 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight">Pick a Topic to Review</h2>
+              <p className="text-slate-600 mt-2 text-sm font-medium">Choose one topic and continue to the AI deep-dive page.</p>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSelectedSubjectSlug(null);
+                setSelectedTopicSlug(null);
+              }}
+              className="w-full md:w-auto border-[#2B0AFA]/30 text-[#2B0AFA] hover:bg-[#2B0AFA]/10"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Change Subject
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden">
+            <div className="hidden md:grid grid-cols-12 px-8 py-5 border-b border-slate-100 bg-slate-50/70">
+              <div className="col-span-5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Topic</div>
+              <div className="col-span-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Weightage</div>
+              <div className="col-span-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mastery Status</div>
+              <div className="col-span-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Action</div>
+            </div>
+
+            <div className="divide-y divide-slate-100">
+              {topicRows.length === 0 ? (
+                <div className="p-8 text-sm text-slate-500">No topics available yet for this subject.</div>
+              ) : null}
+
+              {topicRows.map((row, index) => (
+                <div key={row.topic.id} className="grid grid-cols-1 md:grid-cols-12 px-4 md:px-8 py-5 items-center hover:bg-slate-50/50 transition-colors gap-3">
+                  <div className="md:col-span-5 flex items-start gap-3">
+                    <div className={`w-1 h-12 rounded-full ${row.topic.isHighYield ? "bg-[#FAB100]" : "bg-[#2B0AFA]"}`} />
+                    <div>
+                      <h4 className="font-bold text-slate-900">{row.topic.name}</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        {row.topic.summary || "High impact concept for JAMB preparation."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tight border ${
+                      row.topic.isHighYield
+                        ? "bg-[#FAB100]/20 text-[#8A5C00] border-[#FAB100]/40"
+                        : "bg-[#2B0AFA]/10 text-[#2B0AFA] border-[#2B0AFA]/20"
+                    }`}>
+                      {row.topic.isHighYield ? `High-Yield (${80 + (index % 15)}%)` : "Foundational"}
+                    </span>
+                  </div>
+
+                  <div className="md:col-span-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-[#2B0AFA]" style={{ width: `${row.progress}%` }} />
+                      </div>
+                      {row.progress >= 100 ? (
+                        <CheckCircle2 className="text-[#2B0AFA] w-4 h-4" />
+                      ) : (
+                        <span className="text-xs font-black text-slate-800">{row.progress}%</span>
+                      )}
+                    </div>
+                    <p className="text-[9px] font-bold uppercase mt-1 text-slate-500">{row.masteryState}</p>
+                  </div>
+
+                  <div className="md:col-span-2 flex justify-start md:justify-end">
+                    <button
+                      onClick={() => setSelectedTopicSlug(row.topic.slug)}
+                      className="px-4 py-2 rounded-lg bg-[#2B0AFA] text-white hover:bg-[#2408CF] transition-all text-xs font-bold inline-flex items-center gap-2"
+                    >
+                      Review Topic
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
-            </nav>
-            <h2 className="text-xl md:text-2xl font-black tracking-tight">Post-Quiz AI Deep-Dive</h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Personalized with your selected combination: {onboardedSubjects.join(", ")}
-            </p>
+            </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
-            <Button variant="outline" onClick={handleSaveInsight} className="font-bold text-sm w-full sm:w-auto">
-              <Share2 className="w-4 h-4 mr-2" /> Save Insight ({savedCount})
-            </Button>
-            <Button
-              className="bg-brand-blue text-white hover:bg-brand-blue/90 w-full sm:w-auto"
-              onClick={() => {
-                setQuestionIndex((prev) => prev + 1);
-                setCustomReply(null);
-                setFollowUp("");
-              }}
-            >
-              Next Question
-            </Button>
-          </div>
-        </div>
+        </main>
+      ) : null}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white p-4 md:p-8 rounded-xl relative overflow-hidden border border-slate-200">
-              <div className="absolute top-0 right-0 w-16 h-16 bg-red-100 flex items-center justify-center rounded-bl-3xl">
-                <XCircle className="text-red-600 w-7 h-7" />
+      {step === 3 ? (
+        <>
+          <main className="pb-12 px-4 md:px-12 min-h-screen">
+            <div className="mb-8 flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4">
+              <div className="min-w-0">
+                <nav className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-2">
+                  {trail.map((crumb, index) => (
+                    <div key={`${crumb}-${index}`} className="flex items-center gap-2">
+                      <span className={index === trail.length - 1 ? "text-brand-blue" : ""}>{crumb}</span>
+                      {index < trail.length - 1 ? <ChevronRight className="w-3.5 h-3.5" /> : null}
+                    </div>
+                  ))}
+                </nav>
+                <h2 className="text-xl md:text-2xl font-black tracking-tight">Post-Quiz AI Deep-Dive</h2>
+                <p className="text-xs text-slate-500 mt-1">
+                  Personalized for {selectedSubject?.name ?? current.subject} {selectedTopic ? `• ${selectedTopic.name}` : ""}
+                </p>
               </div>
-              <div className="inline-block px-3 py-1 bg-red-50 text-red-700 text-[10px] font-bold uppercase tracking-widest rounded mb-6">
-                Incorrect Attempt
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedTopicSlug(null)}
+                  className="font-bold text-sm w-full sm:w-auto border-[#2B0AFA]/30 text-[#2B0AFA] hover:bg-[#2B0AFA]/10"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" /> Back to Topics
+                </Button>
+                <Button variant="outline" onClick={handleSaveInsight} className="font-bold text-sm w-full sm:w-auto">
+                  <Share2 className="w-4 h-4 mr-2" /> Save Insight ({savedCount})
+                </Button>
+                <Button
+                  className="bg-brand-blue text-white hover:bg-brand-blue/90 w-full sm:w-auto"
+                  onClick={() => {
+                    setQuestionIndex((prev) => prev + 1);
+                    setCustomReply(null);
+                    setFollowUp("");
+                  }}
+                >
+                  Next Question
+                </Button>
               </div>
-              <p className="text-lg font-medium leading-relaxed mb-8">{current.prompt}</p>
+            </div>
 
-              <div className="space-y-3">
-                {current.options.map((option) => {
-                  const isChosen = option.key === current.chosen;
-                  const isCorrect = option.key === current.correct;
-                  return (
-                    <div
-                      key={option.key}
-                      className={`flex items-center gap-4 p-4 rounded-lg ${
-                        isChosen
-                          ? "border-2 border-red-200 bg-red-50"
-                          : isCorrect
-                            ? "border-2 border-brand-blue/30 bg-brand-blue/5"
-                            : "bg-slate-100"
-                      }`}
-                    >
-                      <span
-                        className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold ${
-                          isChosen
-                            ? "bg-red-500 text-white"
-                            : isCorrect
-                              ? "bg-brand-blue text-white"
-                              : "bg-white text-slate-600"
-                        }`}
-                      >
-                        {option.key}
-                      </span>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+              <div className="lg:col-span-5 space-y-6">
+                <div className="bg-white p-4 md:p-8 rounded-xl relative overflow-hidden border border-slate-200">
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-red-100 flex items-center justify-center rounded-bl-3xl">
+                    <XCircle className="text-red-600 w-7 h-7" />
+                  </div>
+                  <div className="inline-block px-3 py-1 bg-red-50 text-red-700 text-[10px] font-bold uppercase tracking-widest rounded mb-6">
+                    Incorrect Attempt
+                  </div>
+                  <p className="text-lg font-medium leading-relaxed mb-8">{current.prompt}</p>
 
-                      <div className="flex-1 flex justify-between items-center gap-2">
-                        <span
-                          className={`text-sm ${
+                  <div className="space-y-3">
+                    {current.options.map((option) => {
+                      const isChosen = option.key === current.chosen;
+                      const isCorrect = option.key === current.correct;
+                      return (
+                        <div
+                          key={option.key}
+                          className={`flex items-center gap-4 p-4 rounded-lg ${
                             isChosen
-                              ? "font-semibold text-red-700"
+                              ? "border-2 border-red-200 bg-red-50"
                               : isCorrect
-                                ? "font-semibold text-brand-blue"
-                                : "text-slate-700"
+                                ? "border-2 border-brand-blue/30 bg-brand-blue/5"
+                                : "bg-slate-100"
                           }`}
                         >
-                          {option.text}
-                        </span>
-                        {isChosen ? <XCircle className="text-red-600 w-4 h-4" /> : null}
-                        {isCorrect ? <CheckCircle2 className="text-brand-blue w-4 h-4" /> : null}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                          <span
+                            className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold ${
+                              isChosen
+                                ? "bg-red-500 text-white"
+                                : isCorrect
+                                  ? "bg-brand-blue text-white"
+                                  : "bg-white text-slate-600"
+                            }`}
+                          >
+                            {option.key}
+                          </span>
 
-            <div className="bg-slate-100 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <div className="flex items-center gap-3">
-                <Timer className="text-slate-500 w-4 h-4" />
-                <div>
-                  <p className="text-[10px] uppercase font-bold text-slate-500">Time Spent</p>
-                  <p className="text-sm font-bold">{current.timeSpent}</p>
-                </div>
-              </div>
-              <div className="w-px h-8 bg-slate-300/60" />
-              <div className="flex items-center gap-3">
-                <TrendingUp className="text-slate-500 w-4 h-4" />
-                <div>
-                  <p className="text-[10px] uppercase font-bold text-slate-500">Difficulty</p>
-                  <p className="text-sm font-bold">{current.difficulty} ({current.failRate} fail)</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-7 flex flex-col gap-6">
-            <div className="flex-1 bg-white rounded-xl shadow-xl shadow-brand-blue/5 border border-slate-200 flex flex-col overflow-hidden">
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-brand-blue/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded bg-brand-blue flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-black">The First-Principle Breakdown</h3>
-                    <p className="text-[10px] font-medium text-brand-blue">Powered by AI Mentor • Anti-Cram Logic</p>
+                          <div className="flex-1 flex justify-between items-center gap-2">
+                            <span
+                              className={`text-sm ${
+                                isChosen
+                                  ? "font-semibold text-red-700"
+                                  : isCorrect
+                                    ? "font-semibold text-brand-blue"
+                                    : "text-slate-700"
+                              }`}
+                            >
+                              {option.text}
+                            </span>
+                            {isChosen ? <XCircle className="text-red-600 w-4 h-4" /> : null}
+                            {isCorrect ? <CheckCircle2 className="text-brand-blue w-4 h-4" /> : null}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <span className="w-1 h-1 bg-brand-blue rounded-full" />
-                  <span className="w-1 h-1 bg-brand-blue rounded-full opacity-50" />
-                  <span className="w-1 h-1 bg-brand-blue rounded-full opacity-25" />
-                </div>
-              </div>
 
-              <div className="p-4 md:p-8 flex-1 overflow-y-auto space-y-8">
-                <section>
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
-                    Why your selected answer was wrong
-                  </h4>
-                  <div className="pl-4 border-l-2 border-red-200">
-                    <p className="text-sm leading-relaxed text-slate-600">{current.wrongPath}</p>
-                  </div>
-                </section>
-
-                <section>
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-brand-blue rounded-full" />
-                    Foundation Concept
-                  </h4>
-                  <div className="space-y-4">
-                    <p className="text-sm leading-relaxed text-slate-600">
-                      Think from first principles and ask: what process actually produces the result in this system?
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="p-4 bg-slate-100 rounded-lg">
-                        <p className="text-[10px] font-black text-brand-blue mb-1 uppercase">Subject</p>
-                        <p className="text-xs leading-snug">{current.subject}</p>
-                      </div>
-                      <div className="p-4 bg-brand-blue/10 rounded-lg">
-                        <p className="text-[10px] font-black text-brand-blue mb-1 uppercase">Focus Topic</p>
-                        <p className="text-xs leading-snug">{current.topic}</p>
-                      </div>
-                    </div>
-                    <p className="text-sm leading-relaxed text-slate-600">{current.foundation}</p>
-                  </div>
-                </section>
-
-                <div className="p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
-                  <div className="flex items-start gap-3">
-                    <Lightbulb className="text-amber-500 w-4 h-4 mt-0.5" />
+                <div className="bg-slate-100 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div className="flex items-center gap-3">
+                    <Timer className="text-slate-500 w-4 h-4" />
                     <div>
-                      <p className="text-xs font-bold text-amber-800 mb-1 uppercase">Clinical Mnemonic</p>
-                      <p className="text-sm text-amber-900 font-medium">{current.mnemonic}</p>
+                      <p className="text-[10px] uppercase font-bold text-slate-500">Time Spent</p>
+                      <p className="text-sm font-bold">{current.timeSpent}</p>
+                    </div>
+                  </div>
+                  <div className="w-px h-8 bg-slate-300/60" />
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="text-slate-500 w-4 h-4" />
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-slate-500">Difficulty</p>
+                      <p className="text-sm font-bold">{current.difficulty} ({current.failRate} fail)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-7 flex flex-col gap-6">
+                <div className="flex-1 bg-white rounded-xl shadow-xl shadow-brand-blue/5 border border-slate-200 flex flex-col overflow-hidden">
+                  <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-brand-blue/5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded bg-brand-blue flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-black">The First-Principle Breakdown</h3>
+                        <p className="text-[10px] font-medium text-brand-blue">Powered by AI Mentor • Anti-Cram Logic</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <span className="w-1 h-1 bg-brand-blue rounded-full" />
+                      <span className="w-1 h-1 bg-brand-blue rounded-full opacity-50" />
+                      <span className="w-1 h-1 bg-brand-blue rounded-full opacity-25" />
+                    </div>
+                  </div>
+
+                  <div className="p-4 md:p-8 flex-1 overflow-y-auto space-y-8">
+                    <section>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                        Why your selected answer was wrong
+                      </h4>
+                      <div className="pl-4 border-l-2 border-red-200">
+                        <p className="text-sm leading-relaxed text-slate-600">{current.wrongPath}</p>
+                      </div>
+                    </section>
+
+                    <section>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-brand-blue rounded-full" />
+                        Foundation Concept
+                      </h4>
+                      <div className="space-y-4">
+                        <p className="text-sm leading-relaxed text-slate-600">
+                          Think from first principles and ask: what process actually produces the result in this system?
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="p-4 bg-slate-100 rounded-lg">
+                            <p className="text-[10px] font-black text-brand-blue mb-1 uppercase">Subject</p>
+                            <p className="text-xs leading-snug">{selectedSubject?.name ?? current.subject}</p>
+                          </div>
+                          <div className="p-4 bg-brand-blue/10 rounded-lg">
+                            <p className="text-[10px] font-black text-brand-blue mb-1 uppercase">Focus Topic</p>
+                            <p className="text-xs leading-snug">{selectedTopic?.name ?? current.topic}</p>
+                          </div>
+                        </div>
+                        <p className="text-sm leading-relaxed text-slate-600">{current.foundation}</p>
+                      </div>
+                    </section>
+
+                    <div className="p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+                      <div className="flex items-start gap-3">
+                        <Lightbulb className="text-amber-500 w-4 h-4 mt-0.5" />
+                        <div>
+                          <p className="text-xs font-bold text-amber-800 mb-1 uppercase">Clinical Mnemonic</p>
+                          <p className="text-sm text-amber-900 font-medium">{current.mnemonic}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {customReply ? (
+                      <div className="p-4 bg-slate-100 rounded-lg border border-slate-200">
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Follow-up Response</p>
+                        <p className="text-sm text-slate-700 leading-relaxed">{customReply}</p>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="p-4 md:p-6 bg-slate-100 border-t border-slate-200">
+                    <p className="text-xs font-bold text-slate-500 mb-3">
+                      Still confused? Ask AI Mentor a specific question about {selectedSubject?.name ?? current.subject}.
+                    </p>
+                    <div className="relative flex items-center">
+                      <Input
+                        className="w-full bg-white border border-slate-200 rounded-lg py-3 pl-4 pr-12 text-sm"
+                        placeholder="e.g. Explain this concept with another example"
+                        value={followUp}
+                        onChange={(e) => setFollowUp(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAskAi();
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={handleAskAi}
+                        className="absolute right-2 p-1.5 bg-brand-blue text-white rounded-md disabled:opacity-40"
+                        disabled={isPending || !followUp.trim()}
+                      >
+                        {isPending ? <Sparkles className="w-4 h-4 animate-pulse" /> : <Send className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {["Explain like I am 12", "Give 2 likely JAMB traps", "How to remember fast"].map((chip) => (
+                        <button
+                          key={chip}
+                          onClick={() => {
+                            setFollowUp(chip);
+                            setCustomReply(null);
+                          }}
+                          className="text-[10px] font-bold text-brand-blue px-2 py-1 bg-brand-blue/5 rounded border border-brand-blue/10"
+                        >
+                          {chip}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
 
-                {customReply ? (
-                  <div className="p-4 bg-slate-100 rounded-lg border border-slate-200">
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Follow-up Response</p>
-                    <p className="text-sm text-slate-700 leading-relaxed">{customReply}</p>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-2 gap-3">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full border-4 border-slate-200 relative flex items-center justify-center text-[10px] font-black">
+                      75%
+                      <svg className="absolute inset-0 w-full h-full -rotate-90">
+                        <circle
+                          className="text-brand-blue"
+                          cx="24"
+                          cy="24"
+                          fill="none"
+                          r="20"
+                          stroke="currentColor"
+                          strokeDasharray="125"
+                          strokeDashoffset="30"
+                          strokeWidth="4"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-black tracking-tight">{selectedTopic?.name ?? current.topic} Mastery</p>
+                      <p className="text-[10px] text-slate-500">2 questions remaining in this sub-topic</p>
+                    </div>
                   </div>
-                ) : null}
-              </div>
-
-              <div className="p-4 md:p-6 bg-slate-100 border-t border-slate-200">
-                <p className="text-xs font-bold text-slate-500 mb-3">
-                  Still confused? Ask AI Mentor a specific question about {recommendedSubject}.
-                </p>
-                <div className="relative flex items-center">
-                  <Input
-                    className="w-full bg-white border border-slate-200 rounded-lg py-3 pl-4 pr-12 text-sm"
-                    placeholder="e.g. Explain this concept with another example"
-                    value={followUp}
-                    onChange={(e) => setFollowUp(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAskAi();
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={handleAskAi}
-                    className="absolute right-2 p-1.5 bg-brand-blue text-white rounded-md disabled:opacity-40"
-                    disabled={isPending || !followUp.trim()}
-                  >
-                    {isPending ? <Sparkles className="w-4 h-4 animate-pulse" /> : <Send className="w-4 h-4" />}
-                  </button>
-                </div>
-                <div className="flex gap-2 mt-3 flex-wrap">
-                  {["Explain like I am 12", "Give 2 likely JAMB traps", "How to remember fast"].map((chip) => (
-                    <button
-                      key={chip}
-                      onClick={() => {
-                        setFollowUp(chip);
-                        setCustomReply(null);
-                      }}
-                      className="text-[10px] font-bold text-brand-blue px-2 py-1 bg-brand-blue/5 rounded border border-brand-blue/10"
-                    >
-                      {chip}
-                    </button>
-                  ))}
+                  <div className="flex gap-2 items-center">
+                    <div className="flex -space-x-2">
+                      <div className="w-6 h-6 rounded-full bg-brand-blue/30 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">JD</div>
+                      <div className="w-6 h-6 rounded-full bg-indigo-300 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">AK</div>
+                      <div className="w-6 h-6 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">+12</div>
+                    </div>
+                    <p className="text-[10px] font-medium text-slate-500">studying this now</p>
+                  </div>
                 </div>
               </div>
             </div>
+          </main>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-2 gap-3">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full border-4 border-slate-200 relative flex items-center justify-center text-[10px] font-black">
-                  75%
-                  <svg className="absolute inset-0 w-full h-full -rotate-90">
-                    <circle
-                      className="text-brand-blue"
-                      cx="24"
-                      cy="24"
-                      fill="none"
-                      r="20"
-                      stroke="currentColor"
-                      strokeDasharray="125"
-                      strokeDashoffset="30"
-                      strokeWidth="4"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs font-black tracking-tight">{current.topic} Mastery</p>
-                  <p className="text-[10px] text-slate-500">2 questions remaining in this sub-topic</p>
-                </div>
-              </div>
-              <div className="flex gap-2 items-center">
-                <div className="flex -space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-brand-blue/30 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">JD</div>
-                  <div className="w-6 h-6 rounded-full bg-indigo-300 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">AK</div>
-                  <div className="w-6 h-6 rounded-full bg-amber-400 border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">+12</div>
-                </div>
-                <p className="text-[10px] font-medium text-slate-500">studying this now</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+          <button
+            onClick={() => setLocation("/contact")}
+            className="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-12 h-12 md:w-14 md:h-14 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50"
+            aria-label="Support"
+          >
+            <LifeBuoy className="w-4 h-4 md:w-5 md:h-5" />
+          </button>
 
-      <button
-        onClick={() => setLocation("/contact")}
-        className="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-12 h-12 md:w-14 md:h-14 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50"
-        aria-label="Support"
-      >
-        <LifeBuoy className="w-4 h-4 md:w-5 md:h-5" />
-      </button>
-
-      <button
-        onClick={() => setQuestionIndex((prev) => prev + 1)}
-        className="fixed bottom-4 right-20 md:bottom-8 md:right-28 px-3 md:px-4 h-12 md:h-14 bg-brand-blue text-white rounded-full shadow-xl hover:bg-brand-blue/90 transition-all z-50 flex items-center gap-2 text-xs font-bold"
-      >
-        <span className="hidden sm:inline">Next</span>
-        <ArrowRight className="w-4 h-4" />
-      </button>
+          <button
+            onClick={() => setQuestionIndex((prev) => prev + 1)}
+            className="fixed bottom-4 right-20 md:bottom-8 md:right-28 px-3 md:px-4 h-12 md:h-14 bg-brand-blue text-white rounded-full shadow-xl hover:bg-brand-blue/90 transition-all z-50 flex items-center gap-2 text-xs font-bold"
+          >
+            <span className="hidden sm:inline">Next</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </>
+      ) : null}
     </AppShell>
   );
 }

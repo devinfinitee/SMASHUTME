@@ -1,470 +1,407 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useState } from "react";
+import { useLocation } from "wouter";
+import { AdminShell } from "@/components/admin-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLocation } from "wouter";
 import {
-  Plus,
-  Edit2,
-  Trash2,
+  ArrowRight,
   BookOpen,
-  FileText,
-  HelpCircle,
+  Database,
+  Download,
+  FileUp,
+  Flame,
+  Layers3,
+  MemoryStick,
+  Plus,
   Search,
+  ShieldCheck,
+  Sparkles,
+  Upload,
+  Users,
+  Workflow,
+  CheckCircle2,
+  CircleAlert,
+  Clock3,
 } from "lucide-react";
 
-interface Subject {
-  id: string;
-  name: string;
-  description: string;
-  topics: number;
-  students: number;
-  status: "active" | "draft";
-}
+const UPLOAD_METRICS = [
+  { title: "Subjects Live", value: "13", icon: BookOpen, color: "#1C00BC", bg: "rgba(28, 0, 188, 0.08)" },
+  { title: "Topics Synced", value: "247", icon: Layers3, color: "#2B0AFA", bg: "rgba(43, 10, 250, 0.08)" },
+  { title: "Question Bank", value: "15,420", icon: Database, color: "#565E74", bg: "rgba(86, 94, 116, 0.08)" },
+  { title: "AI Sync", value: "45.2%", icon: MemoryStick, color: "#FBB20D", bg: "rgba(251, 178, 13, 0.15)" },
+];
 
-interface Topic {
-  id: string;
-  name: string;
-  subject: string;
-  questions: number;
-  difficulty: "Easy" | "Medium" | "Hard";
-  status: "active" | "draft";
-}
+const uploadQueue = [
+  { name: "Use of English - Syllabus v4.pdf", type: "Subject syllabus", status: "Ready", progress: 100 },
+  { name: "Biology Topic Matrix.xlsx", type: "Topic map", status: "Processing", progress: 72 },
+  { name: "Chemistry Questions Pack.csv", type: "Question bank", status: "Queued", progress: 34 },
+  { name: "Physics Standards Outline.docx", type: "Subject syllabus", status: "Ready", progress: 100 },
+];
 
-interface Question {
-  id: string;
-  question: string;
-  topic: string;
-  difficulty: "Easy" | "Medium" | "Hard";
-  type: "Multiple Choice" | "True/False";
+const curriculumCards = [
+  {
+    subject: "Use of English",
+    topics: 38,
+    lastUpload: "2 hours ago",
+    completion: 92,
+    color: "#1C00BC",
+  },
+  {
+    subject: "Biology",
+    topics: 44,
+    lastUpload: "Today",
+    completion: 84,
+    color: "#2B0AFA",
+  },
+  {
+    subject: "Chemistry",
+    topics: 41,
+    lastUpload: "Yesterday",
+    completion: 76,
+    color: "#FBB20D",
+  },
+  {
+    subject: "Physics",
+    topics: 35,
+    lastUpload: "Today",
+    completion: 88,
+    color: "#565E74",
+  },
+];
+
+const systemChecks = [
+  { label: "Schema validation", value: "Passed", icon: ShieldCheck },
+  { label: "AI extraction", value: "Stable", icon: Sparkles },
+  { label: "Version control", value: "v12.4", icon: Workflow },
+];
+
+const activityFeed = [
+  { action: "New syllabus file uploaded", actor: "Admin Unit 01", time: "5 mins ago" },
+  { action: "Topic extraction completed", actor: "SmashAI", time: "12 mins ago" },
+  { action: "Question pack linked", actor: "Admin Unit 01", time: "1 hour ago" },
+  { action: "Review flag cleared", actor: "SmashAI", time: "3 hours ago" },
+];
+
+function UploadMetric({ title, value, icon: Icon, color, bg }: { title: string; value: string; icon: typeof BookOpen; color: string; bg: string }) {
+  return (
+    <div className="bg-white p-6 rounded-xl border-l-4 shadow-[0_20px_40px_rgba(11,28,48,0.05)]" style={{ borderLeftColor: color }}>
+      <div className="flex justify-between items-start mb-4">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{title}</p>
+        <div className="p-2 rounded-lg" style={{ backgroundColor: bg }}>
+          <Icon className="w-4 h-4" style={{ color }} />
+        </div>
+      </div>
+      <span className="text-3xl font-black text-slate-900">{value}</span>
+    </div>
+  );
 }
 
 export default function ContentManagement() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [isAddSubjectOpen, setIsAddSubjectOpen] = useState(false);
-  const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
-  const [isAddQuestionOpen, setIsAddQuestionOpen] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState("Use of English");
 
-  // Mock data
-  const subjects: Subject[] = [
-    {
-      id: "1",
-      name: "Mathematics",
-      description: "Core mathematics concepts for UTME",
-      topics: 42,
-      students: 2543,
-      status: "active",
-    },
-    {
-      id: "2",
-      name: "English Language",
-      description: "English language and comprehension",
-      topics: 38,
-      students: 2847,
-      status: "active",
-    },
-    {
-      id: "3",
-      name: "Physics",
-      description: "Physics fundamentals and applications",
-      topics: 35,
-      students: 1834,
-      status: "active",
-    },
-  ];
-
-  const topics: Topic[] = [
-    {
-      id: "1",
-      name: "Algebra",
-      subject: "Mathematics",
-      questions: 45,
-      difficulty: "Medium",
-      status: "active",
-    },
-    {
-      id: "2",
-      name: "Geometry",
-      subject: "Mathematics",
-      questions: 38,
-      difficulty: "Hard",
-      status: "active",
-    },
-    {
-      id: "3",
-      name: "Grammar",
-      subject: "English Language",
-      questions: 52,
-      difficulty: "Easy",
-      status: "active",
-    },
-  ];
-
-  const questions: Question[] = [
-    {
-      id: "1",
-      question: "Solve for x: 2x + 5 = 15",
-      topic: "Algebra",
-      difficulty: "Easy",
-      type: "Multiple Choice",
-    },
-    {
-      id: "2",
-      question: "What is the area of a circle with radius 7cm?",
-      topic: "Geometry",
-      difficulty: "Medium",
-      type: "Multiple Choice",
-    },
-    {
-      id: "3",
-      question: "Identify the noun in the sentence: The cat jumped",
-      topic: "Grammar",
-      difficulty: "Easy",
-      type: "Multiple Choice",
-    },
-  ];
+  const filteredQueue = useMemo(() => {
+    if (!searchQuery.trim()) return uploadQueue;
+    const query = searchQuery.toLowerCase();
+    return uploadQueue.filter((item) => item.name.toLowerCase().includes(query) || item.type.toLowerCase().includes(query));
+  }, [searchQuery]);
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+    <AdminShell searchPlaceholder="Search syllabus files, topics, or questions...">
+      <div className="p-6 md:p-8 space-y-8 max-w-[1600px] mx-auto">
+        <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-display font-bold">Content Management</h1>
-            <p className="text-muted-foreground">
-              Manage subjects, topics, and questions
+            <div className="inline-flex items-center gap-2 text-[#1C00BC] font-bold text-[10px] uppercase tracking-widest mb-3">
+              <span className="w-8 h-[2px] bg-[#1C00BC]" />
+              Admin Syllabus Studio
+            </div>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900">Syllabus Upload Center</h1>
+            <p className="text-slate-600 mt-2 max-w-2xl">
+              Upload syllabus files, map topics, validate content structure, and sync the curriculum into the platform.
             </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button variant="outline" onClick={() => setLocation("/admin/dashboard")} className="rounded-full border-slate-200 text-slate-700 hover:bg-slate-50">
+                Back to Admin
+              </Button>
+              <Button variant="outline" onClick={() => setLocation("/admin/quiz-results")} className="rounded-full border-slate-200 text-slate-700 hover:bg-slate-50">
+                Open Results
+              </Button>
+            </div>
           </div>
-          <Button onClick={() => setLocation("/admin/dashboard")} variant="outline" className="rounded-full">
-            Back to Admin
-          </Button>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button variant="outline" className="rounded-full border-slate-200 text-slate-700 hover:bg-slate-50">
+              <Download className="w-4 h-4 mr-2" />
+              Download Template
+            </Button>
+            <Button className="rounded-full bg-[#1C00BC] text-white hover:bg-[#160091]">
+              <ArrowRight className="w-4 h-4 mr-2" />
+              Publish Upload
+            </Button>
+          </div>
         </div>
 
-        {/* Search Bar */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search subjects, topics, or questions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {UPLOAD_METRICS.map((metric) => (
+            <UploadMetric key={metric.title} {...metric} />
+          ))}
+        </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="subjects" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="subjects">
-              <BookOpen className="w-4 h-4 mr-2" />
-              Subjects
-            </TabsTrigger>
-            <TabsTrigger value="topics">
-              <FileText className="w-4 h-4 mr-2" />
-              Topics
-            </TabsTrigger>
-            <TabsTrigger value="questions">
-              <HelpCircle className="w-4 h-4 mr-2" />
-              Questions
-            </TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
+          <div className="xl:col-span-2 space-y-6">
+            <div className="bg-white rounded-xl shadow-[0_20px_40px_rgba(11,28,48,0.05)] p-6 md:p-8 border border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">Upload & Parse Syllabus</h3>
+                  <p className="text-sm text-slate-500">Drag files in, assign subjects, and validate before publishing.</p>
+                </div>
+                <Badge className="bg-[#FBB20D]/20 text-[#8A5C00] border border-[#FBB20D]/40 w-fit">Admin Workflow Active</Badge>
+              </div>
 
-          {/* Subjects Tab */}
-          <TabsContent value="subjects" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">All Subjects ({subjects.length})</h2>
-              <Dialog open={isAddSubjectOpen} onOpenChange={setIsAddSubjectOpen}>
-                <DialogTrigger asChild>
-                  <Button className="rounded-full">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Subject
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Subject</DialogTitle>
-                    <DialogDescription>
-                      Create a new subject for your platform
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="subject-name">Subject Name</Label>
-                      <Input id="subject-name" placeholder="e.g., Biology" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="subject-desc">Description</Label>
-                      <Textarea
-                        id="subject-desc"
-                        placeholder="Brief description of the subject"
-                      />
-                    </div>
-                    <Button className="w-full rounded-full">Create Subject</Button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 md:p-8 min-h-[240px] flex flex-col items-center justify-center text-center">
+                  <div className="w-14 h-14 rounded-full bg-[#2B0AFA]/10 flex items-center justify-center mb-4">
+                    <Upload className="w-6 h-6 text-[#2B0AFA]" />
                   </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Topics</TableHead>
-                    <TableHead>Students</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {subjects.map((subject) => (
-                    <TableRow key={subject.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{subject.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {subject.description}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{subject.topics} topics</TableCell>
-                      <TableCell>{subject.students.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={subject.status === "active" ? "default" : "secondary"}
-                        >
-                          {subject.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
-                            <Edit2 className="w-3 h-3" />
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Trash2 className="w-3 h-3 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
-
-          {/* Topics Tab */}
-          <TabsContent value="topics" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">All Topics ({topics.length})</h2>
-              <Dialog open={isAddTopicOpen} onOpenChange={setIsAddTopicOpen}>
-                <DialogTrigger asChild>
-                  <Button className="rounded-full">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Topic
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Topic</DialogTitle>
-                    <DialogDescription>Create a new topic under a subject</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="topic-name">Topic Name</Label>
-                      <Input id="topic-name" placeholder="e.g., Calculus" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="topic-subject">Subject</Label>
-                      <Input id="topic-subject" placeholder="Select subject" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="topic-difficulty">Difficulty</Label>
-                      <Input id="topic-difficulty" placeholder="Easy, Medium, Hard" />
-                    </div>
-                    <Button className="w-full rounded-full">Create Topic</Button>
+                  <h4 className="text-xl font-black text-slate-900">Drag and drop files here</h4>
+                  <p className="text-sm text-slate-500 mt-2 max-w-sm">
+                    Upload PDF, DOCX, XLSX, or CSV files containing syllabus outlines, topic plans, or question metadata.
+                  </p>
+                  <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                    <Button className="bg-[#2B0AFA] text-white hover:bg-[#2408CF]">
+                      <FileUp className="w-4 h-4 mr-2" />
+                      Browse Files
+                    </Button>
+                    <Button variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Folder
+                    </Button>
                   </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+                </div>
 
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Topic</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Questions</TableHead>
-                    <TableHead>Difficulty</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {topics.map((topic) => (
-                    <TableRow key={topic.id}>
-                      <TableCell className="font-medium">{topic.name}</TableCell>
-                      <TableCell>{topic.subject}</TableCell>
-                      <TableCell>{topic.questions} questions</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            topic.difficulty === "Easy"
-                              ? "secondary"
-                              : topic.difficulty === "Medium"
-                              ? "default"
-                              : "destructive"
-                          }
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Subject</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {["Use of English", "Biology", "Chemistry", "Physics"].map((subject) => (
+                        <button
+                          key={subject}
+                          onClick={() => setSelectedSubject(subject)}
+                          className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-all text-left ${
+                            selectedSubject === subject
+                              ? "bg-[#2B0AFA] text-white border-[#2B0AFA]"
+                              : "bg-white border-slate-200 text-slate-600 hover:border-[#2B0AFA]/40"
+                          }`}
                         >
-                          {topic.difficulty}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={topic.status === "active" ? "default" : "secondary"}
-                        >
-                          {topic.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
-                            <Edit2 className="w-3 h-3" />
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Trash2 className="w-3 h-3 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
-
-          {/* Questions Tab */}
-          <TabsContent value="questions" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">All Questions ({questions.length})</h2>
-              <Dialog open={isAddQuestionOpen} onOpenChange={setIsAddQuestionOpen}>
-                <DialogTrigger asChild>
-                  <Button className="rounded-full">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Question
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Add New Question</DialogTitle>
-                    <DialogDescription>Create a new quiz question</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="question">Question</Label>
-                      <Textarea id="question" placeholder="Enter the question" />
+                          {subject}
+                        </button>
+                      ))}
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="q-topic">Topic</Label>
-                        <Input id="q-topic" placeholder="Select topic" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Upload Notes</Label>
+                    <Textarea
+                      placeholder="Add revision notes, scope instructions, or special handling details..."
+                      className="min-h-[120px] bg-slate-50"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {systemChecks.map((check) => (
+                      <div key={check.label} className="rounded-xl border border-slate-200 bg-white p-4">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{check.label}</span>
+                          <check.icon className="w-4 h-4 text-[#1C00BC]" />
+                        </div>
+                        <p className="text-sm font-bold text-slate-900">{check.value}</p>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="q-difficulty">Difficulty</Label>
-                        <Input id="q-difficulty" placeholder="Easy, Medium, Hard" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-[0_20px_40px_rgba(11,28,48,0.05)] overflow-hidden border border-slate-100">
+              <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">Upload Queue</h3>
+                  <p className="text-sm text-slate-500">Files waiting for review and curriculum extraction</p>
+                </div>
+                <button className="text-xs font-bold text-[#1C00BC] flex items-center gap-1 hover:underline">
+                  View processing log
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    placeholder="Search uploads, subjects, or file types..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 bg-slate-50"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  {filteredQueue.map((item) => (
+                    <div key={item.name} className="rounded-xl border border-slate-200 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:border-[#2B0AFA]/30 transition-colors">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-bold text-slate-900">{item.name}</h4>
+                          <Badge variant={item.status === "Ready" ? "default" : item.status === "Processing" ? "secondary" : "outline"}>{item.status}</Badge>
+                        </div>
+                        <p className="text-sm text-slate-500">{item.type}</p>
+                      </div>
+
+                      <div className="w-full md:w-72 space-y-2">
+                        <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                          <span>Progress</span>
+                          <span>{item.progress}%</span>
+                        </div>
+                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#2B0AFA]" style={{ width: `${item.progress}%` }} />
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Answer Options</Label>
-                      <Input placeholder="Option A" className="mb-2" />
-                      <Input placeholder="Option B" className="mb-2" />
-                      <Input placeholder="Option C" className="mb-2" />
-                      <Input placeholder="Option D" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="correct-answer">Correct Answer</Label>
-                      <Input id="correct-answer" placeholder="A, B, C, or D" />
-                    </div>
-                    <Button className="w-full rounded-full">Create Question</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="bg-[#2B0AFA] text-white rounded-xl shadow-[0_20px_40px_rgba(28,0,188,0.15)] p-6 relative overflow-hidden">
+              <div className="relative z-10">
+                <h4 className="text-lg font-black mb-2">Generate Report</h4>
+                <p className="text-sm text-white/80 mb-6 leading-relaxed">
+                  Compile the syllabus upload into a structured publishing summary.
+                </p>
+                <Button className="w-full bg-white text-[#1C00BC] hover:bg-slate-100 font-bold">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Compile Summary
+                </Button>
+              </div>
+              <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
             </div>
 
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Question</TableHead>
-                    <TableHead>Topic</TableHead>
-                    <TableHead>Difficulty</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {questions.map((question) => (
-                    <TableRow key={question.id}>
-                      <TableCell className="max-w-md">
-                        <p className="truncate">{question.question}</p>
-                      </TableCell>
-                      <TableCell>{question.topic}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            question.difficulty === "Easy"
-                              ? "secondary"
-                              : question.difficulty === "Medium"
-                              ? "default"
-                              : "destructive"
-                          }
-                        >
-                          {question.difficulty}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{question.type}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline">
-                            <Edit2 className="w-3 h-3" />
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Trash2 className="w-3 h-3 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            <div className="bg-white rounded-xl shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100 p-6">
+              <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-4 flex items-center gap-2">
+                <CircleAlert className="w-4 h-4 text-[#FBB20D]" />
+                Validation Checklist
+              </h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
+                  <span className="text-sm text-slate-700">File format accepted</span>
+                  <CheckCircle2 className="w-4 h-4 text-[#1C00BC]" />
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
+                  <span className="text-sm text-slate-700">Subject mapping complete</span>
+                  <CheckCircle2 className="w-4 h-4 text-[#1C00BC]" />
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
+                  <span className="text-sm text-slate-700">Topic hierarchy verified</span>
+                  <Clock3 className="w-4 h-4 text-[#FBB20D]" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100 p-6">
+              <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-4 flex items-center gap-2">
+                <Flame className="w-4 h-4 text-[#FBB20D]" />
+                Curriculum Snapshot
+              </h4>
+              <div className="space-y-4">
+                {curriculumCards.map((card) => (
+                  <div key={card.subject} className="rounded-xl border border-slate-200 p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-bold text-slate-900">{card.subject}</p>
+                      <span className="text-xs font-bold text-slate-500">{card.topics} topics</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                      <span>Last upload: {card.lastUpload}</span>
+                      <span>{card.completion}% complete</span>
+                    </div>
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${card.completion}%`, backgroundColor: card.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+          <div className="xl:col-span-2 bg-white rounded-xl shadow-[0_20px_40px_rgba(11,28,48,0.05)] overflow-hidden border border-slate-100">
+            <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+              <div>
+                <h3 className="text-lg font-black text-slate-900">Recent Activity</h3>
+                <p className="text-sm text-slate-500">Live audit trail of syllabus uploads and syncs</p>
+              </div>
+              <button className="text-xs font-bold text-[#1C00BC] flex items-center gap-1 hover:underline">
+                View all logs
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {activityFeed.map((item, index) => (
+                <div key={`${item.action}-${index}`} className="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 hover:bg-slate-50 transition-colors">
+                  <div>
+                    <p className="font-medium text-slate-900">{item.action}</p>
+                    <p className="text-xs text-slate-500">{item.actor}</p>
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-widest text-slate-500">{item.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100 p-6">
+            <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-4 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#1C00BC]" />
+              Publish Pipeline
+            </h4>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                <div className="w-9 h-9 rounded-full bg-[#1C00BC]/10 flex items-center justify-center text-[#1C00BC]">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">Selected Subject</p>
+                  <p className="text-xs text-slate-500">{selectedSubject}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                <div className="w-9 h-9 rounded-full bg-[#FBB20D]/20 flex items-center justify-center text-[#8A5C00]">
+                  <Workflow className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">Auto Parsing</p>
+                  <p className="text-xs text-slate-500">Extract topics and tags</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                <div className="w-9 h-9 rounded-full bg-[#2B0AFA]/10 flex items-center justify-center text-[#2B0AFA]">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">Impact</p>
+                  <p className="text-xs text-slate-500">Linked to candidate dashboards</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </AdminShell>
   );
 }

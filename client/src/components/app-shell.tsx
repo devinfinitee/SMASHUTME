@@ -31,10 +31,16 @@ function isActiveRoute(currentPath: string, href: string, label: string): boolea
   if (href === "/dashboard") {
     // Several placeholder nav items currently route to /dashboard.
     // Keep active highlight exclusive to the actual Dashboard item.
-    return label === "Dashboard" && currentPath === "/dashboard";
+    return label === "Dashboard" && (currentPath === "/dashboard" || currentPath === "/admin/dashboard");
   }
   if (href === "/syllabus") {
     return currentPath === "/syllabus" || currentPath.startsWith("/subjects") || currentPath.startsWith("/topics");
+  }
+  if (href === "/cbt") {
+    return currentPath === "/cbt";
+  }
+  if (href === "/admin/question-bank") {
+    return currentPath === "/admin/question-bank";
   }
   return currentPath === href;
 }
@@ -47,8 +53,11 @@ export function AppShell({ children, searchPlaceholder = "Search..." }: AppShell
   const navItems = [
     { label: "Dashboard", icon: TrendingUp, href: "/dashboard" },
     { label: "Subjects", icon: BookOpen, href: "/syllabus" },
-    { label: "CBT Practice", icon: BarChart3, href: "/dashboard" },
+    { label: "CBT Practice", icon: BarChart3, href: "/cbt" },
     { label: "AI Review", icon: Brain, href: "/ai-review" },
+    ...(location.startsWith("/admin")
+      ? [{ label: "Question Bank", icon: BookOpen, href: "/admin/question-bank" }]
+      : []),
     { label: "Performance", icon: TrendingUp, href: "/dashboard" },
     { label: "Study Room", icon: Users, href: "/dashboard" },
     { label: "Settings", icon: User, href: "/profile" },
@@ -102,7 +111,9 @@ export function AppShell({ children, searchPlaceholder = "Search..." }: AppShell
         </nav>
 
         <div className="mt-auto px-4 space-y-4 pt-6 border-t border-slate-200 dark:border-slate-700">
-          <Button className="w-full bg-brand-blue text-white hover:bg-brand-blue/90">Start Mock Exam</Button>
+          <Link href="/cbt">
+            <Button className="w-full bg-brand-blue text-white hover:bg-brand-blue/90">Start Mock Exam</Button>
+          </Link>
 
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-brand-gold text-white flex items-center justify-center font-bold text-sm">

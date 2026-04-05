@@ -174,8 +174,33 @@ const MainContent = ({ user }: { user?: User | null }) => {
   const targetCourse = targetData?.course || "Medicine and Surgery";
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6 md:space-y-10">
+    <main className="relative min-h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-24 top-12 h-72 w-72 rounded-full bg-brand-blue/10 blur-3xl" />
+        <div className="absolute right-0 top-40 h-80 w-80 rounded-full bg-brand-gold/10 blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-slate-200/40 blur-3xl dark:bg-slate-800/30" />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8 space-y-6 md:space-y-10">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+          <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Study momentum</p>
+            <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">78%</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Projected score coverage this week.</p>
+          </div>
+          <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">High-yield focus</p>
+            <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">4 topics</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Ready for revision first.</p>
+          </div>
+          <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Next exam</p>
+            <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">UTME 2024</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">42 days to go.</p>
+          </div>
+        </section>
+
+        <div className="space-y-6 md:space-y-10">
         {/* Greeting & Hero Section */}
         <section className="grid grid-cols-12 gap-4 md:gap-8 items-start">
           <div className="col-span-12 lg:col-span-7 space-y-4 md:space-y-6">
@@ -201,8 +226,9 @@ const MainContent = ({ user }: { user?: User | null }) => {
             </header>
 
             {/* Main Hero Widget */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl p-4 md:p-8 shadow-lg border border-slate-100 dark:border-slate-800 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-48 md:w-64 h-48 md:h-64 bg-brand-blue/5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+            <div className="relative overflow-hidden rounded-3xl border border-white/70 bg-gradient-to-br from-white via-white to-slate-50 p-4 md:p-8 shadow-[0_20px_60px_rgba(11,28,48,0.08)] dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+              <div className="absolute top-0 right-0 h-48 w-48 -mr-16 -mt-16 rounded-full bg-brand-blue/10 blur-3xl md:h-64 md:w-64" />
+              <div className="absolute -bottom-20 left-0 h-40 w-40 rounded-full bg-brand-gold/10 blur-3xl" />
 
               <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
                 <div className="w-32 md:w-40 flex-shrink-0">
@@ -216,7 +242,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
                     </h3>
                     <div className="text-3xl md:text-4xl font-bold text-brand-blue mt-2">315 / 400</div>
 
-                    <div className="mt-3 md:mt-4 bg-blue-50 dark:bg-blue-950/30 border-l-4 border-brand-blue p-3 md:p-4 rounded-r-lg">
+                    <div className="mt-3 md:mt-4 rounded-2xl border border-brand-blue/15 bg-brand-blue/5 p-3 md:p-4">
                       <p className="text-xs md:text-sm text-slate-700 dark:text-slate-300">
                         <span className="font-bold text-brand-blue">AI Strategy:</span> Your current
                         aggregate meets the 2023 cut-off for UI Medicine. Ensure your O'level
@@ -239,7 +265,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
           {/* Right Column: Stats */}
           <div className="col-span-12 lg:col-span-5 flex flex-col gap-3 md:gap-4">
             {/* Target Institution Widget */}
-            <div className="bg-brand-gold text-slate-900 dark:text-white p-4 md:p-6 rounded-xl relative overflow-hidden shadow-lg">
+            <div className="relative overflow-hidden rounded-2xl border border-brand-gold/20 bg-gradient-to-br from-brand-gold via-brand-gold to-amber-500 p-4 md:p-6 text-slate-900 shadow-lg dark:text-white">
               <div className="absolute -right-4 -bottom-4 opacity-15">
                 <Award className="w-20 md:w-24 h-20 md:h-24 text-slate-900" />
               </div>
@@ -267,7 +293,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 gap-2 md:gap-4">
-              <div className="bg-white dark:bg-slate-900 p-3 md:p-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-3 md:p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
                 <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">
                   Drills
                 </p>
@@ -277,7 +303,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
                 </p>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 p-3 md:p-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div className="rounded-2xl border border-slate-200/80 bg-white/90 p-3 md:p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
                 <p className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-2">
                   Time
                 </p>
@@ -308,7 +334,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-6">
             {subjectCards.map((subject) => (
-              <div key={subject.id} className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col">
+              <div key={subject.id} className="flex flex-col rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 md:p-6">
                 <div className="flex justify-between items-start mb-3 md:mb-6">
                   <div className={`p-2 md:p-3 ${subject.bgColor} ${subject.color} rounded-lg`}>
                     <subject.icon className="w-4 md:w-5 h-4 md:h-5" />
@@ -371,7 +397,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
               Recent Activity
             </h3>
 
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/90">
               {RECENT_ACTIVITIES.map((activity) => (
                 <div key={activity.id} className="p-3 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                   <div className="w-10 md:w-12 h-10 md:h-12 bg-blue-50 dark:bg-blue-950/30 rounded-lg flex items-center justify-center text-brand-blue flex-shrink-0">
@@ -397,7 +423,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
           </div>
 
           {/* AI Tutor Quick-Access */}
-          <div className="col-span-12 lg:col-span-4 bg-brand-blue text-white p-4 md:p-8 rounded-xl relative overflow-hidden flex flex-col justify-between">
+          <div className="relative col-span-12 lg:col-span-4 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-blue to-blue-700 p-4 text-white shadow-[0_18px_48px_rgba(28,0,188,0.28)] md:p-8 flex flex-col justify-between">
             <div className="absolute top-0 right-0 p-2 opacity-10">
               <Brain className="w-24 md:w-32 h-24 md:h-32" />
             </div>
@@ -417,7 +443,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
             </div>
 
             <div className="relative z-10">
-              <div className="flex items-center gap-2 bg-white text-brand-blue p-2 rounded-md">
+              <div className="flex items-center gap-2 rounded-2xl bg-white p-2 text-brand-blue shadow-lg shadow-black/10">
                 <Input
                   placeholder="Ask..."
                   className="bg-transparent border-none text-xs focus-visible:ring-0 placeholder:text-brand-blue/40 px-1"
@@ -432,9 +458,10 @@ const MainContent = ({ user }: { user?: User | null }) => {
       </div>
 
       {/* Floating Action Button */}
-      <button className="fixed bottom-6 right-6 md:bottom-10 md:right-10 w-14 h-14 bg-brand-blue text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-30 hover:bg-brand-blue/90">
+      <button className="fixed bottom-6 right-6 md:bottom-10 md:right-10 h-14 w-14 rounded-full bg-brand-blue text-white shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 hover:bg-brand-blue/90 z-30">
         <Play className="w-5 h-5" />
       </button>
+      </div>
     </main>
   );
 };
