@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
+import { apiFetch } from "@/lib/api-fetch";
 
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
@@ -56,7 +57,7 @@ export default function ResetPassword() {
 
     try {
       // TODO: Replace with actual API call
-      const response = await fetch("/api/auth/reset-password", {
+      const response = await apiFetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

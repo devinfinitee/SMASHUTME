@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface ContactFormData {
   name: string;
@@ -93,7 +94,7 @@ export default function Contact() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/contact", {
+      const response = await apiFetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

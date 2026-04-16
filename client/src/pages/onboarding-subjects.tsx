@@ -25,6 +25,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
+import { saveOnboardingSubjects } from "@/lib/onboarding-api";
 import { ALL_JAMB_SUBJECTS, inferJambSubjectsForCourse } from "@/lib/onboarding-data";
 
 type SubjectItem = {
@@ -128,7 +129,13 @@ export default function OnboardingSubjects() {
     };
     localStorage.setItem("smashutme-onboarding-subjects", JSON.stringify(payload));
 
-    setLocation("/onboarding/baseline");
+    saveOnboardingSubjects(payload)
+      .catch((saveError) => {
+        console.error("Failed to save subject onboarding:", saveError);
+      })
+      .finally(() => {
+        setLocation("/onboarding/baseline");
+      });
   };
 
   const getSubjectLabel = (subjectId: string) => SUBJECTS.find((s) => s.id === subjectId)?.label ?? subjectId;

@@ -7,6 +7,7 @@ import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
 import heroImage from "@/assets/hero.webp";
 import { registerLocalUser, setCurrentAuthUser } from "@/lib/local-auth";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface SignUpFormData {
   fullName: string;
@@ -85,9 +86,10 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/signup", {
+      const response = await apiFetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           fullName: formData.fullName,
           email: formData.email,
@@ -98,7 +100,8 @@ export default function SignUp() {
       });
 
       if (!response.ok) {
-        throw new Error("Backend unavailable");
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody?.error || "Unable to sign up.");
       }
 
       let userFromApi: { id?: string; name?: string; fullName?: string; email?: string } | null = null;
@@ -108,31 +111,24 @@ export default function SignUp() {
         userFromApi = null;
       }
 
+      const onboardingCompleted = Boolean((userFromApi as { onboardingCompleted?: boolean } | null)?.onboardingCompleted);
+
       setCurrentAuthUser({
         id: userFromApi?.id ?? `local-${Date.now()}`,
         name: userFromApi?.name ?? userFromApi?.fullName ?? formData.fullName,
         email: userFromApi?.email ?? formData.email.toLowerCase(),
+        fullName: userFromApi?.fullName ?? userFromApi?.name,
+        onboardingCompleted,
       });
 
-      setLocation("/onboarding/target");
+      setLocation(onboardingCompleted ? "/dashboard" : "/onboarding/target");
     } catch (error) {
-      try {
-        const localUser = registerLocalUser({
-          fullName: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-        });
-        setCurrentAuthUser(localUser);
-        setLocation("/onboarding/target");
-      } catch (localError) {
-        const message = localError instanceof Error ? localError.message : "Sign up failed.";
-        if (message.toLowerCase().includes("email")) {
-          setErrors({ email: "Email is already registered." });
-        } else {
-          setErrors({ general: message });
-        }
+      const message = error instanceof Error ? error.message : "Sign up failed.";
+      if (message.toLowerCase().includes("email")) {
+        setErrors({ email: "Email is already registered." });
+      } else {
+        setErrors({ general: message });
       }
-
       console.error("Sign up error:", error);
     } finally {
       setIsLoading(false);

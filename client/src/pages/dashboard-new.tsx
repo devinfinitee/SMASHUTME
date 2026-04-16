@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { User } from "@/types";
 import {
   BookOpen,
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { AppShell } from "@/components/app-shell";
+import { useLocation } from "wouter";
 
 interface SubjectCard {
   id: string;
@@ -467,7 +468,25 @@ const MainContent = ({ user }: { user?: User | null }) => {
 };
 
 export default function DashboardNew() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, refetchUser } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      void refetchUser();
+    }
+  }, [isAuthenticated, refetchUser]);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role && ["admin", "super-admin"].includes(user.role)) {
+      setLocation("/admin/dashboard");
+      return;
+    }
+
+    if (isAuthenticated && user && user.onboardingCompleted === false) {
+      setLocation("/onboarding/target");
+    }
+  }, [isAuthenticated, setLocation, user]);
 
   if (isLoading) {
     return (
@@ -481,6 +500,10 @@ export default function DashboardNew() {
 
   if (!isAuthenticated) {
     return <div className="h-screen flex items-center justify-center">Please log in</div>;
+  }
+
+  if (user?.onboardingCompleted === false) {
+    return null;
   }
 
   return (

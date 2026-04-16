@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
 import heroImage from "@/assets/hero.webp";
-import { loginLocalUser, setCurrentAuthUser } from "@/lib/local-auth";
+import { setCurrentAuthUser } from "@/lib/local-auth";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface LoginFormData {
   email: string;
@@ -28,6 +29,9 @@ export default function Login() {
     password: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
+
+  const oauthFailed =
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("oauth") === "failed";
 
   const validateEmail = (email: string): string | undefined => {
     if (!email.trim()) return "Please enter your email.";
@@ -68,9 +72,10 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await apiFetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
@@ -78,7 +83,8 @@ export default function Login() {
       });
 
       if (!response.ok) {
-        throw new Error("Backend unavailable");
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody?.error || "Unable to login.");
       }
 
       let userFromApi: { id?: string; name?: string; fullName?: string; email?: string } | null = null;
@@ -88,28 +94,28 @@ export default function Login() {
         userFromApi = null;
       }
 
+      const onboardingCompleted = Boolean((userFromApi as { onboardingCompleted?: boolean } | null)?.onboardingCompleted);
+      const role = (userFromApi as { role?: string } | null)?.role;
+
       setCurrentAuthUser({
         id: userFromApi?.id ?? `local-${Date.now()}`,
         name: userFromApi?.name ?? userFromApi?.fullName ?? formData.email.split("@")[0],
         email: userFromApi?.email ?? formData.email.toLowerCase(),
+        fullName: userFromApi?.fullName ?? userFromApi?.name,
+        onboardingCompleted,
+        role,
       });
-      setLocation("/dashboard");
-    } catch (error) {
-      try {
-        const user = loginLocalUser({ email: formData.email, password: formData.password });
-        setCurrentAuthUser(user);
-        setLocation("/dashboard");
-      } catch (localError) {
-        const message = localError instanceof Error ? localError.message : "Login failed. Please try again.";
-        if (message.toLowerCase().includes("password")) {
-          setErrors({ password: "Incorrect password." });
-        } else if (message.toLowerCase().includes("account")) {
-          setErrors({ email: "No account found with this email." });
-        } else {
-          setErrors({ general: message });
-        }
-      }
 
+      setLocation(role === "admin" || role === "super-admin" ? "/admin/dashboard" : onboardingCompleted ? "/dashboard" : "/onboarding/target");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Login failed. Please try again.";
+      if (message.toLowerCase().includes("password")) {
+        setErrors({ password: "Incorrect password." });
+      } else if (message.toLowerCase().includes("email") || message.toLowerCase().includes("account")) {
+        setErrors({ email: "No account found with this email." });
+      } else {
+        setErrors({ general: message });
+      }
       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
@@ -193,6 +199,12 @@ export default function Login() {
           </header>
 
           <form onSubmit={handleSubmit} className="space-y-5 w-full" noValidate>
+            {oauthFailed && (
+              <div className="rounded-md border border-brand-gold/40 bg-brand-gold/10 p-3 text-sm text-brand-gold">
+                Google login failed. Please try again or use your email and password.
+              </div>
+            )}
+
             {errors.general && (
               <div className="rounded-md border border-brand-gold/40 bg-brand-gold/10 p-3 text-sm text-brand-gold">
                 {errors.general}
@@ -281,6 +293,12 @@ export default function Login() {
               Do not have an account?
               <button onClick={() => setLocation("/signup")} className="text-brand-blue font-bold hover:underline ml-1">
                 Create Account
+              </button>
+            </p>
+            <p className="text-xs text-slate-500 mt-2">
+              Admin user?
+              <button onClick={() => setLocation("/admin/login")} className="text-brand-blue font-bold hover:underline ml-1">
+                Go to Admin Login
               </button>
             </p>
           </footer>

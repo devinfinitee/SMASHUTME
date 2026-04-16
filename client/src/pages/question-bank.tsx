@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,10 +20,8 @@ import {
   BookOpen,
   Database,
   Brain,
-  Clock3,
   ArrowRight,
-  Lightbulb,
-  LayoutGrid,
+  X,
 } from "lucide-react";
 
 const metrics = [
@@ -33,7 +31,7 @@ const metrics = [
   { title: "Upload Health", value: "Stable", icon: ShieldCheck, color: "#FBB20D", bg: "rgba(251, 178, 13, 0.15)" },
 ];
 
-const questionRows = [
+const INITIAL_QUESTION_ROWS = [
   {
     id: "PQ-2024-001",
     subject: "Mathematics",
@@ -77,12 +75,6 @@ const batchProgress = [
   { label: "Physics 2023 Batch", progress: 68, uploaded: "27 of 40 uploaded", recent: '"Which force acts on..."' },
 ];
 
-const statusTally = [
-  { label: "Validated", value: 284, color: "text-emerald-600" },
-  { label: "Needs Review", value: 38, color: "text-amber-600" },
-  { label: "Queued", value: 96, color: "text-slate-600" },
-];
-
 function MetricCard({ title, value, icon: Icon, color, bg }: { title: string; value: string; icon: typeof Database; color: string; bg: string }) {
   return (
     <div className="bg-white rounded-xl p-6 border-l-4 shadow-[0_20px_40px_rgba(11,28,48,0.05)]" style={{ borderLeftColor: color }}>
@@ -99,18 +91,188 @@ function MetricCard({ title, value, icon: Icon, color, bg }: { title: string; va
 
 function QuestionBank() {
   const [, setLocation] = useLocation();
+  const bulkFileInputRef = useRef<HTMLInputElement | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("Mathematics");
+  const [selectedSubject, setSelectedSubject] = useState("All Subjects");
+  const [selectedYear, setSelectedYear] = useState("All Years");
+  const [selectedTopic, setSelectedTopic] = useState("All Topics");
+  const [selectedStatus, setSelectedStatus] = useState("All Statuses");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("All Difficulty");
+  const [missingExplanationOnly, setMissingExplanationOnly] = useState(false);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [questionRows, setQuestionRows] = useState(INITIAL_QUESTION_ROWS);
+  const [activeQuestionId, setActiveQuestionId] = useState(INITIAL_QUESTION_ROWS[0]?.id ?? "");
+  const [syllabusTags, setSyllabusTags] = useState<string[]>(["Differentiation", "Calculus"]);
+  const [newTag, setNewTag] = useState("");
+  const [questionYear, setQuestionYear] = useState("2024");
+  const [questionBody, setQuestionBody] = useState("Find the derivative of f(x) = 3x^2 + 5x - 2.");
+  const [answerOptions, setAnswerOptions] = useState([
+    { label: "A", value: "6x + 5" },
+    { label: "B", value: "3x + 5" },
+    { label: "C", value: "6x - 2" },
+    { label: "D", value: "x^2 + 5" },
+  ]);
+  const [correctOption, setCorrectOption] = useState("A");
+  const [explanationBody, setExplanationBody] = useState("");
+  const [viewAllRows, setViewAllRows] = useState(false);
+  const [workflowMessage, setWorkflowMessage] = useState("");
+
+  const questionTopics = useMemo(() => {
+    const unique = Array.from(new Set(INITIAL_QUESTION_ROWS.map((row) => row.topic))).sort();
+    return ["All Topics", ...unique];
+  }, []);
+
+  const statuses = ["All Statuses", "Validated", "Needs Review", "Queued"];
+  const difficulties = ["All Difficulty", "Easy", "Medium", "Hard"];
+  const subjects = ["All Subjects", "Mathematics", "English Language", "Physics", "Biology", "Chemistry"];
+
+  function resetWorkflowMessage(message: string) {
+    setWorkflowMessage(message);
+    window.setTimeout(() => {
+      setWorkflowMessage("");
+    }, 2400);
+  }
+
+  function handleCreateSingleQuestion() {
+    const nextId = `PQ-${new Date().getFullYear()}-${String(questionRows.length + 1).padStart(3, "0")}`;
+    setActiveQuestionId(nextId);
+    setQuestionYear(String(new Date().getFullYear()));
+    setQuestionBody("");
+    setExplanationBody("");
+    setSyllabusTags([]);
+    setCorrectOption("A");
+    setAnswerOptions([
+      { label: "A", value: "" },
+      { label: "B", value: "" },
+      { label: "C", value: "" },
+      { label: "D", value: "" },
+    ]);
+    resetWorkflowMessage("New question draft opened.");
+  }
+
+  function handleBulkUpload(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    resetWorkflowMessage(`Queued ${files.length} file(s) for bulk import preview.`);
+  }
+
+  function handleAddTag() {
+    const trimmed = newTag.trim();
+    if (!trimmed) return;
+    if (!syllabusTags.includes(trimmed)) {
+      setSyllabusTags((prev) => [...prev, trimmed]);
+    }
+    setNewTag("");
+  }
+
+  function handleRemoveTag(tag: string) {
+    setSyllabusTags((prev) => prev.filter((item) => item !== tag));
+  }
+
+  function handleOptionChange(label: string, value: string) {
+    setAnswerOptions((prev) => prev.map((item) => (item.label === label ? { ...item, value } : item)));
+  }
+
+  function applyFormatting(token: "bold" | "italic" | "math" | "image") {
+    if (token === "bold") setQuestionBody((prev) => `${prev} **bold**`.trim());
+    if (token === "italic") setQuestionBody((prev) => `${prev} *italic*`.trim());
+    if (token === "math") setQuestionBody((prev) => `${prev} [latex]x^2[/latex]`.trim());
+    if (token === "image") setQuestionBody((prev) => `${prev} [image:url]`.trim());
+  }
+
+  function handleOpenRow(rowId: string) {
+    const row = questionRows.find((item) => item.id === rowId);
+    if (!row) return;
+    setActiveQuestionId(row.id);
+    setSelectedSubject(row.subject);
+    setQuestionYear(row.year);
+    setQuestionBody(row.prompt);
+    setSyllabusTags([row.topic]);
+    setExplanationBody(`Explain why the correct option for ${row.topic} is right, and why alternatives are not.`);
+    resetWorkflowMessage(`Loaded ${row.id} into editor.`);
+  }
+
+  function handleAutoSolve() {
+    setExplanationBody(
+      `Step 1: Differentiate each term independently.\nStep 2: d/dx(3x^2) = 6x, d/dx(5x) = 5, d/dx(-2) = 0.\nStep 3: Final answer is 6x + 5. Distractors miss either coefficient scaling or constant differentiation rules.`,
+    );
+    resetWorkflowMessage("Mock AI explanation generated.");
+  }
+
+  function handleSaveDraft() {
+    resetWorkflowMessage("Draft saved locally (preview mode).");
+  }
+
+  function handlePublish() {
+    const hasExplanation = explanationBody.trim().length > 0;
+    const hasBody = questionBody.trim().length > 0;
+    if (!hasBody) {
+      resetWorkflowMessage("Add a question body before publishing.");
+      return;
+    }
+
+    setQuestionRows((prev) => {
+      const nextSubject = selectedSubject === "All Subjects" ? "Mathematics" : selectedSubject;
+      const exists = prev.some((row) => row.id === activeQuestionId);
+      if (!exists) {
+        return [
+          {
+            id: activeQuestionId,
+            subject: nextSubject,
+            year: questionYear,
+            topic: syllabusTags[0] ?? "General",
+            prompt: questionBody,
+            status: hasExplanation ? "Validated" : "Needs Review",
+            difficulty: selectedDifficulty === "All Difficulty" ? "Medium" : selectedDifficulty,
+          },
+          ...prev,
+        ];
+      }
+
+      return prev.map((row) =>
+        row.id === activeQuestionId
+          ? {
+              ...row,
+              subject: nextSubject,
+              year: questionYear,
+              topic: syllabusTags[0] ?? row.topic,
+              prompt: questionBody,
+              status: hasExplanation ? "Validated" : "Needs Review",
+              difficulty: selectedDifficulty === "All Difficulty" ? row.difficulty : selectedDifficulty,
+            }
+          : row,
+      );
+    });
+    resetWorkflowMessage(hasExplanation ? "Question published to preview queue." : "Published with review flag (no explanation).");
+  }
+
+  function handleDiscard() {
+    const row = questionRows.find((item) => item.id === activeQuestionId);
+    if (!row) return;
+    setQuestionBody(row.prompt);
+    setExplanationBody("");
+    setSyllabusTags([row.topic]);
+    setQuestionYear(row.year);
+    resetWorkflowMessage("Editor reset to last loaded row.");
+  }
 
   const filteredRows = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return questionRows;
-    return questionRows.filter((row) =>
-      [row.id, row.subject, row.year, row.topic, row.prompt, row.status, row.difficulty].some((value) =>
-        value.toLowerCase().includes(query),
-      ),
-    );
-  }, [searchQuery]);
+    return questionRows
+      .filter((row) => (selectedSubject !== "All Subjects" ? row.subject === selectedSubject : true))
+      .filter((row) => (selectedYear !== "All Years" ? row.year === selectedYear : true))
+      .filter((row) => (selectedTopic !== "All Topics" ? row.topic === selectedTopic : true))
+      .filter((row) => (selectedStatus !== "All Statuses" ? row.status === selectedStatus : true))
+      .filter((row) => (selectedDifficulty !== "All Difficulty" ? row.difficulty === selectedDifficulty : true))
+      .filter((row) => (missingExplanationOnly ? row.status !== "Validated" : true))
+      .filter((row) => {
+        if (!query) return true;
+        return [row.id, row.subject, row.year, row.topic, row.prompt, row.status, row.difficulty].some((value) =>
+          value.toLowerCase().includes(query),
+        );
+      });
+  }, [missingExplanationOnly, questionRows, searchQuery, selectedDifficulty, selectedStatus, selectedSubject, selectedTopic, selectedYear]);
+
+  const visibleRows = viewAllRows ? filteredRows : filteredRows.slice(0, 4);
 
   return (
     <AdminShell searchPlaceholder="Search questions...">
@@ -145,22 +307,37 @@ function QuestionBank() {
         </div>
 
         <div className="bg-white rounded-xl p-6 md:p-8 shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100">
+          <input
+            ref={bulkFileInputRef}
+            type="file"
+            accept=".json,.csv,.xlsx"
+            multiple
+            className="hidden"
+            onChange={(e) => handleBulkUpload(e.target.files)}
+          />
+
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h3 className="text-lg font-black text-slate-900">Advanced Filter Bar</h3>
               <p className="text-sm text-slate-500">Narrow the bank by subject, year, topic tag, and review state.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="rounded-full border-slate-200 text-slate-700 hover:bg-slate-50">
+              <Button variant="outline" onClick={() => bulkFileInputRef.current?.click()} className="rounded-full border-slate-200 text-slate-700 hover:bg-slate-50">
                 <FileUp className="w-4 h-4 mr-2" />
                 Bulk Upload JSON/CSV
               </Button>
-              <Button className="rounded-full bg-[#2B0AFA] text-white hover:bg-[#2408CF]">
+              <Button onClick={handleCreateSingleQuestion} className="rounded-full bg-[#2B0AFA] text-white hover:bg-[#2408CF]">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Single Question
               </Button>
             </div>
           </div>
+
+          {workflowMessage ? (
+            <div className="mt-4 rounded-lg border border-[#1C00BC]/15 bg-[#1C00BC]/5 px-4 py-2 text-sm font-medium text-[#1C00BC]">
+              {workflowMessage}
+            </div>
+          ) : null}
 
           <div className="relative mt-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -180,16 +357,18 @@ function QuestionBank() {
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
               >
-                <option>Mathematics</option>
-                <option>English Language</option>
-                <option>Physics</option>
-                <option>Biology</option>
-                <option>Chemistry</option>
+                {subjects.map((subject) => (
+                  <option key={subject}>{subject}</option>
+                ))}
               </select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">JAMB Year</Label>
-              <select className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] font-body text-sm rounded-t-lg px-3 py-2">
+              <select
+                className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] font-body text-sm rounded-t-lg px-3 py-2"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
                 <option>All Years</option>
                 <option>2024</option>
                 <option>2023</option>
@@ -199,25 +378,65 @@ function QuestionBank() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Topic Tag</Label>
-              <select className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] font-body text-sm rounded-t-lg px-3 py-2">
-                <option>All Topics</option>
-                <option>Differentiation</option>
-                <option>Equilibrium</option>
-                <option>Grammar</option>
-                <option>Electric Fields</option>
+              <select
+                className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] font-body text-sm rounded-t-lg px-3 py-2"
+                value={selectedTopic}
+                onChange={(e) => setSelectedTopic(e.target.value)}
+              >
+                {questionTopics.map((topic) => (
+                  <option key={topic}>{topic}</option>
+                ))}
               </select>
             </div>
             <div className="flex flex-wrap items-center gap-4 pt-1 md:pt-5">
               <label className="flex items-center gap-3 cursor-pointer group">
-                <input className="w-5 h-5 rounded border-slate-300 text-[#1C00BC] focus:ring-[#1C00BC]/20" type="checkbox" />
+                <input
+                  className="w-5 h-5 rounded border-slate-300 text-[#1C00BC] focus:ring-[#1C00BC]/20"
+                  type="checkbox"
+                  checked={missingExplanationOnly}
+                  onChange={(e) => setMissingExplanationOnly(e.target.checked)}
+                />
                 <span className="text-sm font-medium text-slate-700 group-hover:text-[#1C00BC] transition-colors">Missing Explanation</span>
               </label>
-              <button className="ml-auto text-[#1C00BC] text-sm font-bold flex items-center gap-1 hover:underline">
+              <button
+                type="button"
+                onClick={() => setShowMoreFilters((prev) => !prev)}
+                className="ml-auto text-[#1C00BC] text-sm font-bold flex items-center gap-1 hover:underline"
+              >
                 <Filter className="w-4 h-4" />
-                More Filters
+                {showMoreFilters ? "Hide Filters" : "More Filters"}
               </button>
             </div>
           </div>
+
+          {showMoreFilters ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-slate-100">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Review Status</Label>
+                <select
+                  className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] font-body text-sm rounded-t-lg px-3 py-2"
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                >
+                  {statuses.map((status) => (
+                    <option key={status}>{status}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Difficulty</Label>
+                <select
+                  className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] font-body text-sm rounded-t-lg px-3 py-2"
+                  value={selectedDifficulty}
+                  onChange={(e) => setSelectedDifficulty(e.target.value)}
+                >
+                  {difficulties.map((difficulty) => (
+                    <option key={difficulty}>{difficulty}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-12 gap-6 md:gap-8 items-start">
@@ -231,26 +450,41 @@ function QuestionBank() {
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Subject Category</Label>
                   <div className="p-4 bg-slate-50 rounded-xl flex items-center justify-between border border-[#1C00BC]/20">
-                    <span className="font-semibold text-[#1C00BC]">{selectedSubject}</span>
+                    <span className="font-semibold text-[#1C00BC]">{selectedSubject === "All Subjects" ? "Mathematics" : selectedSubject}</span>
                     <CheckCircle2 className="w-4 h-4 text-[#1C00BC]" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">JAMB Year</Label>
-                  <Input className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] p-4 font-body font-bold rounded-t-xl" type="number" defaultValue={2024} />
+                  <Input
+                    className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] p-4 font-body font-bold rounded-t-xl"
+                    type="number"
+                    value={questionYear}
+                    onChange={(e) => setQuestionYear(e.target.value)}
+                  />
                 </div>
                 <div className="sm:col-span-2 space-y-2">
                   <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Syllabus Topic Tag</Label>
                   <div className="flex flex-wrap gap-2 p-4 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                    <span className="px-3 py-1 bg-[#1C00BC] text-white text-xs font-bold rounded-full flex items-center gap-1">
-                      Differentiation
-                      <span className="material-symbols-outlined text-[14px]">close</span>
-                    </span>
-                    <span className="px-3 py-1 bg-[#1C00BC] text-white text-xs font-bold rounded-full flex items-center gap-1">
-                      Calculus
-                      <span className="material-symbols-outlined text-[14px]">close</span>
-                    </span>
-                    <button className="px-3 py-1 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full hover:bg-slate-100 transition-colors">
+                    {syllabusTags.map((tag) => (
+                      <span key={tag} className="px-3 py-1 bg-[#1C00BC] text-white text-xs font-bold rounded-full inline-flex items-center gap-1">
+                        {tag}
+                        <button type="button" onClick={() => handleRemoveTag(tag)} aria-label={`Remove ${tag}`}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="New tag"
+                      className="h-8 w-32 bg-white border border-slate-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddTag}
+                      className="px-3 py-1 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full hover:bg-slate-100 transition-colors"
+                    >
                       + Add Topic
                     </button>
                   </div>
@@ -268,27 +502,39 @@ function QuestionBank() {
                   <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Question Body (Rich Text Supported)</Label>
                   <div className="border border-slate-200 rounded-xl overflow-hidden">
                     <div className="bg-slate-100 px-4 py-2 flex items-center gap-4 border-b border-slate-200">
-                      <button className="material-symbols-outlined text-lg text-slate-500 hover:text-[#1C00BC] transition-colors">format_bold</button>
-                      <button className="material-symbols-outlined text-lg text-slate-500 hover:text-[#1C00BC] transition-colors">format_italic</button>
-                      <button className="material-symbols-outlined text-lg text-slate-500 hover:text-[#1C00BC] transition-colors">functions</button>
-                      <button className="material-symbols-outlined text-lg text-slate-500 hover:text-[#1C00BC] transition-colors">image</button>
+                      <button type="button" onClick={() => applyFormatting("bold")} className="material-symbols-outlined text-lg text-slate-500 hover:text-[#1C00BC] transition-colors">format_bold</button>
+                      <button type="button" onClick={() => applyFormatting("italic")} className="material-symbols-outlined text-lg text-slate-500 hover:text-[#1C00BC] transition-colors">format_italic</button>
+                      <button type="button" onClick={() => applyFormatting("math")} className="material-symbols-outlined text-lg text-slate-500 hover:text-[#1C00BC] transition-colors">functions</button>
+                      <button type="button" onClick={() => applyFormatting("image")} className="material-symbols-outlined text-lg text-slate-500 hover:text-[#1C00BC] transition-colors">image</button>
                     </div>
-                    <textarea className="w-full bg-white p-4 border-0 focus:ring-0 font-body leading-relaxed" placeholder="e.g., Find the derivative of f(x) = 3x^2 + 5x - 2..." rows={4} defaultValue="Find the derivative of f(x) = 3x^2 + 5x - 2." />
+                    <textarea
+                      className="w-full bg-white p-4 border-0 focus:ring-0 font-body leading-relaxed"
+                      placeholder="e.g., Find the derivative of f(x) = 3x^2 + 5x - 2..."
+                      rows={4}
+                      value={questionBody}
+                      onChange={(e) => setQuestionBody(e.target.value)}
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
-                  {[
-                    ["A", "6x + 5"],
-                    ["B", "3x + 5"],
-                    ["C", "6x - 2"],
-                    ["D", "x^2 + 5"],
-                  ].map(([option, value]) => (
-                    <div key={option} className="flex items-center gap-4 group">
-                      <input className="w-6 h-6 text-[#1C00BC] focus:ring-[#1C00BC]/20 border-slate-300" name="correct_ans" type="radio" />
+                  {answerOptions.map((optionItem) => (
+                    <div key={optionItem.label} className="flex items-center gap-4 group">
+                      <input
+                        className="w-6 h-6 text-[#1C00BC] focus:ring-[#1C00BC]/20 border-slate-300"
+                        name="correct_ans"
+                        type="radio"
+                        checked={correctOption === optionItem.label}
+                        onChange={() => setCorrectOption(optionItem.label)}
+                      />
                       <div className="flex-1 flex items-center gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 focus-within:border-[#1C00BC] transition-colors">
-                        <span className="font-bold text-slate-500">{option}.</span>
-                        <input className="w-full bg-transparent border-0 focus:ring-0 p-0 font-medium" type="text" value={value} readOnly />
+                        <span className="font-bold text-slate-500">{optionItem.label}.</span>
+                        <input
+                          className="w-full bg-transparent border-0 focus:ring-0 p-0 font-medium"
+                          type="text"
+                          value={optionItem.value}
+                          onChange={(e) => handleOptionChange(optionItem.label, e.target.value)}
+                        />
                       </div>
                     </div>
                   ))}
@@ -303,7 +549,7 @@ function QuestionBank() {
                   <span className="w-8 h-8 rounded-full bg-[#1C00BC]/10 text-[#1C00BC] flex items-center justify-center font-bold">C</span>
                   <h3 className="font-black text-lg text-slate-900">Anti-Cram Explanation</h3>
                 </div>
-                <button className="w-full sm:w-auto px-4 py-2 bg-[#FBB100] text-[#281900] font-bold rounded-lg flex items-center justify-center gap-2 hover:scale-105 transition-transform shadow-md">
+                <button type="button" onClick={handleAutoSolve} className="w-full sm:w-auto px-4 py-2 bg-[#FBB100] text-[#281900] font-bold rounded-lg flex items-center justify-center gap-2 hover:scale-105 transition-transform shadow-md">
                   <Sparkles className="w-4 h-4" />
                   Auto-Solve via SmashAI
                 </button>
@@ -312,7 +558,13 @@ function QuestionBank() {
                 <p className="text-sm text-slate-600 leading-relaxed">
                   Provide a deep conceptual breakdown. Explain <span className="font-bold">why</span> the correct answer is right and why the distractors are wrong.
                 </p>
-                <textarea className="w-full bg-slate-50 border-0 border-b border-[#1C00BC]/30 focus:ring-0 focus:border-[#1C00BC] p-6 font-body text-sm leading-relaxed rounded-t-xl" placeholder="Step 1: Identify the function f(x)..." rows={6} />
+                <textarea
+                  className="w-full bg-slate-50 border-0 border-b border-[#1C00BC]/30 focus:ring-0 focus:border-[#1C00BC] p-6 font-body text-sm leading-relaxed rounded-t-xl"
+                  placeholder="Step 1: Identify the function f(x)..."
+                  rows={6}
+                  value={explanationBody}
+                  onChange={(e) => setExplanationBody(e.target.value)}
+                />
               </div>
             </div>
           </div>
@@ -323,34 +575,55 @@ function QuestionBank() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-600">Syllabus Mapping</span>
-                  <span className="text-emerald-600 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Validated
-                  </span>
+                  {syllabusTags.length > 0 ? (
+                    <span className="text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Validated
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 font-bold flex items-center gap-1">
+                      <CircleAlert className="w-4 h-4" />
+                      Missing
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-600">Option Balance</span>
-                  <span className="text-emerald-600 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Uniform
-                  </span>
+                  {answerOptions.every((option) => option.value.trim().length > 0) ? (
+                    <span className="text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Uniform
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 font-bold flex items-center gap-1">
+                      <CircleAlert className="w-4 h-4" />
+                      Incomplete
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-600">AI Explanation</span>
-                  <span className="text-amber-600 font-bold flex items-center gap-1">
-                    <CircleAlert className="w-4 h-4" />
-                    Needs Review
-                  </span>
+                  {explanationBody.trim().length > 0 ? (
+                    <span className="text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Ready
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 font-bold flex items-center gap-1">
+                      <CircleAlert className="w-4 h-4" />
+                      Needs Review
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-3">
-                <button className="w-full py-4 bg-[#1C00BC] text-white font-bold rounded-xl shadow-lg shadow-[#1C00BC]/30 hover:bg-[#2B0AFA] transition-all active:scale-[0.98]">
+                <button type="button" onClick={handlePublish} className="w-full py-4 bg-[#1C00BC] text-white font-bold rounded-xl shadow-lg shadow-[#1C00BC]/30 hover:bg-[#2B0AFA] transition-all active:scale-[0.98]">
                   Publish Question
                 </button>
-                <button className="w-full py-3 bg-slate-50 text-slate-900 font-semibold rounded-xl hover:bg-slate-100 transition-all">
+                <button type="button" onClick={handleSaveDraft} className="w-full py-3 bg-slate-50 text-slate-900 font-semibold rounded-xl hover:bg-slate-100 transition-all">
                   Save as Draft
                 </button>
-                <button className="w-full py-3 text-red-600 font-bold text-sm hover:underline">
+                <button type="button" onClick={handleDiscard} className="w-full py-3 text-red-600 font-bold text-sm hover:underline">
                   Discard Entry
                 </button>
               </div>
@@ -380,16 +653,6 @@ function QuestionBank() {
                 ))}
               </div>
             </div>
-
-            <div className="bg-[#FBB100] p-6 rounded-xl">
-              <div className="flex items-center gap-2 mb-3">
-                <Lightbulb className="w-4 h-4 text-[#281900]" />
-                <span className="font-black text-[#281900]">Pro-Tip</span>
-              </div>
-              <p className="text-sm text-[#5F4100] leading-snug">
-                Use the <code>[latex]</code> tag for complex formulas to ensure perfect rendering on the candidate's mobile app.
-              </p>
-            </div>
           </div>
         </div>
 
@@ -400,8 +663,8 @@ function QuestionBank() {
                 <h3 className="text-lg font-black text-slate-900">Review Queue</h3>
                 <p className="text-sm text-slate-500">Questions needing validation before publishing</p>
               </div>
-              <button className="text-sm font-bold text-[#1C00BC] flex items-center gap-1 hover:underline">
-                View all
+              <button type="button" onClick={() => setViewAllRows((prev) => !prev)} className="text-sm font-bold text-[#1C00BC] flex items-center gap-1 hover:underline">
+                {viewAllRows ? "Show less" : "View all"}
                 <Eye className="w-4 h-4" />
               </button>
             </div>
@@ -418,8 +681,8 @@ function QuestionBank() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredRows.map((row) => (
-                    <tr key={row.id} className="hover:bg-slate-50 transition-colors">
+                  {visibleRows.map((row) => (
+                    <tr key={row.id} className={`hover:bg-slate-50 transition-colors ${activeQuestionId === row.id ? "bg-[#1C00BC]/5" : ""}`}>
                       <td className="px-4 py-4 text-sm font-bold text-slate-900">{row.id}</td>
                       <td className="px-4 py-4 text-sm text-slate-600">{row.subject} <span className="text-xs text-slate-400">({row.year})</span></td>
                       <td className="px-4 py-4 text-sm text-slate-700">{row.topic}</td>
@@ -427,7 +690,7 @@ function QuestionBank() {
                         <Badge variant={row.status === "Validated" ? "default" : row.status === "Needs Review" ? "secondary" : "outline"}>{row.status}</Badge>
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <button className="inline-flex items-center gap-1 text-xs font-bold text-[#1C00BC] hover:underline">
+                        <button type="button" onClick={() => handleOpenRow(row.id)} className="inline-flex items-center gap-1 text-xs font-bold text-[#1C00BC] hover:underline">
                           <Eye className="w-4 h-4" />
                           Open
                         </button>
@@ -437,6 +700,10 @@ function QuestionBank() {
                 </tbody>
               </table>
             </div>
+
+            {visibleRows.length === 0 ? (
+              <p className="text-sm text-slate-500 py-4">No rows match the current filter selection.</p>
+            ) : null}
           </div>
 
           <div className="space-y-6">
@@ -452,7 +719,7 @@ function QuestionBank() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-900">Selected Subject</p>
-                    <p className="text-xs text-slate-500">{selectedSubject}</p>
+                    <p className="text-xs text-slate-500">{selectedSubject === "All Subjects" ? "Mathematics" : selectedSubject}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
@@ -472,42 +739,6 @@ function QuestionBank() {
                     <p className="text-sm font-bold text-slate-900">QA Gate</p>
                     <p className="text-xs text-slate-500">Explanation review and syllabus sync</p>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100">
-              <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-4 flex items-center gap-2">
-                <LayoutGrid className="w-4 h-4 text-[#1C00BC]" />
-                Status Summary
-              </h4>
-              <div className="space-y-3">
-                {statusTally.map((item) => (
-                  <div key={item.label} className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
-                    <span className="text-sm text-slate-700">{item.label}</span>
-                    <span className={`text-sm font-bold ${item.color}`}>{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100">
-              <h4 className="text-sm font-black uppercase tracking-widest text-slate-900 mb-4 flex items-center gap-2">
-                <Clock3 className="w-4 h-4 text-[#1C00BC]" />
-                Recent Activity
-              </h4>
-              <div className="space-y-4">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium text-slate-900">Bulk import validated</p>
-                  <p className="text-xs text-slate-500">Admin Unit 01 • 5 mins ago</p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium text-slate-900">Question explanation linked</p>
-                  <p className="text-xs text-slate-500">SmashAI • 12 mins ago</p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm font-medium text-slate-900">Queue review completed</p>
-                  <p className="text-xs text-slate-500">QA Team • 1 hour ago</p>
                 </div>
               </div>
             </div>

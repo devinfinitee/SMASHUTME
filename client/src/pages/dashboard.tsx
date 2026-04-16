@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubjects } from "@/hooks/use-subjects";
 import { SubjectCard } from "@/components/subject-card";
@@ -12,6 +13,17 @@ export default function Dashboard() {
   const { data: subjects, isLoading: subjectsLoading } = useSubjects();
   const [, setLocation] = useLocation();
 
+  useEffect(() => {
+    if (isAuthenticated && user?.role && ["admin", "super-admin"].includes(user.role)) {
+      setLocation("/admin/dashboard");
+      return;
+    }
+
+    if (isAuthenticated && user && user.onboardingCompleted === false) {
+      setLocation("/onboarding/target");
+    }
+  }, [isAuthenticated, setLocation, user]);
+
   if (authLoading) {
     return (
       <div className="h-screen w-full flex items-center justify-center">
@@ -22,6 +34,10 @@ export default function Dashboard() {
 
   if (!isAuthenticated) {
     return <Landing />;
+  }
+
+  if (user?.onboardingCompleted === false) {
+    return null;
   }
 
   return (

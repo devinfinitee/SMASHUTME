@@ -33,7 +33,7 @@ export function AdminShell({ children, searchPlaceholder = "Search..." }: AdminS
 
   const adminNavItems = [
     { label: "Dashboard", icon: TrendingUp, href: "/admin/dashboard" },
-    { label: "Syllabus Upload", icon: UploadCloud, href: "/admin/content-management" },
+    { label: "Topic Upload", icon: UploadCloud, href: "/admin/content-management" },
     { label: "Question Bank", icon: BookOpen, href: "/admin/question-bank" },
     { label: "Candidates", icon: Users, href: "/admin/candidates" },
     { label: "Support Desk", icon: Headphones, href: "/admin/support" },

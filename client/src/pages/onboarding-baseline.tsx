@@ -10,6 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
+import { saveOnboardingBaseline } from "@/lib/onboarding-api";
 
 type Option = {
   id: string;
@@ -48,17 +49,23 @@ export default function OnboardingBaseline() {
   const handleNext = () => {
     if (!completed) return;
 
+    const payload = { confidence, scoreBand, studyTime };
+
     localStorage.setItem(
       "smashutme-onboarding-baseline",
       JSON.stringify({
-        confidence,
-        scoreBand,
-        studyTime,
+        ...payload,
         updatedAt: new Date().toISOString(),
       }),
     );
 
-    setLocation("/onboarding/review");
+    saveOnboardingBaseline(payload)
+      .catch((saveError) => {
+        console.error("Failed to save baseline onboarding:", saveError);
+      })
+      .finally(() => {
+        setLocation("/onboarding/review");
+      });
   };
 
   const renderCard = (

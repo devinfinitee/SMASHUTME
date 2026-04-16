@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { HelpCircle, ArrowLeft, BarChart3, SkipForward, CheckCircle2 } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
+import { completeOnboarding } from "@/lib/onboarding-api";
 
 type StatusItem = {
   id: "save" | "filter" | "isolate";
@@ -30,7 +31,13 @@ export default function OnboardingReview() {
 
     const completeTimer = window.setTimeout(() => {
       localStorage.setItem("smashutme-onboarding-complete", "true");
-      setLocation("/dashboard");
+      completeOnboarding()
+        .catch((saveError) => {
+          console.error("Failed to complete onboarding:", saveError);
+        })
+        .finally(() => {
+          setLocation("/dashboard");
+        });
     }, 900);
 
     return () => window.clearTimeout(completeTimer);

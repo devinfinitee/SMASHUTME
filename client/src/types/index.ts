@@ -2,8 +2,17 @@
 
 export interface User {
   id: string;
+  userId?: string;
   name: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  role?: string;
+  status?: string;
+  authProvider?: string;
+  avatarUrl?: string | null;
+  onboardingCompleted?: boolean;
 }
 
 export interface Subject {

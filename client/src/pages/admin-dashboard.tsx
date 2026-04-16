@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   TrendingUp,
   Users,
@@ -13,6 +13,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AdminShell } from "@/components/admin-shell";
+import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 
 function StatCard({
@@ -50,6 +52,37 @@ function StatCard({
 }
 
 export default function AdminDashboard() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      setLocation("/admin/login");
+      return;
+    }
+
+    if (
+      !isLoading &&
+      isAuthenticated &&
+      user?.role &&
+      !["admin", "super-admin", "support", "analyst"].includes(user.role)
+    ) {
+      setLocation("/dashboard");
+    }
+  }, [isAuthenticated, isLoading, setLocation, user]);
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  if (user?.role && !["admin", "super-admin", "support", "analyst"].includes(user.role)) {
+    return null;
+  }
+
   return (
     <AdminShell>
       <div className="p-4 md:p-8 space-y-8 pb-8 lg:pb-28">

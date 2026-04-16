@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Building2, GraduationCap, Lightbulb, ArrowRight, ArrowLeft, SkipForward, BarChart3 } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
+import { saveOnboardingTarget } from "@/lib/onboarding-api";
 import {
   COMMON_NIGERIAN_COURSES,
   NIGERIAN_INSTITUTIONS,
@@ -39,17 +40,30 @@ export default function OnboardingTarget() {
       return;
     }
 
+    const payload = {
+      institution,
+      course,
+      suggestedSubjects: inferJambSubjectsForCourse(course),
+    } as const;
+
     localStorage.setItem(
       "smashutme-onboarding-target",
       JSON.stringify({
-        institution,
-        course,
-        suggestedSubjects: inferJambSubjectsForCourse(course),
+        ...payload,
         updatedAt: new Date().toISOString(),
       }),
     );
 
-    setLocation("/onboarding/subjects");
+    saveOnboardingTarget(payload)
+      .catch((saveError) => {
+        console.error("Failed to save target onboarding:", saveError);
+        setError(saveError instanceof Error ? saveError.message : "Unable to save target onboarding.");
+        throw saveError;
+      })
+      .then(() => {
+        setLocation("/onboarding/subjects");
+      })
+      .catch(() => undefined);
   };
 
   const handleSkip = () => {
