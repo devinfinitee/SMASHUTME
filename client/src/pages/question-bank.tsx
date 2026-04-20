@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { apiFetch } from "@/lib/api-fetch";
 import { AdminShell } from "@/components/admin-shell";
 import {
   CheckCircle2,
@@ -116,6 +117,7 @@ function QuestionBank() {
   const [explanationBody, setExplanationBody] = useState("");
   const [viewAllRows, setViewAllRows] = useState(false);
   const [workflowMessage, setWorkflowMessage] = useState("");
+  const [isUploadingBulk, setIsUploadingBulk] = useState(false);
 
   const questionTopics = useMemo(() => {
     const unique = Array.from(new Set(INITIAL_QUESTION_ROWS.map((row) => row.topic))).sort();
@@ -150,9 +152,146 @@ function QuestionBank() {
     resetWorkflowMessage("New question draft opened.");
   }
 
-  function handleBulkUpload(files: FileList | null) {
+  function splitCsvLine(line: string) {
+    const cells: string[] = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i += 1) {
+      const char = line[i];
+
+      if (char === '"') {
+        const nextChar = line[i + 1];
+        if (inQuotes && nextChar === '"') {
+          current += '"';
+          i += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (char === "," && !inQuotes) {
+        cells.push(current.trim());
+        current = "";
+        continue;
+      }
+
+      current += char;
+    }
+
+    cells.push(current.trim());
+    return cells;
+  }
+
+  function normalizeUploadItem(raw: Record<string, unknown>) {
+    return {
+      subject: String(raw.subject ?? raw.Subject ?? "").trim(),
+      topic: String(raw.topic ?? raw.Topic ?? "").trim(),
+      year: Number(raw.year ?? raw.examYear ?? raw.Year ?? raw.ExamYear ?? ""),
+      questionNumber: Number(raw.questionNumber ?? raw.QuestionNumber ?? ""),
+      question: String(raw.question ?? raw.content ?? raw.Question ?? raw.Content ?? "").trim(),
+      optionA: String(raw.optionA ?? raw.A ?? "").trim(),
+      optionB: String(raw.optionB ?? raw.B ?? "").trim(),
+      optionC: String(raw.optionC ?? raw.C ?? "").trim(),
+      optionD: String(raw.optionD ?? raw.D ?? "").trim(),
+      correctOption: String(raw.correctOption ?? raw.answer ?? raw.Answer ?? "").trim().toUpperCase(),
+      explanation: String(raw.explanation ?? raw.Explanation ?? "").trim(),
+      difficulty: String(raw.difficulty ?? raw.Difficulty ?? "medium").trim().toLowerCase(),
+      tags: raw.tags ?? raw.Tags ?? "",
+    };
+  }
+
+  async function parseUploadFile(file: File) {
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    const text = await file.text();
+
+    if (extension === "json") {
+      const parsed = JSON.parse(text);
+      if (!Array.isArray(parsed)) {
+        throw new Error(`${file.name}: JSON upload must be an array of question rows.`);
+      }
+      return parsed.map((row) => normalizeUploadItem(row as Record<string, unknown>));
+    }
+
+    if (extension === "csv") {
+      const rawLines = text
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      if (rawLines.length < 2) {
+        throw new Error(`${file.name}: CSV must include headers and at least one data row.`);
+      }
+
+      const headers = splitCsvLine(rawLines[0]).map((header) => header.toLowerCase());
+      const rows: Record<string, unknown>[] = [];
+
+      for (let i = 1; i < rawLines.length; i += 1) {
+        const cells = splitCsvLine(rawLines[i]);
+        const row: Record<string, unknown> = {};
+        headers.forEach((header, index) => {
+          row[header] = cells[index] ?? "";
+        });
+        rows.push(row);
+      }
+
+      return rows.map((row) => normalizeUploadItem(row));
+    }
+
+    throw new Error(`${file.name}: Unsupported file type. Use .json or .csv.`);
+  }
+
+  async function handleBulkUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
-    resetWorkflowMessage(`Queued ${files.length} file(s) for bulk import preview.`);
+
+    setIsUploadingBulk(true);
+
+    try {
+      const rowsByFile = await Promise.all(Array.from(files).map((file) => parseUploadFile(file)));
+      const uploadItems = rowsByFile.flat();
+
+      if (uploadItems.length === 0) {
+        resetWorkflowMessage("No upload rows found in selected file(s).");
+        return;
+      }
+
+      const response = await apiFetch("/api/admin/questions/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: uploadItems }),
+      });
+
+      const responseBody = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(responseBody?.error || "Bulk upload failed.");
+      }
+
+      const importedCount = Number(responseBody?.summary?.importedCount ?? 0);
+      const skippedCount = Number(responseBody?.summary?.skippedCount ?? 0);
+
+      const previewRows = uploadItems.slice(0, 8).map((row, index) => ({
+        id: `UPLOAD-${Date.now()}-${index}`,
+        subject: row.subject || "Unknown",
+        year: String(row.year || new Date().getFullYear()),
+        topic: row.topic || "General",
+        prompt: row.question || "Imported question",
+        status: "Queued",
+        difficulty: row.difficulty ? String(row.difficulty).replace(/^./, (char) => char.toUpperCase()) : "Medium",
+      }));
+
+      setQuestionRows((prev) => [...previewRows, ...prev]);
+      resetWorkflowMessage(`Upload complete: ${importedCount} imported, ${skippedCount} skipped.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Bulk upload failed.";
+      resetWorkflowMessage(message);
+    } finally {
+      setIsUploadingBulk(false);
+      if (bulkFileInputRef.current) {
+        bulkFileInputRef.current.value = "";
+      }
+    }
   }
 
   function handleAddTag() {
@@ -310,7 +449,7 @@ function QuestionBank() {
           <input
             ref={bulkFileInputRef}
             type="file"
-            accept=".json,.csv,.xlsx"
+            accept=".json,.csv"
             multiple
             className="hidden"
             onChange={(e) => handleBulkUpload(e.target.files)}
@@ -322,9 +461,14 @@ function QuestionBank() {
               <p className="text-sm text-slate-500">Narrow the bank by subject, year, topic tag, and review state.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={() => bulkFileInputRef.current?.click()} className="rounded-full border-slate-200 text-slate-700 hover:bg-slate-50">
+              <Button
+                variant="outline"
+                onClick={() => bulkFileInputRef.current?.click()}
+                className="rounded-full border-slate-200 text-slate-700 hover:bg-slate-50"
+                disabled={isUploadingBulk}
+              >
                 <FileUp className="w-4 h-4 mr-2" />
-                Bulk Upload JSON/CSV
+                {isUploadingBulk ? "Uploading..." : "Bulk Upload JSON/CSV"}
               </Button>
               <Button onClick={handleCreateSingleQuestion} className="rounded-full bg-[#2B0AFA] text-white hover:bg-[#2408CF]">
                 <Plus className="w-4 h-4 mr-2" />

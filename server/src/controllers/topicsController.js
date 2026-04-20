@@ -42,6 +42,14 @@ function normalizeText(value) {
   return String(value || "").trim();
 }
 
+function normalizeStringArray(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((item) => normalizeText(item)).filter(Boolean);
+}
+
 function mapYieldClass(yieldClass) {
   if (yieldClass === "foundational") {
     return { isHighYield: false, difficultyLevel: "easy" };
@@ -90,13 +98,36 @@ export const getTopicBySlug = (req, res) => {
 
 export const createTopic = async (req, res) => {
   try {
-    const { subject, heading, content, yieldClass, summary, commonTraps, order, status } = req.body || {};
+    const {
+      subject,
+      topicName,
+      heading,
+      highYieldSummary,
+      keyDefinitions,
+      simpleExplanation,
+      importantFormulasFacts,
+      aiExplanations,
+      yieldClass,
+      summary,
+      content,
+      commonTraps,
+      order,
+      status,
+    } = req.body || {};
     const fieldErrors = {};
 
     const normalizedSubject = normalizeText(subject);
-    const normalizedHeading = normalizeText(heading);
-    const normalizedContent = normalizeText(content);
+    const normalizedTopicName = normalizeText(topicName || heading);
+    const normalizedHighYieldSummary = normalizeText(highYieldSummary || summary);
+    const normalizedSimpleExplanation = normalizeText(simpleExplanation || content);
     const normalizedYieldClass = normalizeText(yieldClass);
+    const parsedKeyDefinitions = normalizeStringArray(keyDefinitions);
+    const parsedImportantFormulasFacts = normalizeStringArray(importantFormulasFacts);
+    const parsedAiExplanations = {
+      whyCorrectIsCorrect: normalizeText(aiExplanations?.whyCorrectIsCorrect),
+      whyOthersAreWrong: normalizeText(aiExplanations?.whyOthersAreWrong),
+      simpleBreakdown: normalizeText(aiExplanations?.simpleBreakdown),
+    };
 
     if (!normalizedSubject) {
       fieldErrors.subject = "Please select a subject.";
@@ -104,18 +135,42 @@ export const createTopic = async (req, res) => {
       fieldErrors.subject = "The selected subject is not supported.";
     }
 
-    if (!normalizedHeading) {
-      fieldErrors.heading = "Topic heading is required.";
-    } else if (normalizedHeading.length < 3) {
-      fieldErrors.heading = "Topic heading must be at least 3 characters.";
-    } else if (normalizedHeading.length > 180) {
-      fieldErrors.heading = "Topic heading must be 180 characters or less.";
+    if (!normalizedTopicName) {
+      fieldErrors.topicName = "Topic name is required.";
+    } else if (normalizedTopicName.length < 3) {
+      fieldErrors.topicName = "Topic name must be at least 3 characters.";
+    } else if (normalizedTopicName.length > 180) {
+      fieldErrors.topicName = "Topic name must be 180 characters or less.";
     }
 
-    if (!normalizedContent) {
-      fieldErrors.content = "Topic content is required.";
-    } else if (normalizedContent.length < 20) {
-      fieldErrors.content = "Topic content must be at least 20 characters.";
+    if (!normalizedHighYieldSummary) {
+      fieldErrors.highYieldSummary = "High-yield summary is required.";
+    }
+
+    if (parsedKeyDefinitions.length === 0) {
+      fieldErrors.keyDefinitions = "Add at least one key definition.";
+    }
+
+    if (!normalizedSimpleExplanation) {
+      fieldErrors.simpleExplanation = "Simple explanation is required.";
+    } else if (normalizedSimpleExplanation.length < 20) {
+      fieldErrors.simpleExplanation = "Simple explanation must be at least 20 characters.";
+    }
+
+    if (parsedImportantFormulasFacts.length === 0) {
+      fieldErrors.importantFormulasFacts = "Add at least one important formula or fact.";
+    }
+
+    if (!parsedAiExplanations.whyCorrectIsCorrect) {
+      fieldErrors.whyCorrectIsCorrect = "Why correct answer is correct is required.";
+    }
+
+    if (!parsedAiExplanations.whyOthersAreWrong) {
+      fieldErrors.whyOthersAreWrong = "Why others are wrong is required.";
+    }
+
+    if (!parsedAiExplanations.simpleBreakdown) {
+      fieldErrors.simpleBreakdown = "Simple breakdown is required.";
     }
 
     if (!["foundational", "high", "low"].includes(normalizedYieldClass)) {
@@ -127,31 +182,34 @@ export const createTopic = async (req, res) => {
       fieldErrors.order = "Topic order must be a non-negative number.";
     }
 
-    const parsedCommonTraps = Array.isArray(commonTraps)
-      ? commonTraps.map((item) => normalizeText(item)).filter(Boolean)
-      : [];
+    const parsedCommonTraps = normalizeStringArray(commonTraps);
 
     if (Object.keys(fieldErrors).length > 0) {
       return res.status(400).json(buildTopicErrorResponse(fieldErrors, "Please fix the highlighted topic fields."));
     }
 
     const subjectDoc = await getOrCreateSubject(normalizedSubject);
-    const slug = slugify(normalizedHeading);
+    const slug = slugify(normalizedTopicName);
 
     const existingTopic = await Topic.findOne({ subject: subjectDoc._id, slug });
     if (existingTopic) {
-      return res.status(409).json(buildTopicErrorResponse({ heading: "A topic with this heading already exists for the selected subject." }, "Topic already exists."));
+      return res.status(409).json(buildTopicErrorResponse({ topicName: "A topic with this name already exists for the selected subject." }, "Topic already exists."));
     }
 
     const yieldMapping = mapYieldClass(normalizedYieldClass);
-    const topicSummary = normalizeText(summary) || normalizedContent.slice(0, 180);
+    const topicSummary = normalizedHighYieldSummary || normalizedSimpleExplanation.slice(0, 180);
 
     const topic = await Topic.create({
       subject: subjectDoc._id,
-      name: normalizedHeading,
+      name: normalizedTopicName,
       slug,
       summary: topicSummary,
-      content: normalizedContent,
+      content: normalizedSimpleExplanation,
+      highYieldSummary: normalizedHighYieldSummary,
+      keyDefinitions: parsedKeyDefinitions,
+      simpleExplanation: normalizedSimpleExplanation,
+      importantFormulasFacts: parsedImportantFormulasFacts,
+      aiExplanations: parsedAiExplanations,
       commonTraps: parsedCommonTraps,
       order: parsedOrder,
       status: status && ["draft", "active", "archived"].includes(status) ? status : "active",

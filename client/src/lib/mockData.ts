@@ -197,6 +197,22 @@ export const mockTopics: Topic[] = [
     isHighYield: true,
     content: "# Lexis and Structure\n\nGrammar, usage, and sentence completion strategies.",
     summary: "High-frequency grammar and usage corrections",
+    highYieldSummary: "Lexis and Structure appears frequently in UTME and rewards precise grammar and word-choice skills.",
+    keyDefinitions: [
+      "Lexis: the vocabulary choices used in context.",
+      "Structure: the grammatical arrangement of words in a sentence.",
+    ],
+    simpleExplanation: "Lexis and Structure tests how correctly you can choose words and form grammatically sound sentences. Focus on agreement, tense consistency, modifiers, and punctuation cues.",
+    importantFormulasFacts: [
+      "Ensure subject-verb agreement first before checking other options.",
+      "Use context clues to resolve near-synonym confusion.",
+      "Eliminate options with tense mismatch or faulty parallel structure.",
+    ],
+    aiExplanations: {
+      whyCorrectIsCorrect: "The correct answer satisfies grammar rules and best fits sentence context and meaning.",
+      whyOthersAreWrong: "Distractors usually violate agreement, tense flow, idiomatic usage, or logical meaning.",
+      simpleBreakdown: "1) Find grammar anchor. 2) Check context meaning. 3) Remove structurally wrong options.",
+    },
   },
   {
     id: 17,
@@ -206,6 +222,21 @@ export const mockTopics: Topic[] = [
     isHighYield: true,
     content: "# Comprehension\n\nReading passages and extracting meaning accurately.",
     summary: "Inference and direct meaning questions",
+    highYieldSummary: "Comprehension tests speed, accuracy, and ability to infer meaning from passage context.",
+    keyDefinitions: [
+      "Main idea: the central message of the passage.",
+      "Inference: a conclusion drawn from implied information.",
+    ],
+    simpleExplanation: "Read the question first, then scan the relevant paragraph. Match options to evidence in the passage, not assumptions.",
+    importantFormulasFacts: [
+      "Answer must be supported by text evidence.",
+      "Eliminate extreme options not aligned with tone/context.",
+    ],
+    aiExplanations: {
+      whyCorrectIsCorrect: "The right option is directly stated or strongly implied by the exact lines in the passage.",
+      whyOthersAreWrong: "Wrong options add outside assumptions or distort the author's tone and scope.",
+      simpleBreakdown: "1) Locate evidence line. 2) Compare each option to text. 3) Pick the closest supported meaning.",
+    },
   },
   {
     id: 18,
@@ -215,6 +246,21 @@ export const mockTopics: Topic[] = [
     isHighYield: false,
     content: "# Oral English\n\nStress, intonation, and pronunciation patterns.",
     summary: "Pronunciation and stress placement questions",
+    highYieldSummary: "Oral English focuses on pronunciation patterns, stress placement, and intonation awareness.",
+    keyDefinitions: [
+      "Stress: emphasis placed on a syllable in a word.",
+      "Intonation: rise and fall of voice during speech.",
+    ],
+    simpleExplanation: "Learn common stress patterns and compare sound contrasts repeatedly. Practice with minimal pairs and spoken examples.",
+    importantFormulasFacts: [
+      "Nouns and verbs with similar spelling can have different stress patterns.",
+      "Context helps resolve intonation-based meaning in questions.",
+    ],
+    aiExplanations: {
+      whyCorrectIsCorrect: "The correct option follows accepted pronunciation/stress conventions used in standard English.",
+      whyOthersAreWrong: "Other options usually stress the wrong syllable or confuse similar sounding forms.",
+      simpleBreakdown: "1) Break word into syllables. 2) Apply known stress pattern. 3) Validate with pronunciation rule.",
+    },
   },
   {
     id: 19,

@@ -11,6 +11,15 @@ const topicSchema = new Schema(
     slug: { type: String, required: true, trim: true, lowercase: true, index: true },
     summary: { type: String, default: null },
     content: { type: String, default: null },
+    highYieldSummary: { type: String, default: null },
+    keyDefinitions: [{ type: String, trim: true }],
+    simpleExplanation: { type: String, default: null },
+    importantFormulasFacts: [{ type: String, trim: true }],
+    aiExplanations: {
+      whyCorrectIsCorrect: { type: String, default: null },
+      whyOthersAreWrong: { type: String, default: null },
+      simpleBreakdown: { type: String, default: null },
+    },
     isHighYield: { type: Boolean, default: false },
     commonTraps: [{ type: String, trim: true }],
     difficultyLevel: {

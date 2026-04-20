@@ -32,6 +32,15 @@ export interface Topic {
   content?: string;
   summary?: string;
   commonTraps?: string[];
+  highYieldSummary?: string;
+  keyDefinitions?: string[];
+  simpleExplanation?: string;
+  importantFormulasFacts?: string[];
+  aiExplanations?: {
+    whyCorrectIsCorrect?: string;
+    whyOthersAreWrong?: string;
+    simpleBreakdown?: string;
+  };
 }
 
 export interface Question {

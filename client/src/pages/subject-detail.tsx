@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useRoute } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
 import { useSubject } from "@/hooks/use-subjects";
 import { AppShell } from "@/components/app-shell";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,8 +31,13 @@ function getTopicProgress(index: number, isHighYield: boolean) {
 
 export default function SubjectDetail() {
   const [, params] = useRoute("/subjects/:slug");
+  const [, setLocation] = useLocation();
   const { data: subject, isLoading } = useSubject(params?.slug || "");
   const [showHighYieldOnly, setShowHighYieldOnly] = useState(false);
+
+  const openTopicStudy = (topicSlug: string) => {
+    setLocation(`/topics/${topicSlug}`);
+  };
 
   const topicRows = useMemo(() => {
     if (!subject?.topics) return [];
@@ -174,7 +179,13 @@ export default function SubjectDetail() {
                 <div className="flex items-start gap-3">
                   <div className={`w-1 h-10 rounded-full ${row.topic.isHighYield ? "bg-[#FAB100]" : "bg-[#2B0AFA]"}`}></div>
                   <div className="min-w-0">
-                    <h4 className="font-bold text-slate-900 text-sm">{row.topic.name}</h4>
+                    <button
+                      type="button"
+                      onClick={() => openTopicStudy(row.topic.slug)}
+                      className="font-bold text-slate-900 text-sm text-left hover:text-[#2B0AFA] transition-colors"
+                    >
+                      {row.topic.name}
+                    </button>
                     <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                       {row.topic.summary || "High impact concept for JAMB preparation."}
                     </p>
@@ -222,7 +233,19 @@ export default function SubjectDetail() {
 
           <div className="hidden md:block divide-y divide-slate-100">
             {topicRows.map((row, index) => (
-              <div key={row.topic.id} className="grid grid-cols-12 px-8 py-6 items-center hover:bg-slate-50/50 transition-colors group">
+              <div
+                key={row.topic.id}
+                className="grid grid-cols-12 px-8 py-6 items-center hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                onClick={() => openTopicStudy(row.topic.slug)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openTopicStudy(row.topic.slug);
+                  }
+                }}
+              >
                 <div className="col-span-5 flex items-start gap-4">
                   <div className={`w-1 h-12 rounded-full ${row.topic.isHighYield ? "bg-[#FAB100]" : "bg-[#2B0AFA]"}`}></div>
                   <div>
@@ -263,12 +286,22 @@ export default function SubjectDetail() {
 
                 <div className="col-span-2 flex justify-end gap-2">
                   <Link href={`/topics/${row.topic.slug}`}>
-                    <button className="p-2.5 rounded-lg bg-brand-blue/10 text-brand-blue hover:bg-brand-blue hover:text-white transition-all" title="Read Concept">
+                    <button
+                      type="button"
+                      onClick={(event) => event.stopPropagation()}
+                      className="p-2.5 rounded-lg bg-brand-blue/10 text-brand-blue hover:bg-brand-blue hover:text-white transition-all"
+                      title="Read Concept"
+                    >
                       <BookOpen className="w-4 h-4" />
                     </button>
                   </Link>
                   <Link href={`/topics/${row.topic.slug}/quiz`}>
-                    <button className="p-2.5 rounded-lg bg-[#FAB100]/20 text-[#8A5C00] hover:bg-[#FAB100] hover:text-[#1F1400] transition-all" title="Take Quiz">
+                    <button
+                      type="button"
+                      onClick={(event) => event.stopPropagation()}
+                      className="p-2.5 rounded-lg bg-[#FAB100]/20 text-[#8A5C00] hover:bg-[#FAB100] hover:text-[#1F1400] transition-all"
+                      title="Take Quiz"
+                    >
                       <CircleHelp className="w-4 h-4" />
                     </button>
                   </Link>

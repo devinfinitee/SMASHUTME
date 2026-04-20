@@ -1,94 +1,209 @@
 import { useEffect } from "react";
 import { Link, useRoute } from "wouter";
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from "react-markdown";
 import { useTopic, useUpdateProgress } from "@/hooks/use-topics";
 import { AiHelper } from "@/components/ai-helper";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, PlayCircle } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  Lightbulb,
+  Sparkles,
+} from "lucide-react";
 
 export default function TopicStudy() {
   const [, params] = useRoute("/topics/:slug");
   const { data: topic, isLoading } = useTopic(params?.slug || "");
   const { mutate: updateProgress } = useUpdateProgress();
-  
-  // Track reading progress roughly by scroll or time?
-  // For MVP, just mark in-progress on load
+
   useEffect(() => {
     if (topic && topic.id) {
       updateProgress({ topicId: topic.id, status: "in_progress" });
     }
-  }, [topic?.id]);
+  }, [topic, updateProgress]);
+
+  const subjectName = topic?.subject?.name || "Subject";
+  const subjectSlug = topic?.subject?.slug || "";
 
   if (isLoading) {
     return (
-      <AppShell searchPlaceholder="Search topic notes...">
-        <div className="max-w-3xl mx-auto space-y-8 animate-pulse p-4 md:p-8">
-          <div className="h-8 bg-muted rounded w-1/4"></div>
-          <div className="h-12 bg-muted rounded w-3/4"></div>
-          <div className="space-y-4">
-            <div className="h-4 bg-muted rounded w-full"></div>
-            <div className="h-4 bg-muted rounded w-full"></div>
-            <div className="h-4 bg-muted rounded w-5/6"></div>
+      <AppShell searchPlaceholder="Search topics, concepts, or formulas...">
+        <div className="p-6 md:p-10">
+          <div className="mx-auto max-w-4xl space-y-8 animate-pulse">
+            <div className="h-8 bg-slate-200 rounded w-1/4" />
+            <div className="h-40 bg-slate-200 rounded-3xl" />
+            <div className="h-72 bg-slate-200 rounded-3xl" />
           </div>
         </div>
       </AppShell>
     );
   }
 
-  if (!topic) return <div>Topic not found</div>;
+  if (!topic) {
+    return (
+      <AppShell searchPlaceholder="Search topics, concepts, or formulas...">
+        <div className="p-6 md:p-10">
+          <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_20px_40px_rgba(11,28,48,0.05)]">
+            <h1 className="text-2xl font-black text-slate-900">Topic not found</h1>
+            <p className="mt-2 text-slate-600">The selected topic could not be loaded.</p>
+            <Link href={subjectSlug ? `/subjects/${subjectSlug}` : "/dashboard"}>
+              <Button className="mt-6 bg-brand-blue text-white hover:bg-brand-blue/90">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const masteryLevel = topic.isHighYield ? 72 : 58;
+  const highYieldSummary = topic.highYieldSummary || topic.summary || `Focus here first. ${topic.name} is commonly tested in UTME.`;
+  const keyDefinitions = topic.keyDefinitions && topic.keyDefinitions.length > 0
+    ? topic.keyDefinitions
+    : ["Key terms for this topic will be listed here."];
+  const simpleExplanationText = topic.simpleExplanation || topic.content || "No simple explanation is available for this topic yet.";
+  const importantFormulasFacts = topic.importantFormulasFacts && topic.importantFormulasFacts.length > 0
+    ? topic.importantFormulasFacts
+    : ["No important formulas/facts have been added yet."];
+  const aiExplanation = {
+    whyCorrectIsCorrect:
+      topic.aiExplanations?.whyCorrectIsCorrect ||
+      "The correct option follows directly from the key concept and tested rule for this topic.",
+    whyOthersAreWrong:
+      topic.aiExplanations?.whyOthersAreWrong ||
+      "Other options usually miss a definition, rule condition, or required step in the reasoning.",
+    simpleBreakdown:
+      topic.aiExplanations?.simpleBreakdown ||
+      "1) Identify the tested concept. 2) Apply the right rule. 3) Eliminate distractors quickly.",
+  };
 
   return (
-    <AppShell searchPlaceholder="Search topic notes...">
-      <div className="relative max-w-3xl mx-auto pb-24 p-4 md:p-8">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-brand-blue/10 to-transparent blur-3xl" />
-      {/* Navigation Header */}
-      <div className="mb-8 rounded-3xl border border-slate-200/80 bg-white/90 p-5 md:p-8 shadow-[0_20px_40px_rgba(11,28,48,0.05)] backdrop-blur">
-        <Link href={`/subjects/${topic.subject.slug}`}>
-          <Button variant="ghost" className="pl-0 hover:bg-transparent text-[#2B0AFA] hover:text-[#2408CF] mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to {topic.subject.name}
-          </Button>
-        </Link>
-        <h1 className="text-3xl md:text-4xl font-display font-bold text-slate-900 mb-4">
-          {topic.name}
-        </h1>
-        {topic.isHighYield && (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#FAB100]/20 text-[#8A5C00] border border-[#FAB100]/40">
-            High Yield Topic
-          </span>
-        )}
-        <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FAB100]/20 border border-[#FAB100]/40">
-          <span className="w-2 h-2 rounded-full bg-[#FAB100]" />
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#8A5C00]">Secondary Focus Mode</span>
-        </div>
-      </div>
+    <AppShell searchPlaceholder="Search topics, concepts, or formulas...">
+      <main className="pb-24 px-4 sm:px-6 lg:px-8">
+        <div className="reading-canvas mx-auto max-w-4xl pt-2 md:pt-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-3 mb-2">
+                <span className="bg-primary-container text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-widest">
+                  {subjectName.toUpperCase()}
+                </span>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container-high border border-outline-variant/15">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-[10px] font-bold uppercase tracking-tighter text-on-surface">
+                    Exam Weightage: <span className="text-primary-container font-extrabold">{topic.isHighYield ? "15%" : "8%"}</span>
+                  </span>
+                </div>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-on-surface tracking-tight">{topic.name}</h1>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold uppercase text-on-surface-variant tracking-widest">Mastery Level</p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-32 h-1.5 bg-surface-container rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-primary to-primary-container" style={{ width: `${masteryLevel}%` }} />
+                </div>
+                <span className="text-xs font-bold text-primary">{masteryLevel}%</span>
+              </div>
+            </div>
+          </div>
 
-      {/* Content */}
-      <div className="mb-12 overflow-hidden rounded-3xl border border-slate-200/80 bg-white/90 shadow-[0_20px_40px_rgba(11,28,48,0.05)] backdrop-blur">
-        <div className="prose prose-lg dark:prose-invert max-w-none p-5 md:p-8">
-          <ReactMarkdown>
-            {topic.content || "No content available for this topic yet."}
-          </ReactMarkdown>
-        </div>
-      </div>
+          <article className="bg-surface-container-lowest clinical-shadow rounded-3xl border border-outline-variant/15 overflow-hidden">
+            <div className="px-5 sm:px-8 md:px-12 py-8 md:py-16 space-y-8">
+              <section className="max-w-none">
+                <h2 className="text-2xl font-bold text-on-surface mb-4">High-Yield Summary</h2>
+                <p className="text-on-surface-variant leading-relaxed text-lg">{highYieldSummary}</p>
+              </section>
 
-      {/* Action Footer */}
-      <div className="rounded-3xl border border-[#2B0AFA]/15 bg-gradient-to-br from-white to-slate-50 p-8 shadow-[0_20px_40px_rgba(11,28,48,0.05)] flex flex-col md:flex-row items-center justify-between gap-6">
-        <div>
-          <h3 className="text-lg font-bold mb-1">Ready to test your knowledge?</h3>
-          <p className="text-muted-foreground text-sm">Take a quick quiz to cement what you've learned.</p>
+              <section>
+                <div className="bg-tertiary-fixed/20 p-6 border-l-4 border-tertiary-fixed-dim rounded-r-lg relative my-2">
+                  <div className="absolute -top-3 -left-3 bg-tertiary-fixed-dim text-white w-7 h-7 flex items-center justify-center rounded-full shadow-sm">
+                    <Lightbulb className="h-4 w-4" />
+                  </div>
+                  <p className="text-on-tertiary-fixed font-semibold italic">
+                    {topic.isHighYield
+                      ? `High-Yield: ${topic.name} is a priority topic for UTME preparation.`
+                      : "Build understanding from the core definitions before moving to advanced drills."}
+                  </p>
+                </div>
+              </section>
+
+              <section>
+                <div className="border-l-4 border-primary-container pl-6 py-2 mb-6">
+                  <h3 className="text-lg font-bold text-on-surface uppercase tracking-tight">Key Definitions</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {keyDefinitions.map((definition, index) => (
+                    <div key={`${definition}-${index}`} className="p-5 bg-surface-container-low rounded-lg">
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-widest block mb-2">Definition {index + 1}</span>
+                      <p className="text-sm font-medium text-on-surface">{definition}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <h3 className="text-xl font-bold text-on-surface mb-3">Simple Explanation</h3>
+                <div className="text-on-surface-variant leading-relaxed text-base bg-slate-50 border border-slate-200 rounded-xl p-5">
+                  <ReactMarkdown>{simpleExplanationText}</ReactMarkdown>
+                </div>
+              </section>
+
+              <section className="bg-on-surface text-surface-container-lowest p-8 rounded-xl">
+                <div className="flex items-center gap-3 mb-4">
+                  <BookOpen className="w-4 h-4 text-tertiary-fixed-dim" />
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-surface-variant">Important Formulas / Facts</h3>
+                </div>
+                <ul className="space-y-3">
+                  {importantFormulasFacts.map((fact, index) => (
+                    <li key={`${fact}-${index}`} className="text-surface-variant text-sm leading-relaxed list-disc ml-5">
+                      {fact}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="pt-4">
+                <h2 className="text-2xl font-bold text-on-surface mb-4">AI Explanations</h2>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="rounded-xl border border-brand-blue/20 bg-brand-blue/5 p-5">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-brand-blue mb-2">Why Correct Answer Is Correct</p>
+                    <p className="text-sm text-slate-700 leading-relaxed">{aiExplanation.whyCorrectIsCorrect}</p>
+                  </div>
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-amber-700 mb-2">Why Others Are Wrong</p>
+                    <p className="text-sm text-slate-700 leading-relaxed">{aiExplanation.whyOthersAreWrong}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white p-5">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-slate-700 mb-2">Simple Breakdown</p>
+                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{aiExplanation.simpleBreakdown}</p>
+                  </div>
+                </div>
+              </section>
+            </div>
+
+            <div className="bg-surface-container px-5 sm:px-8 md:px-12 py-5 md:py-6 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
+              <Link href={subjectSlug ? `/subjects/${subjectSlug}` : "/dashboard"}>
+                <button className="flex items-center justify-center gap-2 text-on-surface-variant font-bold text-xs uppercase tracking-widest hover:text-primary transition-colors">
+                  <ArrowLeft className="w-4 h-4" />
+                  Previous Topic
+                </button>
+              </Link>
+              <Link href={`/topics/${topic.slug}/quiz`}>
+                <button className="flex items-center justify-center gap-2 bg-primary text-on-primary px-6 py-3 rounded shadow-sm font-bold text-xs uppercase tracking-widest hover:bg-primary-container transition-all active:scale-95">
+                  Next: Take Quiz
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </Link>
+            </div>
+          </article>
         </div>
-        <Link href={`/topics/${topic.slug}/quiz`}>
-          <Button size="lg" className="w-full md:w-auto rounded-full px-8 bg-[#2B0AFA] hover:bg-[#2408CF] text-white shadow-lg shadow-[#2B0AFA]/25 border border-[#FAB100]/40">
-            Take Quiz
-            <PlayCircle className="w-5 h-5 ml-2" />
-          </Button>
-        </Link>
-      </div>
+      </main>
 
       <AiHelper topicContext={`Topic: ${topic.name}. Content: ${topic.content}`} />
-      </div>
     </AppShell>
   );
 }

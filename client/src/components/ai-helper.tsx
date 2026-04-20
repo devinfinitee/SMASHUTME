@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, X, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,

@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSubjects } from "@/hooks/use-subjects";
+import { apiFetch } from "@/lib/api-fetch";
 import {
   ArrowRight,
   BookOpen,
@@ -33,13 +34,27 @@ type ExamQuestion = {
   explanation: string;
 };
 
-type ExamConfig = {
-  mode: CbtMode;
-  questionCount: number;
-  durationMinutes: number;
-  subjectSlug?: string;
-  subjectLabel: string;
-  highYieldOnly: boolean;
+type SubjectScore = {
+  subject: string;
+  score: number;
+};
+
+type QuestionResult = {
+  questionId: string;
+  isCorrect: boolean;
+  selectedOption: string | null;
+  correctOption: string;
+};
+
+type SessionAnalytics = {
+  score: number;
+  totalQuestions: number;
+  accuracy: number;
+  paceSeconds: number;
+  percentileLabel: string;
+  projectedAggregate: number;
+  subjectBreakdown: SubjectScore[];
+  questionResults: QuestionResult[];
 };
 
 const STEP_LABELS = [
@@ -52,92 +67,10 @@ const STEP_LABELS = [
 const DRILL_QUESTION_COUNTS = [10, 20, 30];
 const DRILL_DURATIONS = [10, 20, 30, 45];
 
-const BASE_QUESTIONS: Omit<ExamQuestion, "id" | "subject" | "topic">[] = [
-  {
-    prompt: "Which option best explains why repeated practice improves speed in CBT exams?",
-    options: {
-      A: "It reduces the need for reading questions",
-      B: "It strengthens retrieval and pattern recognition",
-      C: "It guarantees all questions will repeat",
-      D: "It removes the need for time management",
-    },
-    correctOption: "B",
-    explanation: "Practice improves retrieval fluency and helps you recognize common question structures faster.",
-  },
-  {
-    prompt: "When a question seems unfamiliar, what is the best first action?",
-    options: {
-      A: "Panic and guess immediately",
-      B: "Skip all hard questions permanently",
-      C: "Break it into known concepts and eliminate options",
-      D: "Spend 5 minutes on one question",
-    },
-    correctOption: "C",
-    explanation: "Decomposing the problem and eliminating weak options increases your chance of selecting the best answer.",
-  },
-  {
-    prompt: "In a timed CBT exam, the best pacing strategy is to:",
-    options: {
-      A: "Use equal time for all questions no matter difficulty",
-      B: "Spend most time on your strongest topics only",
-      C: "Set time checkpoints and move when stuck",
-      D: "Answer only questions you are 100% sure of",
-    },
-    correctOption: "C",
-    explanation: "Checkpoint pacing protects your total score and prevents one hard question from consuming all your time.",
-  },
-  {
-    prompt: "High-yield topics are important because they:",
-    options: {
-      A: "Appear frequently and influence total score",
-      B: "Are always easier than other topics",
-      C: "Never require deep understanding",
-      D: "Can replace all other preparation",
-    },
-    correctOption: "A",
-    explanation: "They often recur and carry strong score impact, so mastering them gives efficient performance gains.",
-  },
-  {
-    prompt: "A good post-exam review should prioritize:",
-    options: {
-      A: "Only celebrating high scores",
-      B: "Analyzing wrong answers and timing leaks",
-      C: "Ignoring questions answered correctly",
-      D: "Memorizing answer letters only",
-    },
-    correctOption: "B",
-    explanation: "Error pattern analysis and time diagnostics give the clearest roadmap for improvement.",
-  },
-];
-
 function formatTime(seconds: number) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-}
-
-function buildExamQuestions(config: ExamConfig, topicPool: { topicName: string; subjectName: string }[]): ExamQuestion[] {
-  const questions: ExamQuestion[] = [];
-
-  for (let i = 0; i < config.questionCount; i += 1) {
-    const base = BASE_QUESTIONS[i % BASE_QUESTIONS.length];
-    const poolItem = topicPool[i % topicPool.length] ?? {
-      topicName: config.mode === "mock" ? "Mixed Practice" : "Core Concept",
-      subjectName: config.subjectLabel,
-    };
-
-    questions.push({
-      id: `${config.mode}-${poolItem.subjectName}-${poolItem.topicName}-${i + 1}`,
-      subject: poolItem.subjectName,
-      topic: poolItem.topicName,
-      prompt: `${base.prompt} (${poolItem.topicName})`,
-      options: base.options,
-      correctOption: base.correctOption,
-      explanation: base.explanation,
-    });
-  }
-
-  return questions;
 }
 
 export default function CbtPage() {
@@ -149,6 +82,12 @@ export default function CbtPage() {
   const [questionCount, setQuestionCount] = useState(20);
   const [durationMinutes, setDurationMinutes] = useState(20);
   const [highYieldOnly, setHighYieldOnly] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const [isStartingSession, setIsStartingSession] = useState(false);
+  const [isSubmittingSession, setIsSubmittingSession] = useState(false);
+  const [engineError, setEngineError] = useState<string | null>(null);
+  const [sessionAnalytics, setSessionAnalytics] = useState<SessionAnalytics | null>(null);
 
   const [examQuestions, setExamQuestions] = useState<ExamQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -169,7 +108,6 @@ export default function CbtPage() {
   const currentSelectedOption = currentQuestion ? answers[currentQuestion.id] : undefined;
   const progress = examQuestions.length > 0 ? ((currentQuestionIndex + 1) / examQuestions.length) * 100 : 0;
   const answeredCount = examQuestions.filter((question) => Boolean(answers[question.id])).length;
-  const remainingSeconds = Math.max(0, (durationMinutes * 60) - (answeredCount * 40));
 
   const questionSubjects = useMemo(() => {
     const unique = new Set(examQuestions.map((question) => question.subject));
@@ -182,12 +120,16 @@ export default function CbtPage() {
     }, 0);
   }, [answers, examQuestions]);
 
-  const accuracy = examQuestions.length > 0 ? Math.round((correctCount / examQuestions.length) * 100) : 0;
-  const paceSeconds = examQuestions.length > 0 ? Math.max(20, Math.round((durationMinutes * 60) / examQuestions.length)) : 0;
-  const percentileLabel = accuracy >= 85 ? "Top 3%" : accuracy >= 70 ? "Top 8%" : "Top 20%";
-  const projectedAggregate = Math.round(220 + (accuracy / 100) * 120);
+  const accuracy = sessionAnalytics?.accuracy ?? (examQuestions.length > 0 ? Math.round((correctCount / examQuestions.length) * 100) : 0);
+  const paceSeconds = sessionAnalytics?.paceSeconds ?? (examQuestions.length > 0 ? Math.max(20, Math.round((durationMinutes * 60) / examQuestions.length)) : 0);
+  const percentileLabel = sessionAnalytics?.percentileLabel ?? (accuracy >= 85 ? "Top 3%" : accuracy >= 70 ? "Top 8%" : "Top 20%");
+  const projectedAggregate = sessionAnalytics?.projectedAggregate ?? Math.round(220 + (accuracy / 100) * 120);
 
   const subjectBreakdown = useMemo(() => {
+    if (sessionAnalytics?.subjectBreakdown?.length) {
+      return sessionAnalytics.subjectBreakdown;
+    }
+
     const grouped = new Map<string, { total: number; correct: number }>();
 
     examQuestions.forEach((question) => {
@@ -212,77 +154,167 @@ export default function CbtPage() {
       { subject: "Chemistry", score: 68 },
       { subject: "Physics", score: 79 },
     ];
-  }, [answers, examQuestions]);
+  }, [answers, examQuestions, sessionAnalytics]);
+
+  useEffect(() => {
+    if (step !== 3 || isSubmittingSession) {
+      return undefined;
+    }
+
+    if (remainingSeconds <= 0) {
+      return undefined;
+    }
+
+    const timerId = window.setInterval(() => {
+      setRemainingSeconds((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => window.clearInterval(timerId);
+  }, [step, isSubmittingSession, remainingSeconds]);
 
   const startDrillConfigurator = () => {
+    setEngineError(null);
     setMode("drill");
     setStep(2);
   };
 
-  const startMiniMock = () => {
-    const mockConfig: ExamConfig = {
+  async function initializeSession(payload: {
+    mode: CbtMode;
+    questionCount: number;
+    durationMinutes: number;
+    highYieldOnly: boolean;
+    subjectSlug?: string;
+    subjectName?: string;
+  }) {
+    setEngineError(null);
+    setIsStartingSession(true);
+
+    try {
+      const response = await apiFetch("/api/quiz/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const responseBody = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(responseBody?.error || "Unable to start CBT session.");
+      }
+
+      const questions = Array.isArray(responseBody?.questions)
+        ? responseBody.questions.map((question: ExamQuestion) => ({
+            id: question.id,
+            subject: question.subject,
+            topic: question.topic,
+            prompt: question.prompt,
+            options: question.options,
+            correctOption: question.correctOption,
+            explanation: question.explanation || "No explanation provided.",
+          }))
+        : [];
+
+      if (!questions.length) {
+        throw new Error("No CBT questions were available for this configuration.");
+      }
+
+      setSessionId(responseBody.sessionId || null);
+      setMode(payload.mode);
+      setQuestionCount(payload.questionCount);
+      setDurationMinutes(payload.durationMinutes);
+      setHighYieldOnly(payload.highYieldOnly);
+      setExamQuestions(questions);
+      setAnswers({});
+      setFlaggedQuestionIds({});
+      setVisitedQuestionIds(questions[0] ? { [questions[0].id]: true } : {});
+      setCurrentQuestionIndex(0);
+      setSessionAnalytics(null);
+      setRemainingSeconds(payload.durationMinutes * 60);
+      setStep(3);
+    } catch (error) {
+      setEngineError(error instanceof Error ? error.message : "Unable to start CBT session.");
+    } finally {
+      setIsStartingSession(false);
+    }
+  }
+
+  const startMiniMock = async () => {
+    await initializeSession({
       mode: "mock",
       questionCount: 20,
       durationMinutes: 15,
-      subjectLabel: "Mixed Subjects",
       highYieldOnly: true,
-    };
-
-    const topicPool =
-      preferredSubjects.flatMap((subject) =>
-        (subject.topics ?? []).map((topic) => ({
-          topicName: topic.name,
-          subjectName: subject.name,
-        })),
-      ) || [];
-
-    const questions = buildExamQuestions(mockConfig, topicPool.length > 0 ? topicPool : [{ topicName: "General", subjectName: "Mixed" }]);
-
-    setMode("mock");
-    setQuestionCount(mockConfig.questionCount);
-    setDurationMinutes(mockConfig.durationMinutes);
-    setHighYieldOnly(true);
-    setExamQuestions(questions);
-    setAnswers({});
-    setFlaggedQuestionIds({});
-    setVisitedQuestionIds(questions[0] ? { [questions[0].id]: true } : {});
-    setCurrentQuestionIndex(0);
-    setStep(3);
+    });
   };
 
-  const launchDrillExam = () => {
-    if (!selectedSubject) return;
+  const launchDrillExam = async () => {
+    if (!selectedSubject) {
+      setEngineError("Please choose a subject before starting a drill.");
+      return;
+    }
 
-    const config: ExamConfig = {
+    await initializeSession({
       mode: "drill",
       questionCount,
       durationMinutes,
-      subjectSlug: selectedSubject.slug,
-      subjectLabel: selectedSubject.name,
       highYieldOnly,
-    };
-
-    const topicSource = (selectedSubject.topics ?? []).filter((topic) => (highYieldOnly ? topic.isHighYield : true));
-    const topicsToUse = topicSource.length > 0 ? topicSource : selectedSubject.topics ?? [];
-
-    const topicPool = topicsToUse.map((topic) => ({
-      topicName: topic.name,
+      subjectSlug: selectedSubject.slug,
       subjectName: selectedSubject.name,
-    }));
-
-    const questions = buildExamQuestions(config, topicPool.length > 0 ? topicPool : [{ topicName: "Core Concepts", subjectName: selectedSubject.name }]);
-
-    setExamQuestions(questions);
-    setAnswers({});
-    setFlaggedQuestionIds({});
-    setVisitedQuestionIds(questions[0] ? { [questions[0].id]: true } : {});
-    setCurrentQuestionIndex(0);
-    setStep(3);
+    });
   };
 
-  const submitExam = () => {
-    setStep(4);
+  const submitExam = async () => {
+    if (!sessionId) {
+      setEngineError("No active CBT session was found.");
+      return;
+    }
+
+    if (isSubmittingSession) {
+      return;
+    }
+
+    setIsSubmittingSession(true);
+
+    try {
+      const response = await apiFetch(`/api/quiz/sessions/${sessionId}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          answers,
+          flaggedQuestionIds: Object.keys(flaggedQuestionIds).filter((key) => flaggedQuestionIds[key]),
+          timeSpentSeconds: Math.max(0, (durationMinutes * 60) - remainingSeconds),
+        }),
+      });
+
+      const responseBody = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(responseBody?.error || "Unable to submit CBT session.");
+      }
+
+      setSessionAnalytics({
+        score: responseBody.score || 0,
+        totalQuestions: responseBody.totalQuestions || examQuestions.length,
+        accuracy: responseBody.accuracy || 0,
+        paceSeconds: responseBody.paceSeconds || 0,
+        percentileLabel: responseBody.percentileLabel || "Top 20%",
+        projectedAggregate: responseBody.projectedAggregate || 220,
+        subjectBreakdown: responseBody.subjectBreakdown || [],
+        questionResults: responseBody.questionResults || [],
+      });
+      setStep(4);
+    } catch (error) {
+      setEngineError(error instanceof Error ? error.message : "Unable to submit CBT session.");
+    } finally {
+      setIsSubmittingSession(false);
+    }
   };
+
+  useEffect(() => {
+    if (step === 3 && remainingSeconds === 0 && !isSubmittingSession) {
+      void submitExam();
+    }
+  }, [step, remainingSeconds, isSubmittingSession]);
 
   const goNext = () => {
     if (!currentQuestion) return;
@@ -298,7 +330,7 @@ export default function CbtPage() {
       return;
     }
 
-    submitExam();
+    void submitExam();
   };
 
   const goPrevious = () => {
@@ -321,7 +353,7 @@ export default function CbtPage() {
       }
       return;
     }
-    submitExam();
+    void submitExam();
   };
 
   const jumpToQuestion = (index: number) => {
@@ -348,6 +380,10 @@ export default function CbtPage() {
     setFlaggedQuestionIds({});
     setVisitedQuestionIds({});
     setCurrentQuestionIndex(0);
+    setSessionId(null);
+    setRemainingSeconds(0);
+    setSessionAnalytics(null);
+    setEngineError(null);
   };
 
   if (isLoading) {
@@ -452,14 +488,21 @@ export default function CbtPage() {
                   </div>
                   <Button
                     onClick={startMiniMock}
+                    disabled={isStartingSession}
                     className="w-full bg-[#2B0AFA] text-white hover:bg-[#2408CF] flex items-center gap-2"
                   >
-                    Start Mini Mock
+                    {isStartingSession ? "Preparing Mock..." : "Start Mini Mock"}
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
             </div>
+
+            {engineError ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+                {engineError}
+              </div>
+            ) : null}
 
             <section className="mt-8 max-w-6xl">
               <div className="flex items-center justify-between mb-6">
@@ -666,10 +709,10 @@ export default function CbtPage() {
                     </Button>
                     <Button
                       onClick={launchDrillExam}
-                      disabled={!selectedSubjectSlug}
+                      disabled={!selectedSubjectSlug || isStartingSession}
                       className="bg-[#2B0AFA] text-white hover:bg-[#2408CF]"
                     >
-                      Start CBT Exam
+                      {isStartingSession ? "Preparing Session..." : "Start CBT Exam"}
                     </Button>
                   </div>
                 </div>
@@ -712,11 +755,17 @@ export default function CbtPage() {
                   <span className="font-mono text-base md:text-lg font-black text-[#2B0AFA]">{formatTime(remainingSeconds)}</span>
                 </div>
 
-                <Button onClick={submitExam} className="bg-[#2B0AFA] text-white hover:bg-[#2408CF] w-full lg:w-auto">
-                  Submit Test
+                <Button onClick={submitExam} disabled={isSubmittingSession} className="bg-[#2B0AFA] text-white hover:bg-[#2408CF] w-full lg:w-auto">
+                  {isSubmittingSession ? "Submitting..." : "Submit Test"}
                 </Button>
               </div>
             </div>
+
+            {engineError ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+                {engineError}
+              </div>
+            ) : null}
 
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
               <div className="xl:col-span-8 flex flex-col gap-6">
@@ -774,7 +823,7 @@ export default function CbtPage() {
                         <Button onClick={skipQuestion} variant="outline" className="font-bold w-full lg:w-auto">
                           Skip
                         </Button>
-                        <Button onClick={goNext} disabled={!currentSelectedOption} className="bg-[#2B0AFA] text-white hover:bg-[#2408CF] font-bold w-full lg:w-auto">
+                        <Button onClick={goNext} disabled={!currentSelectedOption || isSubmittingSession} className="bg-[#2B0AFA] text-white hover:bg-[#2408CF] font-bold w-full lg:w-auto">
                           {currentQuestionIndex < examQuestions.length - 1 ? "Save & Next" : "Finish Exam"}
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
@@ -869,7 +918,7 @@ export default function CbtPage() {
                 <span className="w-2 h-2 bg-[#2B0AFA] rounded-full animate-pulse" />
                 Performance Review
               </div>
-              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Mini Mock Completed</h1>
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{mode === "mock" ? "Mini Mock Completed" : "Drill Session Completed"}</h1>
             </header>
 
             <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -970,7 +1019,8 @@ export default function CbtPage() {
               <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-3">Question Review Snapshot</h3>
               <div className="space-y-2">
                 {examQuestions.slice(0, 8).map((question, index) => {
-                  const isCorrect = answers[question.id] === question.correctOption;
+                  const serverResult = sessionAnalytics?.questionResults.find((item) => item.questionId === question.id);
+                  const isCorrect = serverResult ? serverResult.isCorrect : answers[question.id] === question.correctOption;
                   return (
                     <div key={question.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                       <div className="min-w-0 pr-3">

@@ -59,8 +59,14 @@ const JAMB_SUBJECTS = [
 
 interface TopicFormErrors {
   subject?: string;
-  heading?: string;
-  content?: string;
+  topicName?: string;
+  highYieldSummary?: string;
+  keyDefinitions?: string;
+  simpleExplanation?: string;
+  importantFormulasFacts?: string;
+  whyCorrectIsCorrect?: string;
+  whyOthersAreWrong?: string;
+  simpleBreakdown?: string;
   yieldClass?: string;
   general?: string;
 }
@@ -69,8 +75,14 @@ export default function ContentManagement() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const noteFileInputRef = useRef<HTMLInputElement | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [heading, setHeading] = useState("");
-  const [topicBody, setTopicBody] = useState("");
+  const [topicName, setTopicName] = useState("");
+  const [highYieldSummary, setHighYieldSummary] = useState("");
+  const [keyDefinitionsInput, setKeyDefinitionsInput] = useState("");
+  const [simpleExplanation, setSimpleExplanation] = useState("");
+  const [importantFormulasFactsInput, setImportantFormulasFactsInput] = useState("");
+  const [whyCorrectIsCorrect, setWhyCorrectIsCorrect] = useState("");
+  const [whyOthersAreWrong, setWhyOthersAreWrong] = useState("");
+  const [simpleBreakdown, setSimpleBreakdown] = useState("");
   const [yieldClass, setYieldClass] = useState<"foundational" | "high" | "low">("high");
   const [extractionItems, setExtractionItems] = useState(INITIAL_EXTRACTION_ITEMS);
   const [selectedSubject, setSelectedSubject] = useState("");
@@ -181,8 +193,17 @@ export default function ContentManagement() {
 
   function validateTopicDraft() {
     const nextErrors: TopicFormErrors = {};
-    const trimmedHeading = heading.trim();
-    const trimmedContent = topicBody.trim();
+    const trimmedTopicName = topicName.trim();
+    const trimmedHighYieldSummary = highYieldSummary.trim();
+    const trimmedSimpleExplanation = simpleExplanation.trim();
+    const parsedKeyDefinitions = keyDefinitionsInput
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const parsedImportantFormulasFacts = importantFormulasFactsInput
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
 
     if (!selectedSubject) {
       nextErrors.subject = "Please select a JAMB subject.";
@@ -190,18 +211,42 @@ export default function ContentManagement() {
       nextErrors.subject = "Please choose a subject from the list.";
     }
 
-    if (!trimmedHeading) {
-      nextErrors.heading = "Topic heading is required.";
-    } else if (trimmedHeading.length < 3) {
-      nextErrors.heading = "Topic heading must be at least 3 characters.";
-    } else if (trimmedHeading.length > 180) {
-      nextErrors.heading = "Topic heading must be 180 characters or less.";
+    if (!trimmedTopicName) {
+      nextErrors.topicName = "Topic name is required.";
+    } else if (trimmedTopicName.length < 3) {
+      nextErrors.topicName = "Topic name must be at least 3 characters.";
+    } else if (trimmedTopicName.length > 180) {
+      nextErrors.topicName = "Topic name must be 180 characters or less.";
     }
 
-    if (!trimmedContent) {
-      nextErrors.content = "Topic content is required.";
-    } else if (trimmedContent.length < 20) {
-      nextErrors.content = "Topic content must be at least 20 characters.";
+    if (!trimmedHighYieldSummary) {
+      nextErrors.highYieldSummary = "High-yield summary is required.";
+    }
+
+    if (parsedKeyDefinitions.length === 0) {
+      nextErrors.keyDefinitions = "Add at least one key definition (one per line).";
+    }
+
+    if (!trimmedSimpleExplanation) {
+      nextErrors.simpleExplanation = "Simple explanation is required.";
+    } else if (trimmedSimpleExplanation.length < 20) {
+      nextErrors.simpleExplanation = "Simple explanation must be at least 20 characters.";
+    }
+
+    if (parsedImportantFormulasFacts.length === 0) {
+      nextErrors.importantFormulasFacts = "Add at least one important formula or fact (one per line).";
+    }
+
+    if (!whyCorrectIsCorrect.trim()) {
+      nextErrors.whyCorrectIsCorrect = "Why correct answer is correct is required.";
+    }
+
+    if (!whyOthersAreWrong.trim()) {
+      nextErrors.whyOthersAreWrong = "Why others are wrong is required.";
+    }
+
+    if (!simpleBreakdown.trim()) {
+      nextErrors.simpleBreakdown = "Simple breakdown is required.";
     }
 
     if (!["foundational", "high", "low"].includes(yieldClass)) {
@@ -229,11 +274,20 @@ export default function ContentManagement() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           subject: selectedSubject,
-          heading: heading.trim(),
-          content: topicBody.trim(),
+          topicName: topicName.trim(),
+          highYieldSummary: highYieldSummary.trim(),
+          keyDefinitions: keyDefinitionsInput.split("\n").map((item) => item.trim()).filter(Boolean),
+          simpleExplanation: simpleExplanation.trim(),
+          importantFormulasFacts: importantFormulasFactsInput.split("\n").map((item) => item.trim()).filter(Boolean),
+          aiExplanations: {
+            whyCorrectIsCorrect: whyCorrectIsCorrect.trim(),
+            whyOthersAreWrong: whyOthersAreWrong.trim(),
+            simpleBreakdown: simpleBreakdown.trim(),
+          },
           yieldClass,
-          summary: topicBody.trim().slice(0, 180),
-          commonTraps: [],
+          summary: highYieldSummary.trim(),
+          content: simpleExplanation.trim(),
+          commonTraps: whyOthersAreWrong.split("\n").map((item) => item.trim()).filter(Boolean),
           order: 0,
           status: "active",
         }),
@@ -249,8 +303,14 @@ export default function ContentManagement() {
       }
 
       setTopicMessage(responseBody?.message || "Topic saved successfully.");
-      setHeading("");
-      setTopicBody("");
+      setTopicName("");
+      setHighYieldSummary("");
+      setKeyDefinitionsInput("");
+      setSimpleExplanation("");
+      setImportantFormulasFactsInput("");
+      setWhyCorrectIsCorrect("");
+      setWhyOthersAreWrong("");
+      setSimpleBreakdown("");
       setSelectedSubject("");
       setYieldClass("high");
     } catch (error) {
@@ -460,19 +520,19 @@ export default function ContentManagement() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Topic Heading</Label>
+                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Topic Name</Label>
                 <Input
-                  value={heading}
-                  onChange={(e) => setHeading(e.target.value)}
+                  value={topicName}
+                  onChange={(e) => setTopicName(e.target.value)}
                   className="w-full bg-brand-blue/5 border-0 border-b-2 border-brand-blue/20 rounded-none text-xl font-bold focus-visible:ring-0 focus-visible:border-brand-blue"
                   placeholder="e.g., Organic Chemistry"
                 />
-                {topicErrors.heading ? <p className="text-xs font-medium text-red-600">{topicErrors.heading}</p> : null}
+                {topicErrors.topicName ? <p className="text-xs font-medium text-red-600">{topicErrors.topicName}</p> : null}
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Topic Content / Body</Label>
+                  <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">High-Yield Summary</Label>
                   <div className="flex gap-2 text-slate-500">
                     <button className="p-1 rounded hover:bg-slate-100" aria-label="Bold"><Bold className="w-4 h-4" /></button>
                     <button className="p-1 rounded hover:bg-slate-100" aria-label="Italic"><Italic className="w-4 h-4" /></button>
@@ -481,12 +541,85 @@ export default function ContentManagement() {
                   </div>
                 </div>
                 <Textarea
-                  value={topicBody}
-                  onChange={(e) => setTopicBody(e.target.value)}
-                  className="w-full bg-brand-blue/5 border border-brand-blue/10 rounded-xl h-64 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-6"
-                  placeholder="The AI will extract and place topic content here for your review..."
+                  value={highYieldSummary}
+                  onChange={(e) => setHighYieldSummary(e.target.value)}
+                  className="w-full bg-brand-blue/5 border border-brand-blue/10 rounded-xl h-28 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-6"
+                  placeholder="High-level summary of what students must not miss..."
                 />
-                {topicErrors.content ? <p className="text-xs font-medium text-red-600">{topicErrors.content}</p> : null}
+                {topicErrors.highYieldSummary ? <p className="text-xs font-medium text-red-600">{topicErrors.highYieldSummary}</p> : null}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Key Definitions</Label>
+                  <Textarea
+                    value={keyDefinitionsInput}
+                    onChange={(e) => setKeyDefinitionsInput(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl h-36 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
+                    placeholder={"One definition per line\nAllele: alternative form of a gene\nGenotype: genetic makeup"}
+                  />
+                  {topicErrors.keyDefinitions ? <p className="text-xs font-medium text-red-600">{topicErrors.keyDefinitions}</p> : null}
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Important Formulas / Facts</Label>
+                  <Textarea
+                    value={importantFormulasFactsInput}
+                    onChange={(e) => setImportantFormulasFactsInput(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl h-36 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
+                    placeholder={"One formula/fact per line\nHardy-Weinberg: p^2 + 2pq + q^2 = 1"}
+                  />
+                  {topicErrors.importantFormulasFacts ? <p className="text-xs font-medium text-red-600">{topicErrors.importantFormulasFacts}</p> : null}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Simple Explanation</Label>
+                <Textarea
+                  value={simpleExplanation}
+                  onChange={(e) => setSimpleExplanation(e.target.value)}
+                  className="w-full bg-brand-blue/5 border border-brand-blue/10 rounded-xl h-44 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-6"
+                  placeholder="Explain the topic in very simple language students can quickly understand..."
+                />
+                {topicErrors.simpleExplanation ? <p className="text-xs font-medium text-red-600">{topicErrors.simpleExplanation}</p> : null}
+              </div>
+
+              <div className="space-y-4 rounded-2xl border border-brand-blue/20 bg-brand-blue/5 p-5">
+                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">AI Explanations</Label>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Why Correct Answer Is Correct</Label>
+                    <Textarea
+                      value={whyCorrectIsCorrect}
+                      onChange={(e) => setWhyCorrectIsCorrect(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl h-24 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
+                      placeholder="State why the correct option is correct."
+                    />
+                    {topicErrors.whyCorrectIsCorrect ? <p className="text-xs font-medium text-red-600">{topicErrors.whyCorrectIsCorrect}</p> : null}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Why Others Are Wrong</Label>
+                    <Textarea
+                      value={whyOthersAreWrong}
+                      onChange={(e) => setWhyOthersAreWrong(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl h-24 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
+                      placeholder="Explain why distractor options are wrong."
+                    />
+                    {topicErrors.whyOthersAreWrong ? <p className="text-xs font-medium text-red-600">{topicErrors.whyOthersAreWrong}</p> : null}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Simple Breakdown</Label>
+                    <Textarea
+                      value={simpleBreakdown}
+                      onChange={(e) => setSimpleBreakdown(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl h-24 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
+                      placeholder="Give a short step-by-step breakdown students can remember quickly."
+                    />
+                    {topicErrors.simpleBreakdown ? <p className="text-xs font-medium text-red-600">{topicErrors.simpleBreakdown}</p> : null}
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -539,8 +672,14 @@ export default function ContentManagement() {
                 variant="ghost"
                 className="text-slate-600 hover:bg-slate-100"
                 onClick={() => {
-                  setHeading("");
-                  setTopicBody("");
+                  setTopicName("");
+                  setHighYieldSummary("");
+                  setKeyDefinitionsInput("");
+                  setSimpleExplanation("");
+                  setImportantFormulasFactsInput("");
+                  setWhyCorrectIsCorrect("");
+                  setWhyOthersAreWrong("");
+                  setSimpleBreakdown("");
                   setSelectedSubject("");
                   setYieldClass("high");
                   setTopicErrors({});

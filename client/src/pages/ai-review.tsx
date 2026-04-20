@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AppShell } from "@/components/app-shell";
-import { useExplain } from "@/hooks/use-ai";
+import { useAiReview, useExplain } from "@/hooks/use-ai";
 import { useSubjects } from "@/hooks/use-subjects";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -157,6 +157,13 @@ export default function AiReviewPage() {
   const [savedCount, setSavedCount] = useState(() => Number(localStorage.getItem("smashutme-ai-saved-insights") ?? 0));
   const [customReply, setCustomReply] = useState<string | null>(null);
 
+  const {
+    data: reviewQueue,
+    isLoading: isReviewLoading,
+    error: reviewError,
+    refetch: refetchReview,
+  } = useAiReview(selectedSubjectSlug, selectedTopicSlug);
+
   const preferredSubjects = useMemo(() => {
     const storage = parseStorage<StoredSubjects>("smashutme-onboarding-subjects");
 
@@ -213,22 +220,8 @@ export default function AiReviewPage() {
   }, [selectedTopics]);
 
   const reviewQuestions = useMemo(() => {
-    if (!selectedSubject) return REVIEW_QUESTIONS;
-
-    const bySubject = REVIEW_QUESTIONS.filter(
-      (question) => normalizeLabel(question.subject) === normalizeLabel(selectedSubject.name),
-    );
-
-    if (selectedTopic) {
-      const byTopic = bySubject.filter(
-        (question) => normalizeLabel(question.topic) === normalizeLabel(selectedTopic.name),
-      );
-      if (byTopic.length > 0) return byTopic;
-    }
-
-    if (bySubject.length > 0) return bySubject;
-    return REVIEW_QUESTIONS;
-  }, [selectedSubject, selectedTopic]);
+    return Array.isArray(reviewQueue?.questions) ? reviewQueue.questions : [];
+  }, [reviewQueue]);
 
   useEffect(() => {
     setQuestionIndex(0);
@@ -236,10 +229,10 @@ export default function AiReviewPage() {
     setCustomReply(null);
   }, [selectedSubjectSlug, selectedTopicSlug]);
 
-  const current = reviewQuestions[questionIndex % reviewQuestions.length];
+  const current = reviewQuestions.length > 0 ? reviewQuestions[questionIndex % reviewQuestions.length] : null;
   const trail = [
-    selectedSubject?.name ?? current.subject,
-    selectedTopic?.name ?? current.topic,
+    selectedSubject?.name ?? current?.subject ?? "Subject",
+    selectedTopic?.name ?? current?.topic ?? "Topic",
     "AI Review",
   ];
 
@@ -254,10 +247,14 @@ export default function AiReviewPage() {
   const handleAskAi = () => {
     if (!followUp.trim()) return;
 
+    const subjectForContext = selectedSubject?.name || current?.subject || "Unknown Subject";
+    const topicForContext = selectedTopic?.name || current?.topic || "Unknown Topic";
+    const promptForContext = current?.prompt || "No active review prompt available.";
+
     explain(
       {
         text: followUp,
-        context: `${current.subject} - ${current.topic} | ${current.prompt}`,
+        context: `${subjectForContext} - ${topicForContext} | ${promptForContext}`,
       },
       {
         onSuccess: (data) => {
@@ -438,8 +435,50 @@ export default function AiReviewPage() {
       ) : null}
 
       {step === 3 ? (
-        <>
-          <main className="pb-12 px-4 md:px-12 min-h-screen">
+        isReviewLoading ? (
+          <main className="p-6 md:p-12 max-w-7xl mx-auto space-y-6">
+            <Skeleton className="h-12 w-80" />
+            <Skeleton className="h-56 w-full rounded-xl" />
+            <Skeleton className="h-56 w-full rounded-xl" />
+          </main>
+        ) : !current ? (
+          <main className="p-6 md:p-12 max-w-5xl mx-auto">
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 md:p-10 space-y-6">
+              <h3 className="text-2xl font-black tracking-tight text-slate-900">No AI review items yet</h3>
+              <p className="text-slate-600 leading-relaxed">
+                We could not find incorrect CBT questions for this selection yet. Complete a CBT session first, then return here for personalized AI breakdowns.
+              </p>
+              {reviewError ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+                  {(reviewError as Error)?.message || "Unable to load review queue right now."}
+                </div>
+              ) : null}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button onClick={() => setLocation("/cbt")} className="bg-brand-blue text-white hover:bg-brand-blue/90">
+                  Go to CBT Practice
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    void refetchReview();
+                  }}
+                >
+                  Retry Review Load
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedTopicSlug(null);
+                  }}
+                >
+                  Back to Topics
+                </Button>
+              </div>
+            </div>
+          </main>
+        ) : (
+          <>
+            <main className="pb-12 px-4 md:px-12 min-h-screen">
             <div className="mb-8 flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4">
               <div className="min-w-0">
                 <nav className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-2">
@@ -706,7 +745,7 @@ export default function AiReviewPage() {
             </div>
           </main>
 
-          <button
+            <button
             onClick={() => setLocation("/contact")}
             className="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-12 h-12 md:w-14 md:h-14 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50"
             aria-label="Support"
@@ -721,7 +760,8 @@ export default function AiReviewPage() {
             <span className="hidden sm:inline">Next</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-        </>
+          </>
+        )
       ) : null}
     </AppShell>
   );
