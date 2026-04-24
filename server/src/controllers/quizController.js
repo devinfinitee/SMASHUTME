@@ -3,6 +3,8 @@ import Topic from "../models/topic.model.js";
 import Question from "../models/question.model.js";
 import PastQuestion from "../models/pastQuestion.model.js";
 import QuizSession from "../models/quizSession.model.js";
+import User from "../models/user.model.js";
+import { computeProjectedScoreMetrics } from "../lib/projectedScore.js";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -326,6 +328,89 @@ export const submitQuizSession = async (req, res) => {
     session.submittedAt = new Date();
     session.results = results;
     await session.save();
+
+    const user = await User.findById(req.user._id)
+      .populate("subjectProgress.subject", "name slug code icon")
+      .exec();
+
+    if (user) {
+      user.dashboard = user.dashboard || {};
+      user.dashboard.totalDrillsCompleted = Number(user.dashboard.totalDrillsCompleted || 0) + (session.mode === "drill" ? 1 : 0);
+      user.dashboard.totalTimeSpentMinutes = Number(user.dashboard.totalTimeSpentMinutes || 0) + Math.round(safeTimeSpent / 60);
+      user.dashboard.completedQuestions = Number(user.dashboard.completedQuestions || 0) + score;
+      user.dashboard.lastUpdatedAt = new Date();
+
+      if (session.subject) {
+        const subjectId = String(session.subject);
+        const progressEntries = Array.isArray(user.subjectProgress) ? [...user.subjectProgress] : [];
+        const existingIndex = progressEntries.findIndex((entry) => String(entry.subject?._id || entry.subject) === subjectId);
+        const existingEntry = existingIndex >= 0 ? progressEntries[existingIndex] : null;
+        const questionsAnswered = Number(existingEntry?.questionsAnswered) || 0;
+        const questionsCorrect = Number(existingEntry?.questionsCorrect) || 0;
+        const totalAnswered = questionsAnswered + totalQuestions;
+        const totalCorrect = questionsCorrect + score;
+        const updatedEntry = {
+          subject: session.subject,
+          proficiency: Math.max(
+            Number(existingEntry?.proficiency) || 0,
+            Math.round(accuracy),
+          ),
+          questionsAnswered: totalAnswered,
+          questionsCorrect: totalCorrect,
+          accuracy: totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : accuracy,
+          topicsCovered: Number(existingEntry?.topicsCovered) || 0,
+          status: accuracy >= 80 ? "mastered" : accuracy <= 40 ? "weak" : "on-track",
+          timeSpentMinutes: (Number(existingEntry?.timeSpentMinutes) || 0) + Math.round(safeTimeSpent / 60),
+          lastStudiedAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        if (existingIndex >= 0) {
+          progressEntries[existingIndex] = updatedEntry;
+        } else {
+          progressEntries.push(updatedEntry);
+        }
+
+        user.subjectProgress = progressEntries;
+      }
+
+      const subjectIdsFromSelection = Array.isArray(user.selectedSubjects)
+        ? user.selectedSubjects.map((item) => item?._id || item).filter(Boolean)
+        : [];
+      const subjectIdsFromProgress = Array.isArray(user.subjectProgress)
+        ? user.subjectProgress.map((entry) => entry?.subject?._id || entry?.subject).filter(Boolean)
+        : [];
+      const uniqueSubjectIds = Array.from(
+        new Set([...subjectIdsFromSelection, ...subjectIdsFromProgress].map((item) => String(item))),
+      );
+
+      const [recentSubmittedSessions, totalTopics] = await Promise.all([
+        QuizSession.find({ user: user._id, status: "submitted" })
+          .sort({ submittedAt: -1, createdAt: -1 })
+          .limit(12)
+          .select("mode accuracy submittedAt createdAt")
+          .lean(),
+        uniqueSubjectIds.length > 0
+          ? Topic.countDocuments({ subject: { $in: uniqueSubjectIds } })
+          : Promise.resolve(0),
+      ]);
+
+      const metrics = computeProjectedScoreMetrics({
+        subjectProgressEntries: user.subjectProgress || [],
+        recentSessions: recentSubmittedSessions,
+        totalTopics,
+        totalTimeSpentMinutes: user.dashboard.totalTimeSpentMinutes || 0,
+        totalDrillsCompleted: user.dashboard.totalDrillsCompleted || 0,
+        studyTimeBand: user.onboarding?.baseline?.studyTime || null,
+      });
+
+      user.dashboard.averageAccuracy = metrics.averageAccuracyPercent;
+      user.dashboard.projectedScore = metrics.projectedScore;
+      user.dashboard.percentile = metrics.percentile;
+      user.dashboard.studyMomentumPercent = metrics.readinessPercent;
+
+      await user.save();
+    }
 
     const paceSeconds = totalQuestions > 0 ? Math.max(20, Math.round(safeTimeSpent / totalQuestions)) : 0;
     const percentileLabel = accuracy >= 85 ? "Top 3%" : accuracy >= 70 ? "Top 8%" : "Top 20%";

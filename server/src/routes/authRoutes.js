@@ -14,6 +14,7 @@ import {
 	updateOnboardingSubjects,
 	updateOnboardingBaseline,
 	completeOnboarding,
+	updateProfile,
 } from "../controllers/authController.js";
 
 const router = Router();
@@ -23,6 +24,7 @@ router.post("/login", login);
 router.post("/admin/login", adminLogin);
 router.post("/logout", requireAuth, logout);
 router.get("/me", requireAuth, getCurrentUser);
+router.patch("/me", requireAuth, updateProfile);
 router.patch("/onboarding/target", requireAuth, updateOnboardingTarget);
 router.patch("/onboarding/subjects", requireAuth, updateOnboardingSubjects);
 router.patch("/onboarding/baseline", requireAuth, updateOnboardingBaseline);

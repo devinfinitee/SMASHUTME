@@ -41,7 +41,15 @@ async function fetchUser(): Promise<User | null> {
       status: backendUser.status,
       authProvider: backendUser.authProvider,
       avatarUrl: backendUser.avatarUrl,
+      phoneNumber: backendUser.phoneNumber,
+      targetInstitution: backendUser.targetInstitution,
+      targetCourse: backendUser.targetCourse,
+      studyTime: backendUser.studyTime,
       onboardingCompleted: backendUser.onboardingCompleted,
+      dashboard: backendUser.dashboard,
+      selectedSubjectLabels: backendUser.selectedSubjectLabels,
+      selectedSubjects: backendUser.selectedSubjects,
+      subjectProgress: backendUser.subjectProgress,
     };
 
     setCurrentAuthUser(normalizedUser);
@@ -114,7 +122,15 @@ async function signUp(data: SignUpData): Promise<User> {
     status: userFromApi.status,
     authProvider: userFromApi.authProvider,
     avatarUrl: userFromApi.avatarUrl,
+    phoneNumber: userFromApi.phoneNumber,
+    targetInstitution: userFromApi.targetInstitution,
+    targetCourse: userFromApi.targetCourse,
+    studyTime: userFromApi.studyTime,
     onboardingCompleted: userFromApi.onboardingCompleted,
+    dashboard: userFromApi.dashboard,
+    selectedSubjectLabels: userFromApi.selectedSubjectLabels,
+    selectedSubjects: userFromApi.selectedSubjects,
+    subjectProgress: userFromApi.subjectProgress,
   };
 
   setCurrentAuthUser(user);
@@ -153,7 +169,15 @@ async function login(data: LoginData): Promise<User> {
     status: userFromApi.status,
     authProvider: userFromApi.authProvider,
     avatarUrl: userFromApi.avatarUrl,
+    phoneNumber: userFromApi.phoneNumber,
+    targetInstitution: userFromApi.targetInstitution,
+    targetCourse: userFromApi.targetCourse,
+    studyTime: userFromApi.studyTime,
     onboardingCompleted: userFromApi.onboardingCompleted,
+    dashboard: userFromApi.dashboard,
+    selectedSubjectLabels: userFromApi.selectedSubjectLabels,
+    selectedSubjects: userFromApi.selectedSubjects,
+    subjectProgress: userFromApi.subjectProgress,
   };
 
   setCurrentAuthUser(user);

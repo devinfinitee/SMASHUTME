@@ -19,10 +19,10 @@ export default function TopicStudy() {
   const { mutate: updateProgress } = useUpdateProgress();
 
   useEffect(() => {
-    if (topic && topic.id) {
-      updateProgress({ topicId: topic.id, status: "in_progress" });
+    if (topic && params?.slug) {
+      updateProgress({ slug: params.slug, status: "in_progress" });
     }
-  }, [topic, updateProgress]);
+  }, [topic, params?.slug, updateProgress]);
 
   const subjectName = topic?.subject?.name || "Subject";
   const subjectSlug = topic?.subject?.slug || "";
@@ -48,7 +48,7 @@ export default function TopicStudy() {
           <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_20px_40px_rgba(11,28,48,0.05)]">
             <h1 className="text-2xl font-black text-slate-900">Topic not found</h1>
             <p className="mt-2 text-slate-600">The selected topic could not be loaded.</p>
-            <Link href={subjectSlug ? `/subjects/${subjectSlug}` : "/dashboard"}>
+            <Link href={subjectSlug ? `/subjects/${subjectSlug}` : "/user/dashboard"}>
               <Button className="mt-6 bg-brand-blue text-white hover:bg-brand-blue/90">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
@@ -69,6 +69,13 @@ export default function TopicStudy() {
   const importantFormulasFacts = topic.importantFormulasFacts && topic.importantFormulasFacts.length > 0
     ? topic.importantFormulasFacts
     : ["No important formulas/facts have been added yet."];
+  const sections = Array.isArray(topic.sections)
+    ? [...topic.sections].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    : [];
+  const hasSections = sections.length > 0;
+  const learningGoals = topic.learningGoals && topic.learningGoals.length > 0 ? topic.learningGoals : [];
+  const prerequisites = topic.prerequisites && topic.prerequisites.length > 0 ? topic.prerequisites : [];
+  const jambFocus = topic.jambFocus && topic.jambFocus.length > 0 ? topic.jambFocus : [];
   const aiExplanation = {
     whyCorrectIsCorrect:
       topic.aiExplanations?.whyCorrectIsCorrect ||
@@ -118,6 +125,58 @@ export default function TopicStudy() {
                 <p className="text-on-surface-variant leading-relaxed text-lg">{highYieldSummary}</p>
               </section>
 
+              {(topic.overview || topic.referenceBook || learningGoals.length > 0 || prerequisites.length > 0 || jambFocus.length > 0) && (
+                <section className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+                  {topic.overview && (
+                    <div className="mb-5">
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-700 mb-2">Overview</h3>
+                      <p className="text-slate-700 leading-relaxed">{topic.overview}</p>
+                    </div>
+                  )}
+
+                  {topic.referenceBook && (
+                    <p className="text-sm text-slate-700 mb-4">
+                      <span className="font-bold text-slate-900">Reference Book:</span> {topic.referenceBook}
+                    </p>
+                  )}
+
+                  {learningGoals.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-700 mb-2">Learning Goals</h4>
+                      <ul className="list-disc ml-5 space-y-1 text-sm text-slate-700">
+                        {learningGoals.map((goal, index) => (
+                          <li key={`${goal}-${index}`}>{goal}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {prerequisites.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-700 mb-2">Prerequisites</h4>
+                      <ul className="list-disc ml-5 space-y-1 text-sm text-slate-700">
+                        {prerequisites.map((item, index) => (
+                          <li key={`${item}-${index}`}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {jambFocus.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-slate-700 mb-2">JAMB Focus</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {jambFocus.map((item, index) => (
+                          <span key={`${item}-${index}`} className="inline-flex items-center rounded-full bg-brand-blue/10 text-brand-blue text-xs font-semibold px-3 py-1">
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
+
               <section>
                 <div className="bg-tertiary-fixed/20 p-6 border-l-4 border-tertiary-fixed-dim rounded-r-lg relative my-2">
                   <div className="absolute -top-3 -left-3 bg-tertiary-fixed-dim text-white w-7 h-7 flex items-center justify-center rounded-full shadow-sm">
@@ -151,6 +210,79 @@ export default function TopicStudy() {
                   <ReactMarkdown>{simpleExplanationText}</ReactMarkdown>
                 </div>
               </section>
+
+              {hasSections && (
+                <section className="space-y-5">
+                  <h2 className="text-2xl font-bold text-on-surface">Section Breakdown</h2>
+                  {sections.map((section, index) => {
+                    const sectionParagraphs = section.aiExplanation?.paragraphs || [];
+
+                    return (
+                      <article key={`${section.sectionTitle}-${index}`} className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
+                        <header>
+                          <h3 className="text-xl font-bold text-slate-900">{section.sectionTitle}</h3>
+                          {section.definition && <p className="text-sm text-slate-600 mt-1">{section.definition}</p>}
+                        </header>
+
+                        {section.explanation && (
+                          <div className="text-slate-700 leading-relaxed">
+                            <ReactMarkdown>{section.explanation}</ReactMarkdown>
+                          </div>
+                        )}
+
+                        {section.illustrationImageUrl && (
+                          <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                            <img
+                              src={section.illustrationImageUrl}
+                              alt={`${section.sectionTitle} illustration`}
+                              className="w-full max-h-80 object-cover"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+
+                        {section.examples && section.examples.length > 0 && (
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-700 mb-2">Examples</p>
+                            <ul className="list-disc ml-5 space-y-1 text-sm text-slate-700">
+                              {section.examples.map((example, exampleIndex) => (
+                                <li key={`${example}-${exampleIndex}`}>{example}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {section.jambPoint && (
+                          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                            <p className="text-xs font-bold uppercase tracking-widest text-amber-700 mb-1">JAMB Point</p>
+                            <p className="text-sm text-amber-900">{section.jambPoint}</p>
+                          </div>
+                        )}
+
+                        {section.quickTip && (
+                          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                            <p className="text-xs font-bold uppercase tracking-widest text-emerald-700 mb-1">Quick Tip</p>
+                            <p className="text-sm text-emerald-900">{section.quickTip}</p>
+                          </div>
+                        )}
+
+                        {sectionParagraphs.length > 0 && (
+                          <div className="rounded-lg border border-brand-blue/20 bg-brand-blue/5 p-4">
+                            <p className="text-xs font-bold uppercase tracking-widest text-brand-blue mb-2">AI Explanation</p>
+                            <div className="space-y-2">
+                              {sectionParagraphs.map((paragraph, paragraphIndex) => (
+                                <p key={`${paragraph}-${paragraphIndex}`} className="text-sm text-slate-700 leading-relaxed">
+                                  {paragraph}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </section>
+              )}
 
               <section className="bg-on-surface text-surface-container-lowest p-8 rounded-xl">
                 <div className="flex items-center gap-3 mb-4">
@@ -186,7 +318,7 @@ export default function TopicStudy() {
             </div>
 
             <div className="bg-surface-container px-5 sm:px-8 md:px-12 py-5 md:py-6 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
-              <Link href={subjectSlug ? `/subjects/${subjectSlug}` : "/dashboard"}>
+              <Link href={subjectSlug ? `/subjects/${subjectSlug}` : "/user/dashboard"}>
                 <button className="flex items-center justify-center gap-2 text-on-surface-variant font-bold text-xs uppercase tracking-widest hover:text-primary transition-colors">
                   <ArrowLeft className="w-4 h-4" />
                   Previous Topic

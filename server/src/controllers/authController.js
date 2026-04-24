@@ -17,6 +17,44 @@ function buildPublicUser(user) {
   const firstName = nameParts[0] || user.fullName || "SmashUTME";
   const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
   const onboardingCompleted = Boolean(user.onboarding?.completedAt);
+  const studyTime = user.onboarding?.baseline?.studyTime || null;
+  const dashboard = user.dashboard
+    ? {
+        projectedScore: Number(user.dashboard.projectedScore) || 0,
+        percentile: Number(user.dashboard.percentile) || 0,
+        streakDays: Number(user.dashboard.streakDays) || 0,
+        totalDrillsCompleted: Number(user.dashboard.totalDrillsCompleted) || 0,
+        totalTimeSpentMinutes: Number(user.dashboard.totalTimeSpentMinutes) || 0,
+        averageAccuracy: Number(user.dashboard.averageAccuracy) || 0,
+        highYieldTopicsCount: Number(user.dashboard.highYieldTopicsCount) || 0,
+        studyMomentumPercent: Number(user.dashboard.studyMomentumPercent) || 0,
+        completedQuestions: Number(user.dashboard.completedQuestions) || 0,
+        weakAreas: Array.isArray(user.dashboard.weakAreas) ? user.dashboard.weakAreas : [],
+        lastUpdatedAt: user.dashboard.lastUpdatedAt || null,
+      }
+    : null;
+
+  const subjectProgress = Array.isArray(user.subjectProgress)
+    ? user.subjectProgress.map((entry) => ({
+        subject:
+          typeof entry.subject === "object" && entry.subject !== null
+            ? {
+                id: String(entry.subject._id || entry.subject.id || entry.subject),
+                name: entry.subject.name || null,
+                slug: entry.subject.slug || null,
+                icon: entry.subject.icon || null,
+              }
+            : String(entry.subject),
+        proficiency: Number(entry.proficiency) || 0,
+        questionsAnswered: Number(entry.questionsAnswered) || 0,
+        questionsCorrect: Number(entry.questionsCorrect) || 0,
+        accuracy: Number(entry.accuracy) || 0,
+        topicsCovered: Number(entry.topicsCovered) || 0,
+        status: entry.status || "on-track",
+        timeSpentMinutes: Number(entry.timeSpentMinutes) || 0,
+        lastStudiedAt: entry.lastStudiedAt || null,
+      }))
+    : [];
 
   return {
     id: userId,
@@ -31,6 +69,21 @@ function buildPublicUser(user) {
     status: user.status,
     onboardingCompleted,
     avatarUrl: user.avatarUrl || null,
+    phoneNumber: user.phoneNumber || null,
+    targetInstitution: user.targetInstitution || null,
+    targetCourse: user.targetCourse || null,
+    studyTime,
+    dashboard,
+    subjectProgress,
+    selectedSubjectLabels: Array.isArray(user.selectedSubjectLabels) ? user.selectedSubjectLabels : [],
+    selectedSubjects: Array.isArray(user.selectedSubjects)
+      ? user.selectedSubjects.map((subject) => ({
+          id: String(subject._id || subject.id || subject),
+          name: subject.name || null,
+          slug: subject.slug || null,
+          icon: subject.icon || null,
+        }))
+      : [],
   };
 }
 
@@ -288,5 +341,52 @@ export const completeOnboarding = async (req, res) => {
   } catch (error) {
     console.error("Complete onboarding error:", error);
     return res.status(500).json(buildErrorResponse(error, "Unable to complete onboarding."));
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { fullName, phoneNumber, avatarUrl, targetInstitution, targetCourse, studyTime } = req.body || {};
+
+    const trimmedFullName = String(fullName || "").trim();
+    if (!trimmedFullName) {
+      return res.status(400).json({ error: "fullName is required." });
+    }
+
+    const normalizedAvatarUrl = avatarUrl === undefined ? req.user.avatarUrl : String(avatarUrl || "").trim() || null;
+    if (normalizedAvatarUrl && normalizedAvatarUrl.length > 900000) {
+      return res.status(400).json({ error: "Profile picture is too large. Use a smaller image." });
+    }
+
+    if (
+      normalizedAvatarUrl &&
+      !/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(normalizedAvatarUrl) &&
+      !/^https?:\/\//.test(normalizedAvatarUrl)
+    ) {
+      return res.status(400).json({ error: "Profile picture must be a valid image URL or uploaded image data." });
+    }
+
+    const allowedStudyTimes = ["lt-1", "1-2", "2-4", "4-plus"];
+    if (studyTime !== undefined && studyTime !== null && studyTime !== "" && !allowedStudyTimes.includes(String(studyTime))) {
+      return res.status(400).json({ error: "Invalid study time selection." });
+    }
+
+    req.user.fullName = trimmedFullName;
+    req.user.phoneNumber = phoneNumber ? String(phoneNumber).trim() : null;
+    req.user.avatarUrl = normalizedAvatarUrl;
+    req.user.targetInstitution = targetInstitution ? String(targetInstitution).trim() : null;
+    req.user.targetCourse = targetCourse ? String(targetCourse).trim() : null;
+    req.user.onboarding.baseline.studyTime = studyTime ? String(studyTime) : null;
+    req.user.onboarding.baseline.updatedAt = new Date();
+
+    await req.user.save();
+
+    return res.json({
+      message: "Profile updated.",
+      user: buildPublicUser(req.user),
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    return res.status(500).json(buildErrorResponse(error, "Unable to update profile."));
   }
 };

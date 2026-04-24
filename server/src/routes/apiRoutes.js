@@ -8,6 +8,7 @@ import quizRoutes from "./quizRoutes.js";
 import candidatesRoutes from "./candidatesRoutes.js";
 import adminRoutes from "./adminRoutes.js";
 import aiRoutes from "./aiRoutes.js";
+import dashboardRoutes from "./dashboardRoutes.js";
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use("/quiz", quizRoutes);
 router.use("/candidates", candidatesRoutes);
 router.use("/admin", adminRoutes);
 router.use("/ai", aiRoutes);
+router.use("/dashboard", dashboardRoutes);
 
 export default router;

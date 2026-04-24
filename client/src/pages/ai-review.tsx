@@ -745,7 +745,7 @@ export default function AiReviewPage() {
             </div>
           </main>
 
-            <button
+          <button
             onClick={() => setLocation("/contact")}
             className="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-12 h-12 md:w-14 md:h-14 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50"
             aria-label="Support"
@@ -760,7 +760,7 @@ export default function AiReviewPage() {
             <span className="hidden sm:inline">Next</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-          </>
+        </>
         )
       ) : null}
     </AppShell>

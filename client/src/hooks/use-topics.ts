@@ -2,16 +2,24 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { mockTopics, mockQuestions } from "@/lib/mockData";
 import type { Topic, Question } from "../types";
+import { apiFetch } from "@/lib/api-fetch";
 
 export function useTopic(slug: string) {
   return useQuery({
     queryKey: ["/topics", slug],
     queryFn: async (): Promise<Topic | null> => {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const topic = mockTopics.find(t => t.slug === slug);
-      return topic || null;
+      const response = await apiFetch(`/api/topics/${slug}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const topic = mockTopics.find((item) => item.slug === slug);
+        return topic || null;
+      }
+
+      const data = await response.json();
+      return data?.topic || data || null;
     },
     enabled: !!slug,
   });
@@ -22,18 +30,28 @@ export function useUpdateProgress() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ topicId, status }: { topicId: number; status: "not_started" | "in_progress" | "completed" }) => {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Mock successful update
-      return { success: true, topicId, status };
+    mutationFn: async ({ slug, status }: { slug: string; status: "not_started" | "in_progress" | "completed" }) => {
+      const response = await apiFetch(`/api/topics/${slug}/progress`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody?.error || "Failed to save progress.");
+      }
+
+      return response.json();
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/subjects"] });
+      queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["/dashboard/overview"] });
+      queryClient.invalidateQueries({ queryKey: ["/topics", variables.slug] });
       toast({
         title: "Progress Updated",
-        description: `Topic marked as ${variables.status.replace('_', ' ')}`,
+        description: `Topic marked as ${variables.status.replace("_", " ")}`,
         variant: "default",
       });
     },

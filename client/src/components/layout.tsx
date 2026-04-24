@@ -17,10 +17,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const isDashboardPage = location === "/dashboard";
+  const isDashboardPage = location === "/user/dashboard";
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
     { name: "Subjects", href: "/subjects", icon: BookOpen },
     { name: "Profile", href: "/profile", icon: User },
   ];
@@ -28,7 +28,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const NavContent = () => (
     <div className="flex flex-col h-full bg-sidebar-background">
       <div className="p-6 border-b border-sidebar-border">
-        <Link href="/dashboard" className="flex items-center overflow-visible py-4">
+        <Link href="/user/dashboard" className="flex items-center overflow-visible py-4">
           <img src={smashutmeLogo} alt="SmashUTME" className="w-12 h-12 object-left-top object-cover scale-[6] origin-left" />
         </Link>
       </div>
@@ -60,7 +60,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="bg-card rounded-2xl p-4 shadow-md border border-border mb-4 hover:shadow-lg transition-shadow duration-300">
           <div className="flex items-center space-x-3">
             <Avatar>
-              <AvatarImage src={user?.profileImageUrl || undefined} />
+              <AvatarImage src={user?.avatarUrl || undefined} />
               <AvatarFallback>{user?.firstName?.[0]}{user?.lastName?.[0]}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
@@ -96,7 +96,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 z-30">
-        <Link href="/dashboard" className="flex items-center">
+        <Link href="/user/dashboard" className="flex items-center">
           <img src={smashutmeLogo} alt="SmashUTME" className="w-10 h-10 object-left-top object-cover scale-[6] origin-left" />
         </Link>
         <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>

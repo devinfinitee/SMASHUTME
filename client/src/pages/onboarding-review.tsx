@@ -36,7 +36,7 @@ export default function OnboardingReview() {
           console.error("Failed to complete onboarding:", saveError);
         })
         .finally(() => {
-          setLocation("/dashboard");
+          setLocation("/user/dashboard");
         });
     }, 900);
 

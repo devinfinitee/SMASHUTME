@@ -169,7 +169,7 @@ export default function About() {
               <div className="space-y-2 text-slate-500">
                 <button onClick={() => setLocation("/signup")} className="block hover:text-brand-blue">Create Free Account</button>
                 <button onClick={() => setLocation("/login")} className="block hover:text-brand-blue">Continue Learning</button>
-                <button onClick={() => setLocation("/dashboard")} className="block hover:text-brand-blue">Open Dashboard</button>
+                <button onClick={() => setLocation("/user/dashboard")} className="block hover:text-brand-blue">Open Dashboard</button>
               </div>
             </div>
 

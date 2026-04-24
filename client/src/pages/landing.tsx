@@ -299,7 +299,7 @@ export default function Landing() {
                   <p className="text-slate-600 text-lg leading-snug mb-5">
                     Don't just read. Track your mastery. Know exactly when you're ready for the 300+ score.
                   </p>
-                  <Button onClick={() => setLocation("/dashboard")} className="w-full sm:w-auto rounded-full bg-brand-blue text-white hover:bg-brand-blue/90">
+                  <Button onClick={() => setLocation("/user/dashboard")} className="w-full sm:w-auto rounded-full bg-brand-blue text-white hover:bg-brand-blue/90">
                     Open Your Progress Tracker
                   </Button>
                 </div>

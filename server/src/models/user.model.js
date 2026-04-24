@@ -44,11 +44,32 @@ const onboardingBaselineSchema = new Schema(
   { _id: false },
 );
 
+const subjectProgressSchema = new Schema(
+  {
+    subject: { type: Schema.Types.ObjectId, ref: "Subject", required: true, index: true },
+    proficiency: { type: Number, min: 0, max: 100, default: 0 },
+    questionsAnswered: { type: Number, default: 0 },
+    questionsCorrect: { type: Number, default: 0 },
+    accuracy: { type: Number, min: 0, max: 100, default: 0 },
+    topicsCovered: { type: Number, default: 0 },
+    status: { type: String, enum: ["weak", "on-track", "mastered"], default: "on-track" },
+    timeSpentMinutes: { type: Number, default: 0 },
+    lastStudiedAt: { type: Date, default: null },
+    updatedAt: { type: Date, default: Date.now },
+  },
+  { _id: false },
+);
+
 const dashboardSnapshotSchema = new Schema(
   {
     projectedScore: { type: Number, default: null },
     percentile: { type: Number, default: null },
     streakDays: { type: Number, default: 0 },
+    totalDrillsCompleted: { type: Number, default: 0 },
+    totalTimeSpentMinutes: { type: Number, default: 0 },
+    averageAccuracy: { type: Number, min: 0, max: 100, default: 0 },
+    highYieldTopicsCount: { type: Number, default: 0 },
+    studyMomentumPercent: { type: Number, min: 0, max: 100, default: 0 },
     completedQuestions: { type: Number, default: 0 },
     weakAreas: [{ type: String, trim: true }],
     lastUpdatedAt: { type: Date, default: null },
@@ -90,6 +111,7 @@ const userSchema = new Schema(
     targetCourse: { type: String, trim: true, default: null },
     selectedSubjects: [{ type: Schema.Types.ObjectId, ref: "Subject" }],
     selectedSubjectLabels: [{ type: String, trim: true }],
+    subjectProgress: [{ type: subjectProgressSchema, default: () => [] }],
     onboarding: {
       target: { type: onboardingTargetSchema, default: () => ({}) },
       subjects: { type: onboardingSubjectsSchema, default: () => ({}) },

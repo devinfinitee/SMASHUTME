@@ -67,7 +67,7 @@ export default function OnboardingTarget() {
   };
 
   const handleSkip = () => {
-    setLocation("/dashboard");
+    setLocation("/user/dashboard");
   };
 
   return (

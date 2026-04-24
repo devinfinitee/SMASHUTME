@@ -28,10 +28,10 @@ type AppShellProps = {
 };
 
 function isActiveRoute(currentPath: string, href: string, label: string): boolean {
-  if (href === "/dashboard") {
-    // Several placeholder nav items currently route to /dashboard.
+  if (href === "/user/dashboard") {
+    // Several placeholder nav items currently route to the user dashboard.
     // Keep active highlight exclusive to the actual Dashboard item.
-    return label === "Dashboard" && (currentPath === "/dashboard" || currentPath === "/admin/dashboard");
+    return label === "Dashboard" && (currentPath === "/user/dashboard" || currentPath === "/dashboard" || currentPath === "/admin/dashboard");
   }
   if (href === "/syllabus") {
     return currentPath === "/syllabus" || currentPath.startsWith("/subjects") || currentPath.startsWith("/topics");
@@ -47,19 +47,18 @@ function isActiveRoute(currentPath: string, href: string, label: string): boolea
 
 export function AppShell({ children, searchPlaceholder = "Search..." }: AppShellProps) {
   const { user, logout } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const navItems = [
-    { label: "Dashboard", icon: TrendingUp, href: "/dashboard" },
+    { label: "Dashboard", icon: TrendingUp, href: "/user/dashboard" },
     { label: "Subjects", icon: BookOpen, href: "/syllabus" },
     { label: "CBT Practice", icon: BarChart3, href: "/cbt" },
     { label: "AI Review", icon: Brain, href: "/ai-review" },
     ...(location.startsWith("/admin")
       ? [{ label: "Question Bank", icon: BookOpen, href: "/admin/question-bank" }]
       : []),
-    { label: "Performance", icon: TrendingUp, href: "/dashboard" },
-    { label: "Study Room", icon: Users, href: "/dashboard" },
+    { label: "Performance", icon: BarChart3, href: "/performance" },
     { label: "Settings", icon: User, href: "/profile" },
   ];
 
@@ -147,17 +146,32 @@ export function AppShell({ children, searchPlaceholder = "Search..." }: AppShell
         </div>
 
         <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-          <button className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all relative">
+          <button
+            onClick={() => setLocation("/user/dashboard")}
+            className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all relative"
+            aria-label="Open streak overview"
+            title="Streak overview"
+          >
             <Flame className="w-5 h-5 text-brand-gold" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-brand-gold rounded-full"></span>
           </button>
 
-          <button className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all relative">
+          <button
+            onClick={() => setLocation("/contact")}
+            className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all relative"
+            aria-label="Open support contact"
+            title="Support"
+          >
             <Bell className="w-5 h-5" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
 
-          <button className="hidden sm:inline-flex p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
+          <button
+            onClick={() => setLocation("/profile")}
+            className="hidden sm:inline-flex p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+            aria-label="Open study profile"
+            title="Profile"
+          >
             <Target className="w-5 h-5" />
           </button>
         </div>

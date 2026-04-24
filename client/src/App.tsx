@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Pages
-import DashboardNew from "@/pages/dashboard-new";
+import UserDashboardPage from "@/pages/user-dashboard";
 import SubjectDetail from "@/pages/subject-detail";
 import TopicStudy from "@/pages/topic-study";
 import Quiz from "@/pages/quiz";
@@ -30,6 +30,7 @@ import CbtPage from "@/pages/cbt";
 import AdminDashboard from "@/pages/admin-dashboard";
 import ContentManagement from "./pages/content-management";
 import QuizResults from "@/pages/quiz-results";
+import Performance from "@/pages/performance";
 import QuestionBank from "./pages/question-bank";
 import Support from "./pages/support";
 import Revenue from "./pages/revenue";
@@ -41,6 +42,16 @@ function ScrollToTopOnRouteChange() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [location]);
+
+  return null;
+}
+
+function UserDashboardRedirect() {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    setLocation("/user/dashboard");
+  }, [setLocation]);
 
   return null;
 }
@@ -59,7 +70,9 @@ function Router() {
       <Route path="/onboarding/subjects" component={OnboardingSubjects} />
       <Route path="/onboarding/baseline" component={OnboardingBaseline} />
       <Route path="/onboarding/review" component={OnboardingReview} />
-      <Route path="/dashboard" component={DashboardNew} />
+      <Route path="/dashboard" component={UserDashboardRedirect} />
+      <Route path="/user/dashboard" component={UserDashboardPage} />
+      <Route path="/performance" component={Performance} />
       <Route path="/syllabus" component={SyllabusPage} />
       <Route path="/cbt" component={CbtPage} />
       <Route path="/ai-review" component={AiReviewPage} />

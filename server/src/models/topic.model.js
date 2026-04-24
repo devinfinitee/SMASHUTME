@@ -4,22 +4,60 @@ import { slugify } from "./schemaUtils.js";
 
 const { Schema, model, models } = mongoose;
 
+const aiExplanationSchema = new Schema(
+  {
+    whyCorrectIsCorrect: { type: String, default: null },
+    whyOthersAreWrong: { type: String, default: null },
+    simpleBreakdown: { type: String, default: null },
+    paragraphs: [{ type: String, trim: true }],
+  },
+  { _id: false },
+);
+
+const topicSectionSchema = new Schema(
+  {
+    sectionTitle: { type: String, required: true, trim: true },
+    sectionSlug: { type: String, trim: true, lowercase: true, default: null },
+    order: { type: Number, default: 0 },
+    definition: { type: String, default: null },
+    explanation: { type: String, default: null },
+    aiExplanation: { type: aiExplanationSchema, default: () => ({}) },
+    examples: [{ type: String, trim: true }],
+    jambPoint: { type: String, default: null },
+    commonMistakes: [{ type: String, trim: true }],
+    quickTip: { type: String, default: null },
+    illustrationImageUrl: { type: String, default: null },
+    mnemonic: { type: String, default: null },
+    relatedSections: [{ type: String, trim: true }],
+    tags: [{ type: String, trim: true }],
+  },
+  { _id: false },
+);
+
 const topicSchema = new Schema(
   {
     subject: { type: Schema.Types.ObjectId, ref: "Subject", required: true, index: true },
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, trim: true, lowercase: true, index: true },
+    referenceBook: { type: String, default: null },
+    jambFocus: [{ type: String, trim: true }],
+    overview: { type: String, default: null },
+    learningGoals: [{ type: String, trim: true }],
+    prerequisites: [{ type: String, trim: true }],
+    relatedTopics: [{ type: String, trim: true }],
+    revisionPriority: {
+      type: String,
+      enum: ["low", "medium", "high", "critical"],
+      default: "medium",
+    },
+    sections: { type: [topicSectionSchema], default: [] },
     summary: { type: String, default: null },
     content: { type: String, default: null },
     highYieldSummary: { type: String, default: null },
     keyDefinitions: [{ type: String, trim: true }],
     simpleExplanation: { type: String, default: null },
     importantFormulasFacts: [{ type: String, trim: true }],
-    aiExplanations: {
-      whyCorrectIsCorrect: { type: String, default: null },
-      whyOthersAreWrong: { type: String, default: null },
-      simpleBreakdown: { type: String, default: null },
-    },
+    aiExplanations: { type: aiExplanationSchema, default: () => ({}) },
     isHighYield: { type: Boolean, default: false },
     commonTraps: [{ type: String, trim: true }],
     difficultyLevel: {

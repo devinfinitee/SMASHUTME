@@ -6,21 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { apiFetch } from "@/lib/api-fetch";
-import {
-  FileText,
-  Upload,
-  Sparkles,
-  Search,
-  Bold,
-  Italic,
-  List,
-  Link2,
-  Trophy,
-  Zap,
-  Gauge,
-  Share2,
-  CheckCircle2,
-} from "lucide-react";
+import { FileText, Upload, Sparkles, Search, Trophy, Zap, Gauge, Share2, CheckCircle2, Plus, Trash2, X } from "lucide-react";
 
 const INITIAL_EXTRACTION_ITEMS = [
   { name: "Pathology_Core_2024.pdf", score: "98% Match", processing: false },
@@ -58,6 +44,7 @@ const JAMB_SUBJECTS = [
 ];
 
 interface TopicFormErrors {
+  [key: string]: string | undefined;
   subject?: string;
   topicName?: string;
   highYieldSummary?: string;
@@ -71,25 +58,49 @@ interface TopicFormErrors {
   general?: string;
 }
 
+interface SectionDraft {
+  sectionTitle: string;
+  definition: string;
+  explanation: string;
+  examplesInput: string;
+  jambPoint: string;
+  quickTip: string;
+  aiParagraphsInput: string;
+  illustrationImageUrl: string;
+  illustrationFileName: string;
+}
+
+const buildEmptySection = (): SectionDraft => ({
+  sectionTitle: "",
+  definition: "",
+  explanation: "",
+  examplesInput: "",
+  jambPoint: "",
+  quickTip: "",
+  aiParagraphsInput: "",
+  illustrationImageUrl: "",
+  illustrationFileName: "",
+});
+
 export default function ContentManagement() {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const noteFileInputRef = useRef<HTMLInputElement | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [topicName, setTopicName] = useState("");
-  const [highYieldSummary, setHighYieldSummary] = useState("");
-  const [keyDefinitionsInput, setKeyDefinitionsInput] = useState("");
-  const [simpleExplanation, setSimpleExplanation] = useState("");
-  const [importantFormulasFactsInput, setImportantFormulasFactsInput] = useState("");
-  const [whyCorrectIsCorrect, setWhyCorrectIsCorrect] = useState("");
-  const [whyOthersAreWrong, setWhyOthersAreWrong] = useState("");
-  const [simpleBreakdown, setSimpleBreakdown] = useState("");
+  const [referenceBook, setReferenceBook] = useState("");
+  const [overview, setOverview] = useState("");
+  const [jambFocusInput, setJambFocusInput] = useState("");
+  const [learningGoalsInput, setLearningGoalsInput] = useState("");
+  const [prerequisitesInput, setPrerequisitesInput] = useState("");
+  const [relatedTopicsInput, setRelatedTopicsInput] = useState("");
+  const [revisionPriority, setRevisionPriority] = useState<"low" | "medium" | "high" | "critical">("medium");
+  const [sections, setSections] = useState<SectionDraft[]>([buildEmptySection()]);
   const [yieldClass, setYieldClass] = useState<"foundational" | "high" | "low">("high");
   const [extractionItems, setExtractionItems] = useState(INITIAL_EXTRACTION_ITEMS);
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedNoteFile, setSelectedNoteFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+  const [isParsingNote, setIsParsingNote] = useState(false);
   const [topicErrors, setTopicErrors] = useState<TopicFormErrors>({});
   const [topicMessage, setTopicMessage] = useState<string | null>(null);
   const [isSavingTopic, setIsSavingTopic] = useState(false);
@@ -115,19 +126,6 @@ export default function ContentManagement() {
     return null;
   }
 
-  function handleChooseFiles(files: File[]) {
-    setUploadMessage(null);
-    const validationError = validateFiles(files);
-    if (validationError) {
-      setUploadError(validationError);
-      setSelectedFiles([]);
-      return;
-    }
-
-    setUploadError(null);
-    setSelectedFiles(files);
-  }
-
   function handleChooseNoteFile(file: File | null) {
     setUploadMessage(null);
     if (!file) {
@@ -146,64 +144,95 @@ export default function ContentManagement() {
     setSelectedNoteFile(file);
   }
 
-  function handleUploadSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleUploadSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setUploadMessage(null);
+    setTopicErrors({});
 
     if (!selectedSubject) {
-      setUploadError("Please select a JAMB subject before uploading.");
-      return;
-    }
-
-    if (selectedFiles.length === 0) {
-      setUploadError("Please choose at least one file to upload.");
+      setUploadError("Please select a JAMB subject before parsing.");
       return;
     }
 
     if (!selectedNoteFile) {
-      setUploadError("Please upload the note file as well.");
+      setUploadError("Please upload the note file to parse.");
       return;
     }
 
-    const queuedItems = selectedFiles.map((file) => ({
-      name: `${selectedSubject} - ${file.name}`,
-      score: "Queued...",
-      processing: true,
-    }));
+    setIsParsingNote(true);
 
-    const noteQueueItem = {
-      name: `${selectedSubject} - Note - ${selectedNoteFile.name}`,
-      score: "Queued...",
-      processing: true,
-    };
+    try {
+      const formData = new FormData();
+      formData.append("noteFile", selectedNoteFile);
+      formData.append("topicName", topicName.trim());
 
-    setExtractionItems((prev) => [noteQueueItem, ...queuedItems, ...prev]);
-    setSelectedFiles([]);
-    setSelectedNoteFile(null);
-    setUploadError(null);
-    setUploadMessage(`Uploaded ${queuedItems.length} topic file(s) and 1 note file for ${selectedSubject}.`);
+      const response = await apiFetch("/api/admin/topics/parse-note", {
+        method: "POST",
+        body: formData,
+      });
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    if (noteFileInputRef.current) {
-      noteFileInputRef.current.value = "";
+      const responseBody = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(responseBody?.error || "Unable to parse note file.");
+      }
+
+      const parsed = responseBody?.data || {};
+      const parsedSections = Array.isArray(parsed.sections) ? parsed.sections : [];
+
+      setTopicName(String(parsed.topicName || topicName).trim());
+      setOverview(String(parsed.overview || "").trim());
+      setReferenceBook(String(parsed.referenceBook || "").trim());
+      setJambFocusInput((parsed.jambFocus || []).join("\n"));
+      setLearningGoalsInput((parsed.learningGoals || []).join("\n"));
+      setPrerequisitesInput((parsed.prerequisites || []).join("\n"));
+      setRelatedTopicsInput((parsed.relatedTopics || []).join("\n"));
+      setRevisionPriority(
+        ["low", "medium", "high", "critical"].includes(String(parsed.revisionPriority || "").toLowerCase())
+          ? (String(parsed.revisionPriority).toLowerCase() as "low" | "medium" | "high" | "critical")
+          : "medium",
+      );
+
+      if (parsedSections.length > 0) {
+        setSections(
+          parsedSections.map((section: any) => ({
+            sectionTitle: String(section?.sectionTitle || "").trim(),
+            definition: String(section?.definition || "").trim(),
+            explanation: String(section?.explanation || "").trim(),
+            examplesInput: Array.isArray(section?.examples) ? section.examples.join("\n") : "",
+            jambPoint: String(section?.jambPoint || "").trim(),
+            quickTip: String(section?.quickTip || "").trim(),
+            aiParagraphsInput: Array.isArray(section?.aiExplanation?.paragraphs)
+              ? section.aiExplanation.paragraphs.join("\n\n")
+              : "",
+            illustrationImageUrl: String(section?.illustrationImageUrl || "").trim(),
+            illustrationFileName: "",
+          })),
+        );
+      }
+
+      setExtractionItems((prev) => [
+        {
+          name: `${selectedSubject} - Parsed - ${selectedNoteFile.name}`,
+          score: responseBody?.meta?.usedGemini ? "AI Parsed" : "Parsed",
+          processing: false,
+        },
+        ...prev,
+      ]);
+      setUploadError(null);
+      setUploadMessage(responseBody?.message || "Note parsed and form auto-filled.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to parse note file.";
+      setUploadError(message);
+    } finally {
+      setIsParsingNote(false);
     }
   }
 
   function validateTopicDraft() {
     const nextErrors: TopicFormErrors = {};
     const trimmedTopicName = topicName.trim();
-    const trimmedHighYieldSummary = highYieldSummary.trim();
-    const trimmedSimpleExplanation = simpleExplanation.trim();
-    const parsedKeyDefinitions = keyDefinitionsInput
-      .split("\n")
-      .map((item) => item.trim())
-      .filter(Boolean);
-    const parsedImportantFormulasFacts = importantFormulasFactsInput
-      .split("\n")
-      .map((item) => item.trim())
-      .filter(Boolean);
+    const parsedJambFocus = jambFocusInput.split("\n").map((item) => item.trim()).filter(Boolean);
+    const parsedLearningGoals = learningGoalsInput.split("\n").map((item) => item.trim()).filter(Boolean);
 
     if (!selectedSubject) {
       nextErrors.subject = "Please select a JAMB subject.";
@@ -219,34 +248,43 @@ export default function ContentManagement() {
       nextErrors.topicName = "Topic name must be 180 characters or less.";
     }
 
-    if (!trimmedHighYieldSummary) {
-      nextErrors.highYieldSummary = "High-yield summary is required.";
+    if (!overview.trim()) {
+      nextErrors.overview = "Overview is required.";
     }
 
-    if (parsedKeyDefinitions.length === 0) {
-      nextErrors.keyDefinitions = "Add at least one key definition (one per line).";
+    if (parsedLearningGoals.length === 0) {
+      nextErrors.learningGoals = "Add at least one learning goal (one per line).";
     }
 
-    if (!trimmedSimpleExplanation) {
-      nextErrors.simpleExplanation = "Simple explanation is required.";
-    } else if (trimmedSimpleExplanation.length < 20) {
-      nextErrors.simpleExplanation = "Simple explanation must be at least 20 characters.";
+    if (parsedJambFocus.length === 0) {
+      nextErrors.jambFocus = "Add at least one JAMB focus point (one per line).";
     }
 
-    if (parsedImportantFormulasFacts.length === 0) {
-      nextErrors.importantFormulasFacts = "Add at least one important formula or fact (one per line).";
+    if (sections.length === 0) {
+      nextErrors.sections = "Add at least one section.";
     }
 
-    if (!whyCorrectIsCorrect.trim()) {
-      nextErrors.whyCorrectIsCorrect = "Why correct answer is correct is required.";
-    }
+    sections.forEach((section, index) => {
+      if (!section.sectionTitle.trim()) {
+        nextErrors[`sections.${index}.sectionTitle`] = "Section title is required.";
+      }
+      if (!section.definition.trim() && !section.explanation.trim()) {
+        nextErrors[`sections.${index}.explanation`] = "Add a definition or explanation.";
+      }
+      const paragraphCount = section.aiParagraphsInput
+        .split("\n\n")
+        .map((item) => item.trim())
+        .filter(Boolean).length;
+      if (paragraphCount === 0) {
+        nextErrors[`sections.${index}.aiExplanation`] = "Add at least one AI explanation paragraph (separate with blank lines).";
+      }
+      if (section.illustrationImageUrl && !section.illustrationImageUrl.startsWith("data:image/")) {
+        nextErrors[`sections.${index}.illustrationImageUrl`] = "Section image must be a valid image file.";
+      }
+    });
 
-    if (!whyOthersAreWrong.trim()) {
-      nextErrors.whyOthersAreWrong = "Why others are wrong is required.";
-    }
-
-    if (!simpleBreakdown.trim()) {
-      nextErrors.simpleBreakdown = "Simple breakdown is required.";
+    if (sections.filter((section) => section.illustrationImageUrl).length > 4) {
+      nextErrors.sectionsImages = "Use up to 4 section illustrations per topic to keep uploads light.";
     }
 
     if (!["foundational", "high", "low"].includes(yieldClass)) {
@@ -254,6 +292,70 @@ export default function ContentManagement() {
     }
 
     return nextErrors;
+  }
+
+  function handleSectionImageSelect(index: number, file: File | null) {
+    if (!file) {
+      updateSection(index, { illustrationImageUrl: "", illustrationFileName: "" });
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setTopicErrors((prev) => ({ ...prev, [`sections.${index}.illustrationImageUrl`]: "Only image files are allowed." }));
+      return;
+    }
+
+    if (file.size > 1.5 * 1024 * 1024) {
+      setTopicErrors((prev) => ({
+        ...prev,
+        [`sections.${index}.illustrationImageUrl`]: "Image must be 1.5MB or less.",
+      }));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateSection(index, {
+        illustrationImageUrl: typeof reader.result === "string" ? reader.result : "",
+        illustrationFileName: file.name,
+      });
+      setTopicErrors((prev) => ({ ...prev, [`sections.${index}.illustrationImageUrl`]: undefined }));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function updateSection(index: number, patch: Partial<SectionDraft>) {
+    setSections((prev) => prev.map((section, i) => (i === index ? { ...section, ...patch } : section)));
+  }
+
+  function addSection() {
+    setSections((prev) => [...prev, buildEmptySection()]);
+  }
+
+  function removeSection(index: number) {
+    setSections((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
+  }
+
+  function resetTopicForm() {
+    setTopicName("");
+    setReferenceBook("");
+    setOverview("");
+    setJambFocusInput("");
+    setLearningGoalsInput("");
+    setPrerequisitesInput("");
+    setRelatedTopicsInput("");
+    setRevisionPriority("medium");
+    setSections([buildEmptySection()]);
+    setSelectedSubject("");
+    setSelectedNoteFile(null);
+    setYieldClass("high");
+    setTopicErrors({});
+    setTopicMessage(null);
+    setUploadMessage(null);
+    setUploadError(null);
+    if (noteFileInputRef.current) {
+      noteFileInputRef.current.value = "";
+    }
   }
 
   async function handleSaveTopic() {
@@ -269,28 +371,69 @@ export default function ContentManagement() {
     setIsSavingTopic(true);
 
     try {
+      const parsedJambFocus = jambFocusInput.split("\n").map((item) => item.trim()).filter(Boolean);
+      const parsedLearningGoals = learningGoalsInput.split("\n").map((item) => item.trim()).filter(Boolean);
+      const parsedPrerequisites = prerequisitesInput.split("\n").map((item) => item.trim()).filter(Boolean);
+      const parsedRelatedTopics = relatedTopicsInput.split("\n").map((item) => item.trim()).filter(Boolean);
+      const firstSection = sections[0];
+      const normalizedSections = sections.map((section, index) => ({
+        sectionTitle: section.sectionTitle.trim(),
+        order: index,
+        definition: section.definition.trim(),
+        explanation: section.explanation.trim(),
+        examples: section.examplesInput.split("\n").map((item) => item.trim()).filter(Boolean),
+        jambPoint: section.jambPoint.trim(),
+        quickTip: section.quickTip.trim(),
+        illustrationImageUrl: section.illustrationImageUrl || null,
+        aiExplanation: {
+          paragraphs: section.aiParagraphsInput
+            .split("\n\n")
+            .map((item) => item.trim())
+            .filter(Boolean),
+        },
+      }));
+      const highYieldSummary = overview.trim();
+      const keyDefinitions = normalizedSections.map((item) => item.definition).filter(Boolean);
+      const importantFormulasFacts = normalizedSections.map((item) => item.jambPoint).filter(Boolean);
+      const simpleExplanation = firstSection?.explanation?.trim() || firstSection?.definition?.trim() || highYieldSummary;
+      const aiParagraphs = firstSection?.aiParagraphsInput
+        ?.split("\n\n")
+        .map((item) => item.trim())
+        .filter(Boolean) || [];
+
+      const payload = {
+        subject: selectedSubject,
+        topicName: topicName.trim(),
+        highYieldSummary,
+        keyDefinitions,
+        simpleExplanation,
+        importantFormulasFacts,
+        aiExplanations: {
+          whyCorrectIsCorrect: "Correct options follow the section definitions and rule conditions.",
+          whyOthersAreWrong: "Wrong options usually violate the concept definition or a required condition.",
+          simpleBreakdown: "Read question, identify tested concept, apply rule, eliminate distractors.",
+          paragraphs: aiParagraphs,
+        },
+        yieldClass,
+        summary: highYieldSummary,
+        content: simpleExplanation,
+        commonTraps: [],
+        order: 0,
+        status: "active",
+        overview: overview.trim(),
+        referenceBook: referenceBook.trim(),
+        jambFocus: parsedJambFocus,
+        learningGoals: parsedLearningGoals,
+        prerequisites: parsedPrerequisites,
+        relatedTopics: parsedRelatedTopics,
+        revisionPriority,
+        sections: normalizedSections,
+      };
+
       const response = await apiFetch("/api/admin/topics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subject: selectedSubject,
-          topicName: topicName.trim(),
-          highYieldSummary: highYieldSummary.trim(),
-          keyDefinitions: keyDefinitionsInput.split("\n").map((item) => item.trim()).filter(Boolean),
-          simpleExplanation: simpleExplanation.trim(),
-          importantFormulasFacts: importantFormulasFactsInput.split("\n").map((item) => item.trim()).filter(Boolean),
-          aiExplanations: {
-            whyCorrectIsCorrect: whyCorrectIsCorrect.trim(),
-            whyOthersAreWrong: whyOthersAreWrong.trim(),
-            simpleBreakdown: simpleBreakdown.trim(),
-          },
-          yieldClass,
-          summary: highYieldSummary.trim(),
-          content: simpleExplanation.trim(),
-          commonTraps: whyOthersAreWrong.split("\n").map((item) => item.trim()).filter(Boolean),
-          order: 0,
-          status: "active",
-        }),
+        body: JSON.stringify(payload),
       });
 
       const responseBody = await response.json().catch(() => ({}));
@@ -303,16 +446,7 @@ export default function ContentManagement() {
       }
 
       setTopicMessage(responseBody?.message || "Topic saved successfully.");
-      setTopicName("");
-      setHighYieldSummary("");
-      setKeyDefinitionsInput("");
-      setSimpleExplanation("");
-      setImportantFormulasFactsInput("");
-      setWhyCorrectIsCorrect("");
-      setWhyOthersAreWrong("");
-      setSimpleBreakdown("");
-      setSelectedSubject("");
-      setYieldClass("high");
+      resetTopicForm();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to save topic.";
       setTopicErrors((prev) => ({
@@ -367,14 +501,6 @@ export default function ContentManagement() {
 
               <form onSubmit={handleUploadSubmit} className="space-y-4">
                 <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.docx"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => handleChooseFiles(Array.from(e.target.files ?? []))}
-                />
-                <input
                   ref={noteFileInputRef}
                   type="file"
                   accept=".pdf,.docx"
@@ -384,45 +510,46 @@ export default function ContentManagement() {
 
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Study Note File</Label>
-                  <button
-                    type="button"
-                    onClick={() => noteFileInputRef.current?.click()}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left"
-                  >
-                    {selectedNoteFile ? selectedNoteFile.name : "Choose note file (.pdf or .docx)"}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => noteFileInputRef.current?.click()}
+                      className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left"
+                    >
+                      {selectedNoteFile ? selectedNoteFile.name : "Choose note file (.pdf or .docx)"}
+                    </button>
+                    {selectedNoteFile && (
+                      <button
+                        type="button"
+                        onClick={() => handleChooseNoteFile(null)}
+                        className="rounded-lg border border-red-300 bg-red-50 px-3 py-2.5 text-red-600 hover:bg-red-100 transition-colors"
+                        title="Clear selected file"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => noteFileInputRef.current?.click()}
                   className="w-full border-2 border-dashed border-brand-blue/30 rounded-2xl p-8 text-center space-y-4 hover:border-brand-blue transition-colors bg-gradient-to-b from-brand-blue/5 to-brand-gold/10"
                 >
                   <div className="mx-auto w-16 h-16 rounded-full bg-brand-blue/10 flex items-center justify-center text-brand-blue">
                     <Upload className="w-7 h-7" />
                   </div>
                   <div className="space-y-1">
-                    <p className="font-bold text-slate-900">Upload Topic File for AI Extraction</p>
+                    <p className="font-bold text-slate-900">Upload Note File to Auto-Fill Form</p>
                     <p className="text-xs text-slate-500">Max file size: 50MB. Supports .pdf, .docx</p>
                   </div>
                 </button>
-
-                {selectedFiles.length > 0 ? (
-                  <div className="rounded-xl border border-brand-blue/20 bg-brand-blue/5 p-3">
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Selected Files</p>
-                    <ul className="space-y-1 text-sm text-slate-700">
-                      {selectedFiles.map((file) => (
-                        <li key={file.name} className="truncate">{file.name}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
 
                 {uploadError ? <p className="text-xs font-medium text-red-600">{uploadError}</p> : null}
                 {uploadMessage ? <p className="text-xs font-medium text-green-700">{uploadMessage}</p> : null}
 
                 <Button type="submit" className="w-full bg-brand-blue text-white hover:bg-brand-blue/90 shadow-lg shadow-brand-blue/25">
-                  Add to Extraction Queue
+                  {isParsingNote ? "Parsing Note..." : "Parse and Fill Structured Form"}
                 </Button>
               </form>
 
@@ -479,9 +606,8 @@ export default function ContentManagement() {
                 <div className="w-2 h-8 bg-brand-gold rounded-full" />
                 <h3 className="font-black text-xl text-slate-900">Topic Details</h3>
               </div>
-              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                <span className="w-2 h-2 rounded-full bg-green-500" />
-                Auto-saved at 14:02
+              <div className="rounded-full bg-brand-blue/10 border border-brand-blue/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-brand-blue">
+                Structured Note Form
               </div>
             </div>
 
@@ -530,97 +656,241 @@ export default function ContentManagement() {
                 {topicErrors.topicName ? <p className="text-xs font-medium text-red-600">{topicErrors.topicName}</p> : null}
               </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">High-Yield Summary</Label>
-                  <div className="flex gap-2 text-slate-500">
-                    <button className="p-1 rounded hover:bg-slate-100" aria-label="Bold"><Bold className="w-4 h-4" /></button>
-                    <button className="p-1 rounded hover:bg-slate-100" aria-label="Italic"><Italic className="w-4 h-4" /></button>
-                    <button className="p-1 rounded hover:bg-slate-100" aria-label="List"><List className="w-4 h-4" /></button>
-                    <button className="p-1 rounded hover:bg-slate-100" aria-label="Link"><Link2 className="w-4 h-4" /></button>
-                  </div>
-                </div>
-                <Textarea
-                  value={highYieldSummary}
-                  onChange={(e) => setHighYieldSummary(e.target.value)}
-                  className="w-full bg-brand-blue/5 border border-brand-blue/10 rounded-xl h-28 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-6"
-                  placeholder="High-level summary of what students must not miss..."
-                />
-                {topicErrors.highYieldSummary ? <p className="text-xs font-medium text-red-600">{topicErrors.highYieldSummary}</p> : null}
-              </div>
+              <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Reference Book</Label>
+                      <Input
+                        value={referenceBook}
+                        onChange={(e) => setReferenceBook(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl"
+                        placeholder="e.g., New School Chemistry by Osei Yaw Ababio"
+                      />
+                    </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Key Definitions</Label>
-                  <Textarea
-                    value={keyDefinitionsInput}
-                    onChange={(e) => setKeyDefinitionsInput(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl h-36 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
-                    placeholder={"One definition per line\nAllele: alternative form of a gene\nGenotype: genetic makeup"}
-                  />
-                  {topicErrors.keyDefinitions ? <p className="text-xs font-medium text-red-600">{topicErrors.keyDefinitions}</p> : null}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Important Formulas / Facts</Label>
-                  <Textarea
-                    value={importantFormulasFactsInput}
-                    onChange={(e) => setImportantFormulasFactsInput(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl h-36 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
-                    placeholder={"One formula/fact per line\nHardy-Weinberg: p^2 + 2pq + q^2 = 1"}
-                  />
-                  {topicErrors.importantFormulasFacts ? <p className="text-xs font-medium text-red-600">{topicErrors.importantFormulasFacts}</p> : null}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Simple Explanation</Label>
-                <Textarea
-                  value={simpleExplanation}
-                  onChange={(e) => setSimpleExplanation(e.target.value)}
-                  className="w-full bg-brand-blue/5 border border-brand-blue/10 rounded-xl h-44 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-6"
-                  placeholder="Explain the topic in very simple language students can quickly understand..."
-                />
-                {topicErrors.simpleExplanation ? <p className="text-xs font-medium text-red-600">{topicErrors.simpleExplanation}</p> : null}
-              </div>
-
-              <div className="space-y-4 rounded-2xl border border-brand-blue/20 bg-brand-blue/5 p-5">
-                <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">AI Explanations</Label>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Why Correct Answer Is Correct</Label>
-                    <Textarea
-                      value={whyCorrectIsCorrect}
-                      onChange={(e) => setWhyCorrectIsCorrect(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl h-24 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
-                      placeholder="State why the correct option is correct."
-                    />
-                    {topicErrors.whyCorrectIsCorrect ? <p className="text-xs font-medium text-red-600">{topicErrors.whyCorrectIsCorrect}</p> : null}
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Revision Priority</Label>
+                      <select
+                        value={revisionPriority}
+                        onChange={(e) => setRevisionPriority(e.target.value as "low" | "medium" | "high" | "critical")}
+                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Why Others Are Wrong</Label>
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Overview</Label>
                     <Textarea
-                      value={whyOthersAreWrong}
-                      onChange={(e) => setWhyOthersAreWrong(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl h-24 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
-                      placeholder="Explain why distractor options are wrong."
+                      value={overview}
+                      onChange={(e) => setOverview(e.target.value)}
+                      className="w-full bg-brand-blue/5 border border-brand-blue/10 rounded-xl h-28 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-6"
+                      placeholder="Give a concise overview of this topic as it appears in your note."
                     />
-                    {topicErrors.whyOthersAreWrong ? <p className="text-xs font-medium text-red-600">{topicErrors.whyOthersAreWrong}</p> : null}
+                    {topicErrors.overview ? <p className="text-xs font-medium text-red-600">{topicErrors.overview}</p> : null}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Simple Breakdown</Label>
-                    <Textarea
-                      value={simpleBreakdown}
-                      onChange={(e) => setSimpleBreakdown(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-xl h-24 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
-                      placeholder="Give a short step-by-step breakdown students can remember quickly."
-                    />
-                    {topicErrors.simpleBreakdown ? <p className="text-xs font-medium text-red-600">{topicErrors.simpleBreakdown}</p> : null}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">JAMB Focus Points</Label>
+                      <Textarea
+                        value={jambFocusInput}
+                        onChange={(e) => setJambFocusInput(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl h-32 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
+                        placeholder={"One point per line\nDefinition-based questions\nTrend/periodicity questions"}
+                      />
+                      {topicErrors.jambFocus ? <p className="text-xs font-medium text-red-600">{topicErrors.jambFocus}</p> : null}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Learning Goals</Label>
+                      <Textarea
+                        value={learningGoalsInput}
+                        onChange={(e) => setLearningGoalsInput(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl h-32 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
+                        placeholder={"One goal per line\nDefine the core concept\nApply it to objective questions"}
+                      />
+                      {topicErrors.learningGoals ? <p className="text-xs font-medium text-red-600">{topicErrors.learningGoals}</p> : null}
+                    </div>
                   </div>
-                </div>
-              </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Prerequisites</Label>
+                      <Textarea
+                        value={prerequisitesInput}
+                        onChange={(e) => setPrerequisitesInput(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl h-28 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
+                        placeholder={"One prerequisite per line"}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Related Topics</Label>
+                      <Textarea
+                        value={relatedTopicsInput}
+                        onChange={(e) => setRelatedTopicsInput(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl h-28 text-slate-800 leading-relaxed focus-visible:ring-2 focus-visible:ring-brand-blue/20 resize-none p-4"
+                        placeholder={"One related topic per line"}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-2xl border border-brand-blue/20 bg-brand-blue/5 p-5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Structured Sections</Label>
+                      <Button type="button" onClick={addSection} className="h-8 bg-brand-blue text-white hover:bg-brand-blue/90 text-xs">
+                        <Plus className="w-3.5 h-3.5 mr-1" />
+                        Add Section
+                      </Button>
+                    </div>
+
+                    {sections.map((section, index) => (
+                      <div key={`section-${index}`} className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-bold text-slate-800">Section {index + 1}</p>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => removeSection(index)}
+                            className="h-8 text-red-600 hover:bg-red-50"
+                            disabled={sections.length === 1}
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Remove
+                          </Button>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Section Title</Label>
+                          <Input
+                            value={section.sectionTitle}
+                            onChange={(e) => updateSection(index, { sectionTitle: e.target.value })}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl"
+                            placeholder="e.g., Dalton's Atomic Theory"
+                          />
+                          {topicErrors[`sections.${index}.sectionTitle`] ? (
+                            <p className="text-xs font-medium text-red-600">{topicErrors[`sections.${index}.sectionTitle`]}</p>
+                          ) : null}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Definition</Label>
+                            <Textarea
+                              value={section.definition}
+                              onChange={(e) => updateSection(index, { definition: e.target.value })}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl h-24 resize-none"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">JAMB Point</Label>
+                            <Textarea
+                              value={section.jambPoint}
+                              onChange={(e) => updateSection(index, { jambPoint: e.target.value })}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl h-24 resize-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Explanation</Label>
+                          <Textarea
+                            value={section.explanation}
+                            onChange={(e) => updateSection(index, { explanation: e.target.value })}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl h-24 resize-none"
+                          />
+                          {topicErrors[`sections.${index}.explanation`] ? (
+                            <p className="text-xs font-medium text-red-600">{topicErrors[`sections.${index}.explanation`]}</p>
+                          ) : null}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Examples</Label>
+                            <Textarea
+                              value={section.examplesInput}
+                              onChange={(e) => updateSection(index, { examplesInput: e.target.value })}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl h-24 resize-none"
+                              placeholder={"One example per line"}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Quick Tip</Label>
+                            <Textarea
+                              value={section.quickTip}
+                              onChange={(e) => updateSection(index, { quickTip: e.target.value })}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl h-24 resize-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">AI Explanation Paragraphs</Label>
+                          <Textarea
+                            value={section.aiParagraphsInput}
+                            onChange={(e) => updateSection(index, { aiParagraphsInput: e.target.value })}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl h-28 resize-none"
+                            placeholder={"Separate each paragraph with one blank line."}
+                          />
+                          {topicErrors[`sections.${index}.aiExplanation`] ? (
+                            <p className="text-xs font-medium text-red-600">{topicErrors[`sections.${index}.aiExplanation`]}</p>
+                          ) : null}
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Section Illustration (Optional)</Label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleSectionImageSelect(index, e.target.files?.[0] ?? null)}
+                            className="block w-full text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-blue/10 file:px-3 file:py-2 file:font-semibold file:text-brand-blue hover:file:bg-brand-blue/20"
+                          />
+                          {section.illustrationFileName ? (
+                            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-600">Selected: {section.illustrationFileName}</p>
+                              <button
+                                type="button"
+                                onClick={() => handleSectionImageSelect(index, null)}
+                                className="text-red-600 hover:text-red-700 transition-colors"
+                                title="Remove image"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : null}
+                          {section.illustrationImageUrl ? (
+                            <div className="space-y-2">
+                              <div className="rounded-lg border border-slate-200 overflow-hidden bg-slate-50 relative group">
+                                <img src={section.illustrationImageUrl} alt={`Section ${index + 1} illustration`} className="w-full max-h-48 object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => handleSectionImageSelect(index, null)}
+                                  className="absolute top-2 right-2 rounded-full bg-red-500 hover:bg-red-600 text-white p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                  title="Remove image"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : null}
+                          {topicErrors[`sections.${index}.illustrationImageUrl`] ? (
+                            <p className="text-xs font-medium text-red-600">{topicErrors[`sections.${index}.illustrationImageUrl`]}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                    ))}
+
+                    {topicErrors.sections ? <p className="text-xs font-medium text-red-600">{topicErrors.sections}</p> : null}
+                    {topicErrors.sectionsImages ? <p className="text-xs font-medium text-red-600">{topicErrors.sectionsImages}</p> : null}
+                  </div>
+              </>
 
               <div className="space-y-4">
                 <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Yield Classification</Label>
@@ -671,20 +941,7 @@ export default function ContentManagement() {
                 type="button"
                 variant="ghost"
                 className="text-slate-600 hover:bg-slate-100"
-                onClick={() => {
-                  setTopicName("");
-                  setHighYieldSummary("");
-                  setKeyDefinitionsInput("");
-                  setSimpleExplanation("");
-                  setImportantFormulasFactsInput("");
-                  setWhyCorrectIsCorrect("");
-                  setWhyOthersAreWrong("");
-                  setSimpleBreakdown("");
-                  setSelectedSubject("");
-                  setYieldClass("high");
-                  setTopicErrors({});
-                  setTopicMessage(null);
-                }}
+                onClick={resetTopicForm}
               >
                 Cancel
               </Button>

@@ -106,7 +106,7 @@ export default function Login() {
         role,
       });
 
-      setLocation(role === "admin" || role === "super-admin" ? "/admin/dashboard" : onboardingCompleted ? "/dashboard" : "/onboarding/target");
+      setLocation(role === "admin" || role === "super-admin" ? "/admin/dashboard" : onboardingCompleted ? "/user/dashboard" : "/onboarding/target");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Login failed. Please try again.";
       if (message.toLowerCase().includes("password")) {

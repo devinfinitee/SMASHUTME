@@ -24,7 +24,10 @@ async function loadUserFromSession(req) {
     return null;
   }
 
-  const user = await User.findById(sessionUserId);
+  const user = await User.findById(sessionUserId)
+    .populate("selectedSubjects", "name slug code icon")
+    .populate("subjectProgress.subject", "name slug code icon")
+    .exec();
 
   if (!user && req.session) {
     req.session.userId = null;
@@ -43,7 +46,10 @@ async function loadUserFromToken(req) {
   }
 
   const payload = jwt.verify(token, getAuthSecret());
-  const user = await User.findById(payload.sub);
+  const user = await User.findById(payload.sub)
+    .populate("selectedSubjects", "name slug code icon")
+    .populate("subjectProgress.subject", "name slug code icon")
+    .exec();
 
   if (user && req.session && !req.session.userId) {
     req.session.userId = String(user._id);

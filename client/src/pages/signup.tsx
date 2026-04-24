@@ -121,7 +121,7 @@ export default function SignUp() {
         onboardingCompleted,
       });
 
-      setLocation(onboardingCompleted ? "/dashboard" : "/onboarding/target");
+      setLocation(onboardingCompleted ? "/user/dashboard" : "/onboarding/target");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sign up failed.";
       if (message.toLowerCase().includes("email")) {

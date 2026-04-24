@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import type { User } from "@/types";
+import { useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { DashboardOverview, DashboardRecentActivity, DashboardSubjectCard, User } from "@/types";
 import {
   BookOpen,
   Calculator,
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { AppShell } from "@/components/app-shell";
+import { apiFetch } from "@/lib/api-fetch";
 import { useLocation } from "wouter";
 
 interface SubjectCard {
@@ -32,7 +34,7 @@ interface SubjectCard {
   bgColor: string;
 }
 
-const RECENT_ACTIVITIES = [
+const FALLBACK_RECENT_ACTIVITIES = [
   {
     id: "1",
     type: "drill",
@@ -49,6 +51,13 @@ const RECENT_ACTIVITIES = [
     icon: Lightbulb,
     actionLabel: "Review Errors",
   },
+];
+
+const SUBJECT_CARD_COLORS = [
+  { color: "text-brand-blue", bgColor: "bg-brand-blue/10" },
+  { color: "text-purple-600", bgColor: "bg-purple-600/10" },
+  { color: "text-red-600", bgColor: "bg-red-600/10" },
+  { color: "text-amber-600", bgColor: "bg-amber-600/10" },
 ];
 
 function parseStorage<T>(key: string): T | null {
@@ -74,22 +83,42 @@ function iconForSubject(subjectName: string): typeof BookOpen {
   return BookOpen;
 }
 
-function buildSubjectCards(subjects: string[]): SubjectCard[] {
-  const colors = [
-    { color: "text-brand-blue", bgColor: "bg-brand-blue/10" },
-    { color: "text-purple-600", bgColor: "bg-purple-600/10" },
-    { color: "text-red-600", bgColor: "bg-red-600/10" },
-    { color: "text-amber-600", bgColor: "bg-amber-600/10" },
-  ];
-
+function buildFallbackSubjectCards(subjects: string[]): SubjectCard[] {
   return subjects.slice(0, 4).map((subject, index) => ({
     id: subject.toLowerCase(),
     name: subject,
     icon: iconForSubject(subject),
-    proficiency: Math.max(52, 88 - index * 9),
-    status: index === 0 ? "compulsory" : index === 1 ? "mastered" : index === 2 ? "weak" : "on-track",
-    color: colors[index % colors.length].color,
-    bgColor: colors[index % colors.length].bgColor,
+    proficiency: 0,
+    status: index === 0 ? "compulsory" : "on-track",
+    color: SUBJECT_CARD_COLORS[index % SUBJECT_CARD_COLORS.length].color,
+    bgColor: SUBJECT_CARD_COLORS[index % SUBJECT_CARD_COLORS.length].bgColor,
+  }));
+}
+
+function buildDashboardSubjectCards(cards?: DashboardOverview["subjectCards"]): SubjectCard[] {
+  if (!Array.isArray(cards) || cards.length === 0) {
+    return [];
+  }
+
+  return cards.slice(0, 4).map((card, index) => ({
+    id: card.id,
+    name: card.name,
+    icon: iconForSubject(card.name),
+    proficiency: Number(card.proficiency) || 0,
+    status: card.status,
+    color: card.color || SUBJECT_CARD_COLORS[index % SUBJECT_CARD_COLORS.length].color,
+    bgColor: card.bgColor || SUBJECT_CARD_COLORS[index % SUBJECT_CARD_COLORS.length].bgColor,
+  }));
+}
+
+function buildDashboardActivities(activities?: DashboardRecentActivity[]) {
+  if (!Array.isArray(activities) || activities.length === 0) {
+    return FALLBACK_RECENT_ACTIVITIES;
+  }
+
+  return activities.map((activity) => ({
+    ...activity,
+    icon: activity.iconKey === "mock" ? Lightbulb : BookOpen,
   }));
 }
 

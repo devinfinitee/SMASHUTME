@@ -67,7 +67,7 @@ export default function AdminDashboard() {
       user?.role &&
       !["admin", "super-admin", "support", "analyst"].includes(user.role)
     ) {
-      setLocation("/dashboard");
+      setLocation("/user/dashboard");
     }
   }, [isAuthenticated, isLoading, setLocation, user]);
 
