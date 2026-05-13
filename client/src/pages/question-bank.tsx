@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { apiFetch } from "@/lib/api-fetch";
 import { AdminShell } from "@/components/admin-shell";
+import { PDFQuestionUploader } from "@/components/pdf-question-uploader";
 import {
   CheckCircle2,
   CircleAlert,
@@ -23,6 +24,7 @@ import {
   Brain,
   ArrowRight,
   X,
+  Edit2,
 } from "lucide-react";
 
 const metrics = [
@@ -101,6 +103,7 @@ function QuestionBank() {
   const [selectedDifficulty, setSelectedDifficulty] = useState("All Difficulty");
   const [missingExplanationOnly, setMissingExplanationOnly] = useState(false);
   const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState<"manage" | "pdf-upload">("manage");
   const [questionRows, setQuestionRows] = useState(INITIAL_QUESTION_ROWS);
   const [activeQuestionId, setActiveQuestionId] = useState(INITIAL_QUESTION_ROWS[0]?.id ?? "");
   const [syllabusTags, setSyllabusTags] = useState<string[]>(["Differentiation", "Calculus"]);
@@ -326,15 +329,71 @@ function QuestionBank() {
     setQuestionYear(row.year);
     setQuestionBody(row.prompt);
     setSyllabusTags([row.topic]);
-    setExplanationBody(`Explain why the correct option for ${row.topic} is right, and why alternatives are not.`);
+    setExplanationBody("");
     resetWorkflowMessage(`Loaded ${row.id} into editor.`);
   }
 
-  function handleAutoSolve() {
-    setExplanationBody(
-      `Step 1: Differentiate each term independently.\nStep 2: d/dx(3x^2) = 6x, d/dx(5x) = 5, d/dx(-2) = 0.\nStep 3: Final answer is 6x + 5. Distractors miss either coefficient scaling or constant differentiation rules.`,
-    );
-    resetWorkflowMessage("Mock AI explanation generated.");
+  async function handleAutoSolve() {
+    const hasBody = questionBody.trim().length > 0;
+    const hasOptions = answerOptions.every((opt) => opt.value.trim().length > 0);
+    const hasCorrect = correctOption && ["A", "B", "C", "D"].includes(correctOption);
+
+    if (!hasBody) {
+      resetWorkflowMessage("Add a question body before using Auto-Solve.");
+      return;
+    }
+
+    if (!hasOptions) {
+      resetWorkflowMessage("All four options (A-D) must be filled before using Auto-Solve.");
+      return;
+    }
+
+    if (!hasCorrect) {
+      resetWorkflowMessage("Please select the correct answer (A-D) before using Auto-Solve.");
+      return;
+    }
+
+    setExplanationBody("🤖 Generating explanation with AI...");
+
+    try {
+      const response = await apiFetch("/api/admin/questions/auto-solve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questionBody: questionBody.trim(),
+          optionA: answerOptions[0]?.value?.trim() || "",
+          optionB: answerOptions[1]?.value?.trim() || "",
+          optionC: answerOptions[2]?.value?.trim() || "",
+          optionD: answerOptions[3]?.value?.trim() || "",
+          correctOption: correctOption.toUpperCase(),
+          subject: selectedSubject === "All Subjects" ? "General" : selectedSubject,
+        }),
+      });
+
+      const responseBody = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(responseBody?.error || "Failed to generate explanation.");
+      }
+
+      const explanation = responseBody?.data?.explanation || "";
+      const examTip = responseBody?.data?.examTip || "";
+
+      if (explanation) {
+        const fullExplanation = examTip
+          ? `${explanation}\n\nExam Tip: ${examTip}`
+          : explanation;
+
+        setExplanationBody(fullExplanation);
+        resetWorkflowMessage("✅ AI explanation generated successfully!");
+      } else {
+        throw new Error("No explanation received from AI.");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to generate explanation.";
+      setExplanationBody("");
+      resetWorkflowMessage(`❌ ${message}`);
+    }
   }
 
   function handleSaveDraft() {
@@ -445,146 +504,220 @@ function QuestionBank() {
           ))}
         </div>
 
-        <div className="bg-white rounded-xl p-6 md:p-8 shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100">
-          <input
-            ref={bulkFileInputRef}
-            type="file"
-            accept=".json,.csv"
-            multiple
-            className="hidden"
-            onChange={(e) => handleBulkUpload(e.target.files)}
-          />
-
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-black text-slate-900">Advanced Filter Bar</h3>
-              <p className="text-sm text-slate-500">Narrow the bank by subject, year, topic tag, and review state.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={() => bulkFileInputRef.current?.click()}
-                className="rounded-full border-slate-200 text-slate-700 hover:bg-slate-50"
-                disabled={isUploadingBulk}
-              >
-                <FileUp className="w-4 h-4 mr-2" />
-                {isUploadingBulk ? "Uploading..." : "Bulk Upload JSON/CSV"}
-              </Button>
-              <Button onClick={handleCreateSingleQuestion} className="rounded-full bg-[#2B0AFA] text-white hover:bg-[#2408CF]">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Single Question
-              </Button>
-            </div>
+        {/* Tab Navigation */}
+        <div className="mt-12 border-b border-slate-200 bg-slate-50 p-4 rounded-t-xl">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab("manage")}
+              className={`px-6 py-4 font-bold text-base transition-colors border-b-4 ${
+                activeTab === "manage"
+                  ? "border-[#1C00BC] text-[#1C00BC] bg-white"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              📋 Manage Questions
+            </button>
+            <button
+              onClick={() => setActiveTab("pdf-upload")}
+              className={`px-6 py-4 font-bold text-base transition-colors border-b-4 ${
+                activeTab === "pdf-upload"
+                  ? "border-[#1C00BC] text-[#1C00BC] bg-white"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              📄 Upload PDF Questions
+            </button>
           </div>
-
-          {workflowMessage ? (
-            <div className="mt-4 rounded-lg border border-[#1C00BC]/15 bg-[#1C00BC]/5 px-4 py-2 text-sm font-medium text-[#1C00BC]">
-              {workflowMessage}
-            </div>
-          ) : null}
-
-          <div className="relative mt-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              placeholder="Search questions, years, or syllabus topics..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-slate-50"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-8">
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Subject</Label>
-              <select
-                className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] font-body text-sm rounded-t-lg px-3 py-2"
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-              >
-                {subjects.map((subject) => (
-                  <option key={subject}>{subject}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">JAMB Year</Label>
-              <select
-                className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] font-body text-sm rounded-t-lg px-3 py-2"
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-              >
-                <option>All Years</option>
-                <option>2024</option>
-                <option>2023</option>
-                <option>2022</option>
-                <option>2021</option>
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Topic Tag</Label>
-              <select
-                className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] font-body text-sm rounded-t-lg px-3 py-2"
-                value={selectedTopic}
-                onChange={(e) => setSelectedTopic(e.target.value)}
-              >
-                {questionTopics.map((topic) => (
-                  <option key={topic}>{topic}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 pt-1 md:pt-5">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <input
-                  className="w-5 h-5 rounded border-slate-300 text-[#1C00BC] focus:ring-[#1C00BC]/20"
-                  type="checkbox"
-                  checked={missingExplanationOnly}
-                  onChange={(e) => setMissingExplanationOnly(e.target.checked)}
-                />
-                <span className="text-sm font-medium text-slate-700 group-hover:text-[#1C00BC] transition-colors">Missing Explanation</span>
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowMoreFilters((prev) => !prev)}
-                className="ml-auto text-[#1C00BC] text-sm font-bold flex items-center gap-1 hover:underline"
-              >
-                <Filter className="w-4 h-4" />
-                {showMoreFilters ? "Hide Filters" : "More Filters"}
-              </button>
-            </div>
-          </div>
-
-          {showMoreFilters ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-slate-100">
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Review Status</Label>
-                <select
-                  className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] font-body text-sm rounded-t-lg px-3 py-2"
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                >
-                  {statuses.map((status) => (
-                    <option key={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1">Difficulty</Label>
-                <select
-                  className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] font-body text-sm rounded-t-lg px-3 py-2"
-                  value={selectedDifficulty}
-                  onChange={(e) => setSelectedDifficulty(e.target.value)}
-                >
-                  {difficulties.map((difficulty) => (
-                    <option key={difficulty}>{difficulty}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ) : null}
         </div>
 
-        <div className="grid grid-cols-12 gap-6 md:gap-8 items-start">
-          <div className="col-span-12 lg:col-span-8 space-y-8">
+        {/* PDF Upload Tab */}
+        {activeTab === "pdf-upload" && (
+          <div className="mt-0 bg-white rounded-b-xl p-8 md:p-10 shadow-[0_20px_40px_rgba(11,28,48,0.08)] border border-t-0 border-slate-100">
+            <h2 className="text-2xl font-black text-slate-900 mb-6">Upload Past Questions from PDF</h2>
+            <PDFQuestionUploader />
+          </div>
+        )}
+
+        {/* Manage Questions Tab */}
+        {activeTab === "manage" && (
+          <>
+            <input
+              ref={bulkFileInputRef}
+              type="file"
+              accept=".json,.csv"
+              multiple
+              className="hidden"
+              onChange={(e) => handleBulkUpload(e.target.files)}
+            />
+
+            {workflowMessage ? (
+              <div className="rounded-lg border border-[#1C00BC]/15 bg-[#1C00BC]/5 px-4 py-2 text-sm font-medium text-[#1C00BC]">
+                {workflowMessage}
+              </div>
+            ) : null}
+
+            <div className="grid grid-cols-12 gap-6 md:gap-8 items-start">
+          {/* Left Column: Batch List & Filters */}
+          <div className="col-span-12 lg:col-span-5">
+            <div className="bg-white rounded-xl p-6 shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100 sticky top-24">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">Batch Editor</h3>
+                  <p className="text-sm text-slate-500 mt-1">Select questions to edit</p>
+                </div>
+                <Button
+                  onClick={handleCreateSingleQuestion}
+                  size="sm"
+                  className="bg-[#2B0AFA] text-white hover:bg-[#2408CF]"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  New
+                </Button>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    placeholder="Search by ID, subject..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 bg-slate-50 border-0 border-b border-slate-200 text-sm rounded-t-lg"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <select
+                    className="bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] text-xs px-2 py-2 rounded-t"
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                  >
+                    {subjects.map((subject) => (
+                      <option key={subject}>{subject}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] text-xs px-2 py-2 rounded-t"
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                  >
+                    <option>All Years</option>
+                    <option>2024</option>
+                    <option>2023</option>
+                    <option>2022</option>
+                    <option>2021</option>
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowMoreFilters((prev) => !prev)}
+                  className="text-[#1C00BC] text-xs font-bold flex items-center gap-1 hover:underline"
+                >
+                  <Filter className="w-3 h-3" />
+                  {showMoreFilters ? "Hide" : "More"} Filters
+                </button>
+              </div>
+
+              {showMoreFilters && (
+                <div className="space-y-2 mb-6 pb-6 border-b border-slate-100">
+                  <select
+                    className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] text-xs px-2 py-1 rounded-t"
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                  >
+                    {statuses.map((status) => (
+                      <option key={status}>{status}</option>
+                    ))}
+                  </select>
+                  <select
+                    className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] text-xs px-2 py-1 rounded-t"
+                    value={selectedDifficulty}
+                    onChange={(e) => setSelectedDifficulty(e.target.value)}
+                  >
+                    {difficulties.map((difficulty) => (
+                      <option key={difficulty}>{difficulty}</option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-2 text-xs cursor-pointer">
+                    <input
+                      className="w-4 h-4 rounded border-slate-300 text-[#1C00BC]"
+                      type="checkbox"
+                      checked={missingExplanationOnly}
+                      onChange={(e) => setMissingExplanationOnly(e.target.checked)}
+                    />
+                    Missing Explanation Only
+                  </label>
+                </div>
+              )}
+
+              <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                {visibleRows.map((row) => (
+                  <button
+                    key={row.id}
+                    type="button"
+                    onClick={() => handleOpenRow(row.id)}
+                    className={`w-full text-left p-3 rounded-lg border transition-all ${
+                      activeQuestionId === row.id
+                        ? "bg-[#1C00BC]/10 border-[#1C00BC] shadow-sm"
+                        : "bg-slate-50 border-slate-200 hover:border-[#1C00BC]/50"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <span className="text-xs font-bold text-slate-600">{row.id}</span>
+                      <Badge
+                        variant={row.status === "Validated" ? "default" : row.status === "Needs Review" ? "secondary" : "outline"}
+                        className="text-[9px]"
+                      >
+                        {row.status}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-slate-900 font-medium line-clamp-2">{row.prompt}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{row.subject} • {row.year}</p>
+                  </button>
+                ))}
+              </div>
+
+              {visibleRows.length === 0 && (
+                <p className="text-xs text-slate-500 py-4 text-center">No questions match filters</p>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Editor Form */}
+          <div className="col-span-12 lg:col-span-7 space-y-6">
+            {/* Input Mode Toggle */}
+            <div className="bg-white rounded-lg p-4 shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("manage")}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
+                    activeTab === "manage"
+                      ? "bg-[#1C00BC] text-white shadow-sm"
+                      : "bg-slate-50 text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Edit2 className="w-4 h-4 inline mr-2" />
+                  Single Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => bulkFileInputRef.current?.click()}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
+                    false
+                      ? "bg-[#1C00BC] text-white shadow-sm"
+                      : "bg-slate-50 text-slate-600 hover:text-slate-900"
+                  }`}
+                  disabled={isUploadingBulk}
+                >
+                  <FileUp className="w-4 h-4 inline mr-2" />
+                  {isUploadingBulk ? "Uploading..." : "Bulk Upload"}
+                </button>
+              </div>
+            </div>
+
+            {/* Form Sections */}
             <div className="bg-white p-8 rounded-xl shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100">
               <div className="flex items-center gap-3 mb-6">
                 <span className="w-8 h-8 rounded-full bg-[#1C00BC]/10 text-[#1C00BC] flex items-center justify-center font-bold">A</span>
@@ -593,10 +726,17 @@ function QuestionBank() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Subject Category</Label>
-                  <div className="p-4 bg-slate-50 rounded-xl flex items-center justify-between border border-[#1C00BC]/20">
-                    <span className="font-semibold text-[#1C00BC]">{selectedSubject === "All Subjects" ? "Mathematics" : selectedSubject}</span>
-                    <CheckCircle2 className="w-4 h-4 text-[#1C00BC]" />
-                  </div>
+                  <select
+                    className="w-full bg-slate-50 border-0 border-b border-slate-200 focus:ring-0 focus:border-[#1C00BC] p-4 font-bold rounded-t-lg text-sm"
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                  >
+                    {subjects.map((subject) => (
+                      <option key={subject} value={subject}>
+                        {subject}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">JAMB Year</Label>
@@ -638,7 +778,7 @@ function QuestionBank() {
 
             <div className="bg-white p-8 rounded-xl shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100">
               <div className="flex items-center gap-3 mb-6">
-                <span className="w-8 h-8 rounded-full bg-[#1C00BC]/10 text-[#1C00BC] flex items-center justify-center font-bold">B</span>
+                <span className="w-8 h-8 rounded-full bg-[#1C00BC]/10 text-[#1C00BC] flex items-center justify-center font-bold text-sm">B</span>
                 <h3 className="font-black text-lg text-slate-900">Question Data</h3>
               </div>
               <div className="space-y-6">
@@ -690,10 +830,10 @@ function QuestionBank() {
               <div className="absolute top-0 right-0 w-64 h-64 bg-[#1C00BC]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 relative">
                 <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-full bg-[#1C00BC]/10 text-[#1C00BC] flex items-center justify-center font-bold">C</span>
+                  <span className="w-8 h-8 rounded-full bg-[#1C00BC]/10 text-[#1C00BC] flex items-center justify-center font-bold text-sm">C</span>
                   <h3 className="font-black text-lg text-slate-900">Anti-Cram Explanation</h3>
                 </div>
-                <button type="button" onClick={handleAutoSolve} className="w-full sm:w-auto px-4 py-2 bg-[#FBB100] text-[#281900] font-bold rounded-lg flex items-center justify-center gap-2 hover:scale-105 transition-transform shadow-md">
+                <button type="button" onClick={handleAutoSolve} className="w-full sm:w-auto px-4 py-2 bg-[#FBB100] text-[#281900] font-bold rounded-lg flex items-center justify-center gap-2 hover:scale-105 transition-transform shadow-md text-sm">
                   <Sparkles className="w-4 h-4" />
                   Auto-Solve via SmashAI
                 </button>
@@ -711,9 +851,8 @@ function QuestionBank() {
                 />
               </div>
             </div>
-          </div>
 
-          <div className="col-span-12 lg:col-span-4 space-y-6 lg:sticky lg:top-24">
+            {/* Status Sidebar */}
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-[0_20px_40px_rgba(11,28,48,0.05)]">
               <h4 className="font-black text-slate-900 mb-4">Entry Status</h4>
               <div className="space-y-4">
@@ -761,51 +900,27 @@ function QuestionBank() {
                 </div>
               </div>
               <div className="mt-6 pt-6 border-t border-slate-100 flex flex-col gap-3">
-                <button type="button" onClick={handlePublish} className="w-full py-4 bg-[#1C00BC] text-white font-bold rounded-xl shadow-lg shadow-[#1C00BC]/30 hover:bg-[#2B0AFA] transition-all active:scale-[0.98]">
+                <button type="button" onClick={handlePublish} className="w-full py-3 bg-[#1C00BC] text-white font-bold rounded-xl shadow-lg shadow-[#1C00BC]/30 hover:bg-[#2B0AFA] transition-all active:scale-[0.98] text-sm">
                   Publish Question
                 </button>
-                <button type="button" onClick={handleSaveDraft} className="w-full py-3 bg-slate-50 text-slate-900 font-semibold rounded-xl hover:bg-slate-100 transition-all">
+                <button type="button" onClick={handleSaveDraft} className="w-full py-2 bg-slate-50 text-slate-900 font-semibold rounded-xl hover:bg-slate-100 transition-all text-sm">
                   Save as Draft
                 </button>
-                <button type="button" onClick={handleDiscard} className="w-full py-3 text-red-600 font-bold text-sm hover:underline">
+                <button type="button" onClick={handleDiscard} className="w-full py-2 text-red-600 font-bold text-xs hover:underline">
                   Discard Entry
                 </button>
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
-              <h4 className="font-black text-slate-900 text-sm mb-4">Batch Progress</h4>
-              <div className="space-y-4">
-                {batchProgress.map((batch) => (
-                  <div key={batch.label} className="space-y-2">
-                    <div className="flex gap-4">
-                      <div className="w-1.5 h-12 bg-[#1C00BC] rounded-full" />
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-slate-900">{batch.label}</p>
-                        <p className="text-xs text-slate-500">{batch.uploaded}</p>
-                        <div className="w-full h-1.5 bg-slate-200 rounded-full mt-2 overflow-hidden">
-                          <div className="h-full bg-[#1C00BC] rounded-full" style={{ width: `${batch.progress}%` }} />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-3 bg-white rounded-lg border border-slate-200">
-                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Last Uploaded</p>
-                      <p className="text-xs font-medium text-slate-900 truncate">{batch.recent}</p>
-                      <p className="text-[10px] text-[#1C00BC] font-bold mt-1">2 minutes ago</p>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Review Queue Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
           <div className="bg-white rounded-xl p-6 shadow-[0_20px_40px_rgba(11,28,48,0.05)] border border-slate-100 lg:col-span-2">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-lg font-black text-slate-900">Review Queue</h3>
-                <p className="text-sm text-slate-500">Questions needing validation before publishing</p>
+                <h3 className="text-lg font-black text-slate-900">Full Review Queue</h3>
+                <p className="text-sm text-slate-500">All questions in the bank</p>
               </div>
               <button type="button" onClick={() => setViewAllRows((prev) => !prev)} className="text-sm font-bold text-[#1C00BC] flex items-center gap-1 hover:underline">
                 {viewAllRows ? "Show less" : "View all"}
@@ -888,6 +1003,8 @@ function QuestionBank() {
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </AdminShell>
   );

@@ -82,41 +82,31 @@ export default function Login() {
         }),
       });
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody?.error || "Unable to login.");
+        // Check if this is a 403 error (admin trying to login as regular user)
+        if (response.status === 403 && data.error?.includes("admin login portal")) {
+          setErrors({
+            general: data.error || "Admin accounts must use the Admin Login portal. Redirecting...",
+          });
+          // Redirect to admin login after 2 seconds
+          setTimeout(() => {
+            setLocation("/admin/login");
+          }, 2000);
+          return;
+        }
+        throw new Error(data?.error || "Login failed.");
       }
 
-      let userFromApi: { id?: string; name?: string; fullName?: string; email?: string } | null = null;
-      try {
-        userFromApi = await response.json();
-      } catch {
-        userFromApi = null;
-      }
-
-      const onboardingCompleted = Boolean((userFromApi as { onboardingCompleted?: boolean } | null)?.onboardingCompleted);
-      const role = (userFromApi as { role?: string } | null)?.role;
-
-      setCurrentAuthUser({
-        id: userFromApi?.id ?? `local-${Date.now()}`,
-        name: userFromApi?.name ?? userFromApi?.fullName ?? formData.email.split("@")[0],
-        email: userFromApi?.email ?? formData.email.toLowerCase(),
-        fullName: userFromApi?.fullName ?? userFromApi?.name,
-        onboardingCompleted,
-        role,
-      });
-
-      setLocation(role === "admin" || role === "super-admin" ? "/admin/dashboard" : onboardingCompleted ? "/user/dashboard" : "/onboarding/target");
+      setCurrentAuthUser(data);
+      setLocation("/user/dashboard");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Login failed. Please try again.";
-      if (message.toLowerCase().includes("password")) {
-        setErrors({ password: "Incorrect password." });
-      } else if (message.toLowerCase().includes("email") || message.toLowerCase().includes("account")) {
-        setErrors({ email: "No account found with this email." });
-      } else {
-        setErrors({ general: message });
-      }
-      console.error("Login error:", error);
+      const message = error instanceof Error ? error.message : "Login failed.";
+      setErrors((prev) => ({
+        ...prev,
+        general: message,
+      }));
     } finally {
       setIsLoading(false);
     }

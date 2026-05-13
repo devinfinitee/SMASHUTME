@@ -72,6 +72,7 @@ function buildPublicUser(user) {
     phoneNumber: user.phoneNumber || null,
     targetInstitution: user.targetInstitution || null,
     targetCourse: user.targetCourse || null,
+    targetScore: Number(user.targetScore) || 300,
     studyTime,
     dashboard,
     subjectProgress,
@@ -99,7 +100,7 @@ function buildErrorResponse(error, fallbackMessage) {
 
 export const signUp = async (req, res) => {
   try {
-    const { fullName, email, password, phoneNumber, subjects } = req.body || {};
+    const { fullName, email, password, phoneNumber, subjects, targetScore } = req.body || {};
 
     if (!fullName || !email || !password) {
       return res.status(400).json({
@@ -124,12 +125,22 @@ export const signUp = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(String(password), 12);
 
+    // Validate and normalize targetScore (JAMB/UTME: 0-400)
+    let normalizedTargetScore = 300; // default UTME target score
+    if (targetScore !== undefined && targetScore !== null) {
+      const scoreNum = Number(targetScore);
+      if (!isNaN(scoreNum) && scoreNum >= 0 && scoreNum <= 400) {
+        normalizedTargetScore = scoreNum;
+      }
+    }
+
     const user = await User.create({
       fullName: String(fullName).trim(),
       email: normalizedEmail,
       passwordHash,
       phoneNumber: phoneNumber || null,
       authProvider: "local",
+      targetScore: normalizedTargetScore,
       selectedSubjectLabels: Array.isArray(subjects) ? subjects : [],
       acceptedTermsAt: new Date(),
       lastLoginAt: new Date(),
@@ -159,6 +170,11 @@ export const login = async (req, res) => {
 
     if (!user || !user.passwordHash) {
       return res.status(401).json({ error: "Invalid email or password." });
+    }
+
+    // SECURITY: Reject admin users trying to login via regular user endpoint
+    if (ADMIN_ROLES.includes(user.role)) {
+      return res.status(403).json({ error: "Admin users must use the admin login portal. Please use /admin/login instead." });
     }
 
     const matches = await bcrypt.compare(String(password), user.passwordHash);
@@ -195,13 +211,15 @@ export const adminLogin = async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
+    // Check password BEFORE role check to avoid leaking user roles
     const matches = await bcrypt.compare(String(password), user.passwordHash);
     if (!matches) {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
+    // SECURITY: Only admin roles can access this endpoint
     if (!ADMIN_ROLES.includes(user.role)) {
-      return res.status(403).json({ error: "Admin access is required." });
+      return res.status(403).json({ error: "Admin access is required. This account does not have admin privileges." });
     }
 
     user.lastLoginAt = new Date();
@@ -346,7 +364,7 @@ export const completeOnboarding = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { fullName, phoneNumber, avatarUrl, targetInstitution, targetCourse, studyTime } = req.body || {};
+    const { fullName, phoneNumber, avatarUrl, targetInstitution, targetCourse, studyTime, targetScore } = req.body || {};
 
     const trimmedFullName = String(fullName || "").trim();
     if (!trimmedFullName) {
@@ -376,6 +394,14 @@ export const updateProfile = async (req, res) => {
     req.user.avatarUrl = normalizedAvatarUrl;
     req.user.targetInstitution = targetInstitution ? String(targetInstitution).trim() : null;
     req.user.targetCourse = targetCourse ? String(targetCourse).trim() : null;
+    // Accept and validate targetScore (UTME scale: 0-400)
+    if (targetScore !== undefined && targetScore !== null && targetScore !== "") {
+      const scoreNum = Number(targetScore);
+      if (isNaN(scoreNum) || scoreNum < 0 || scoreNum > 400) {
+        return res.status(400).json({ error: "targetScore must be a number between 0 and 400." });
+      }
+      req.user.targetScore = scoreNum;
+    }
     req.user.onboarding.baseline.studyTime = studyTime ? String(studyTime) : null;
     req.user.onboarding.baseline.updatedAt = new Date();
 

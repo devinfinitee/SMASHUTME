@@ -15,10 +15,12 @@ import {
   User,
   Users,
   X,
+  ArrowLeft,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useBrowserHistory } from "@/hooks/use-history";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
 import type { ReactNode } from "react";
 
@@ -49,6 +51,7 @@ export function AppShell({ children, searchPlaceholder = "Search..." }: AppShell
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { goBack } = useBrowserHistory();
 
   const navItems = [
     { label: "Dashboard", icon: TrendingUp, href: "/user/dashboard" },
@@ -135,6 +138,16 @@ export function AppShell({ children, searchPlaceholder = "Search..." }: AppShell
       </aside>
 
       <header className="fixed top-0 right-0 left-0 md:left-64 h-16 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-100/50 dark:border-slate-800/50 flex justify-between items-center px-4 md:px-8 gap-4">
+        {/* Back Button */}
+        <button
+          onClick={() => goBack()}
+          className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+          aria-label="Go back to previous page"
+          title="Back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
         <div className="flex-1 min-w-0">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -174,6 +187,17 @@ export function AppShell({ children, searchPlaceholder = "Search..." }: AppShell
           >
             <Target className="w-5 h-5" />
           </button>
+
+          {user?.role && ["admin", "super-admin"].includes(user.role) && (
+            <button
+              onClick={() => setLocation("/admin/dashboard")}
+              className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
+              aria-label="Go to admin dashboard"
+              title="Admin Dashboard"
+            >
+              <Users className="w-5 h-5 text-brand-blue" />
+            </button>
+          )}
         </div>
       </header>
 

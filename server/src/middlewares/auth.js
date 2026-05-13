@@ -109,6 +109,18 @@ export function requireRole(allowedRoles = []) {
   };
 }
 
+export function requireAdmin(req, res, next) {
+  if (!req.user) {
+    return respondUnauthenticated(res);
+  }
+
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Admin access required." });
+  }
+
+  return next();
+}
+
 export function requireOnboardingComplete(req, res, next) {
   if (!req.user) {
     return respondUnauthenticated(res);

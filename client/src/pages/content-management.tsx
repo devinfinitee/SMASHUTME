@@ -6,7 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { apiFetch } from "@/lib/api-fetch";
-import { FileText, Upload, Sparkles, Search, Trophy, Zap, Gauge, Share2, CheckCircle2, Plus, Trash2, X } from "lucide-react";
+import { FileText, Upload, Sparkles, Search, Trophy, Zap, Gauge, Share2, CheckCircle2, Plus, Trash2, X, BookOpen, Brain } from "lucide-react";
+import { PDFQuestionUploader } from "@/components/pdf-question-uploader";
+import { SmartNoteEditor } from "@/components/smart-note-editor";
 
 const INITIAL_EXTRACTION_ITEMS = [
   { name: "Pathology_Core_2024.pdf", score: "98% Match", processing: false },
@@ -84,6 +86,8 @@ const buildEmptySection = (): SectionDraft => ({
 
 export default function ContentManagement() {
   const noteFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [activeTab, setActiveTab] = useState<"topics" | "questions">("topics");
+  const [inputMode, setInputMode] = useState<"file" | "text">("file");
   const [searchQuery, setSearchQuery] = useState("");
   const [topicName, setTopicName] = useState("");
   const [referenceBook, setReferenceBook] = useState("");
@@ -358,6 +362,52 @@ export default function ContentManagement() {
     }
   }
 
+  function handleAnalysisComplete(analysis: any) {
+    const parsedSections = Array.isArray(analysis.sections) ? analysis.sections : [];
+
+    setTopicName(String(analysis.topicName || topicName).trim());
+    setOverview(String(analysis.overview || "").trim());
+    setReferenceBook(String(analysis.referenceBook || "").trim());
+    setJambFocusInput((analysis.jambFocus || []).join("\n"));
+    setLearningGoalsInput((analysis.learningGoals || []).join("\n"));
+    setPrerequisitesInput((analysis.prerequisites || []).join("\n"));
+    setRelatedTopicsInput((analysis.relatedTopics || []).join("\n"));
+    setRevisionPriority(
+      ["low", "medium", "high", "critical"].includes(String(analysis.revisionPriority || "").toLowerCase())
+        ? (String(analysis.revisionPriority).toLowerCase() as "low" | "medium" | "high" | "critical")
+        : "medium",
+    );
+
+    if (parsedSections.length > 0) {
+      setSections(
+        parsedSections.map((section: any) => ({
+          sectionTitle: String(section?.sectionTitle || "").trim(),
+          definition: String(section?.definition || "").trim(),
+          explanation: String(section?.explanation || "").trim(),
+          examplesInput: Array.isArray(section?.examples) ? section.examples.join("\n") : "",
+          jambPoint: String(section?.jambPoint || "").trim(),
+          quickTip: String(section?.quickTip || "").trim(),
+          aiParagraphsInput: Array.isArray(section?.aiExplanation?.paragraphs)
+            ? section.aiExplanation.paragraphs.join("\n\n")
+            : "",
+          illustrationImageUrl: String(section?.illustrationImageUrl || "").trim(),
+          illustrationFileName: "",
+        })),
+      );
+    }
+
+    setExtractionItems((prev) => [
+      {
+        name: `Smart Editor - ${analysis.topicName || "Untitled"}`,
+        score: "AI Analyzed",
+        processing: false,
+      },
+      ...prev,
+    ]);
+    setUploadError(null);
+    setUploadMessage("Note analyzed and form auto-filled successfully!");
+  }
+
   async function handleSaveTopic() {
     setTopicMessage(null);
     setTopicErrors({});
@@ -477,15 +527,41 @@ export default function ContentManagement() {
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 text-brand-blue font-bold text-[10px] uppercase tracking-widest bg-white/70 border border-brand-blue/20 rounded-full px-3 py-1">
               <span className="w-6 h-[2px] bg-brand-blue" />
-              Topic Upload Studio
+              Content Studio
             </div>
-            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900">Topic Editor & Importer</h1>
-            <p className="text-slate-600 max-w-2xl">Refine AI-extracted modules and finalize curriculum topic structures with a cleaner, faster publishing workflow.</p>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900">Content Editor & Importer</h1>
+            <p className="text-slate-600 max-w-2xl">Create topics, upload past questions, and manage curriculum content with AI-powered classification and explanations.</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" className="bg-white/80 border-slate-200 text-slate-700 hover:bg-white">Drafts (12)</Button>
             <Button variant="outline" className="bg-white/80 border-slate-200 text-slate-700 hover:bg-white">Revision History</Button>
           </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex gap-4 border-b border-slate-200">
+          <button
+            onClick={() => setActiveTab("topics")}
+            className={`px-4 py-3 font-semibold transition-colors ${
+              activeTab === "topics"
+                ? "text-brand-blue border-b-2 border-brand-blue"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Sparkles className="w-4 h-4 inline mr-2" />
+            Topics
+          </button>
+          <button
+            onClick={() => setActiveTab("questions")}
+            className={`px-4 py-3 font-semibold transition-colors ${
+              activeTab === "questions"
+                ? "text-brand-blue border-b-2 border-brand-blue"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <BookOpen className="w-4 h-4 inline mr-2" />
+            Past Questions
+          </button>
         </div>
 
         <div className="grid grid-cols-12 gap-8 items-start">
@@ -499,59 +575,99 @@ export default function ContentManagement() {
                 <Badge className="bg-brand-blue/10 text-brand-blue border border-brand-blue/20 text-[10px] font-bold uppercase tracking-widest">Beta</Badge>
               </div>
 
-              <form onSubmit={handleUploadSubmit} className="space-y-4">
-                <input
-                  ref={noteFileInputRef}
-                  type="file"
-                  accept=".pdf,.docx"
-                  className="hidden"
-                  onChange={(e) => handleChooseNoteFile(e.target.files?.[0] ?? null)}
-                />
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Study Note File</Label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => noteFileInputRef.current?.click()}
-                      className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left"
-                    >
-                      {selectedNoteFile ? selectedNoteFile.name : "Choose note file (.pdf or .docx)"}
-                    </button>
-                    {selectedNoteFile && (
-                      <button
-                        type="button"
-                        onClick={() => handleChooseNoteFile(null)}
-                        className="rounded-lg border border-red-300 bg-red-50 px-3 py-2.5 text-red-600 hover:bg-red-100 transition-colors"
-                        title="Clear selected file"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
+              {/* Input Mode Toggle */}
+              <div className="flex gap-2 mb-6 p-1 bg-slate-100 rounded-lg">
                 <button
                   type="button"
-                  onClick={() => noteFileInputRef.current?.click()}
-                  className="w-full border-2 border-dashed border-brand-blue/30 rounded-2xl p-8 text-center space-y-4 hover:border-brand-blue transition-colors bg-gradient-to-b from-brand-blue/5 to-brand-gold/10"
+                  onClick={() => setInputMode("file")}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
+                    inputMode === "file"
+                      ? "bg-white text-brand-blue shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
                 >
-                  <div className="mx-auto w-16 h-16 rounded-full bg-brand-blue/10 flex items-center justify-center text-brand-blue">
-                    <Upload className="w-7 h-7" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="font-bold text-slate-900">Upload Note File to Auto-Fill Form</p>
-                    <p className="text-xs text-slate-500">Max file size: 50MB. Supports .pdf, .docx</p>
-                  </div>
+                  <Upload className="w-4 h-4 inline mr-2" />
+                  Upload File
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setInputMode("text")}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
+                    inputMode === "text"
+                      ? "bg-white text-brand-blue shadow-sm"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Brain className="w-4 h-4 inline mr-2" />
+                  Paste Notes
+                </button>
+              </div>
 
-                {uploadError ? <p className="text-xs font-medium text-red-600">{uploadError}</p> : null}
-                {uploadMessage ? <p className="text-xs font-medium text-green-700">{uploadMessage}</p> : null}
+              {/* File Upload Mode */}
+              {inputMode === "file" && (
+                <form onSubmit={handleUploadSubmit} className="space-y-4">
+                  <input
+                    ref={noteFileInputRef}
+                    type="file"
+                    accept=".pdf,.docx"
+                    className="hidden"
+                    onChange={(e) => handleChooseNoteFile(e.target.files?.[0] ?? null)}
+                  />
 
-                <Button type="submit" className="w-full bg-brand-blue text-white hover:bg-brand-blue/90 shadow-lg shadow-brand-blue/25">
-                  {isParsingNote ? "Parsing Note..." : "Parse and Fill Structured Form"}
-                </Button>
-              </form>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Study Note File</Label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => noteFileInputRef.current?.click()}
+                        className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left"
+                      >
+                        {selectedNoteFile ? selectedNoteFile.name : "Choose note file (.pdf or .docx)"}
+                      </button>
+                      {selectedNoteFile && (
+                        <button
+                          type="button"
+                          onClick={() => handleChooseNoteFile(null)}
+                          className="rounded-lg border border-red-300 bg-red-50 px-3 py-2.5 text-red-600 hover:bg-red-100 transition-colors"
+                          title="Clear selected file"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => noteFileInputRef.current?.click()}
+                    className="w-full border-2 border-dashed border-brand-blue/30 rounded-2xl p-8 text-center space-y-4 hover:border-brand-blue transition-colors bg-gradient-to-b from-brand-blue/5 to-brand-gold/10"
+                  >
+                    <div className="mx-auto w-16 h-16 rounded-full bg-brand-blue/10 flex items-center justify-center text-brand-blue">
+                      <Upload className="w-7 h-7" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-bold text-slate-900">Upload Note File to Auto-Fill Form</p>
+                      <p className="text-xs text-slate-500">Max file size: 50MB. Supports .pdf, .docx</p>
+                    </div>
+                  </button>
+
+                  {uploadError ? <p className="text-xs font-medium text-red-600">{uploadError}</p> : null}
+                  {uploadMessage ? <p className="text-xs font-medium text-green-700">{uploadMessage}</p> : null}
+
+                  <Button type="submit" className="w-full bg-brand-blue text-white hover:bg-brand-blue/90 shadow-lg shadow-brand-blue/25">
+                    {isParsingNote ? "Parsing Note..." : "Parse and Fill Structured Form"}
+                  </Button>
+                </form>
+              )}
+
+              {/* Text Editor Mode */}
+              {inputMode === "text" && (
+                <SmartNoteEditor
+                  onAnalysisComplete={(analysis) => {
+                    handleAnalysisComplete(analysis);
+                  }}
+                />
+              )}
 
               <div className="mt-8 space-y-4">
                 <div className="flex items-center justify-between">

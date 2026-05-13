@@ -48,6 +48,29 @@ const questionSchema = new Schema(
       sourceUrl: { type: String, default: null },
     },
     isPastQuestion: { type: Boolean, default: false },
+    // PDF Upload specific fields
+    aiExplanation: {
+      type: String,
+      default: null,
+      description: "AI-generated concise explanation from PDF upload",
+    },
+    classification: {
+      topic: { type: String, default: null },
+      confidence: { type: Number, min: 0, max: 1, default: null },
+      reasoning: { type: String, default: null },
+    },
+    sourceFormat: {
+      type: String,
+      enum: ["manual", "pdf-upload", "api"],
+      default: "manual",
+    },
+    uploadedBy: { type: Schema.Types.ObjectId, ref: "Admin", default: null },
+    pdfMetadata: {
+      fileName: { type: String, default: null },
+      uploadDate: { type: Date, default: null },
+      pageNumber: { type: Number, default: null },
+      extractionConfidence: { type: Number, min: 0, max: 1, default: null },
+    },
   },
   {
     timestamps: true,

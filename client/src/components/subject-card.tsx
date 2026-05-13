@@ -15,11 +15,14 @@ const iconMap: Record<string, any> = {
 };
 
 interface SubjectCardProps {
-  subject: Subject & { progress: number; topicCount: number };
+  subject: Subject;
 }
 
 export function SubjectCard({ subject }: SubjectCardProps) {
   const Icon = iconMap[subject.icon] || Book;
+  const topicCount = subject.topics ? subject.topics.length : 0;
+  // Some data sources attach a progress number; fallback to 0 when absent
+  const progress = (subject as any).progress ?? 0;
 
   return (
     <Link href={`/subjects/${subject.slug}`}>
@@ -29,20 +32,20 @@ export function SubjectCard({ subject }: SubjectCardProps) {
             <Icon className="w-6 h-6" />
           </div>
           <div className="bg-muted px-3 py-1 rounded-full text-xs font-medium text-muted-foreground">
-            {subject.topicCount} Topics
+            {topicCount} Topics
           </div>
         </div>
-        
+
         <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">
           {subject.name}
         </h3>
-        
+
         <div className="mt-auto pt-4">
           <div className="flex items-center justify-between text-sm mb-2">
             <span className="text-muted-foreground font-medium">Progress</span>
-            <span className="text-foreground font-bold">{subject.progress}%</span>
+            <span className="text-foreground font-bold">{progress}%</span>
           </div>
-          <Progress value={subject.progress} className="h-2 bg-muted" />
+          <Progress value={progress} className="h-2 bg-muted" />
         </div>
       </div>
     </Link>

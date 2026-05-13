@@ -240,7 +240,7 @@ export default function UserDashboardPage() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8 space-y-6 md:space-y-10">
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+          <section className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4">
             <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Study momentum</p>
               <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{studyMomentum}%</p>
@@ -255,6 +255,11 @@ export default function UserDashboardPage() {
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Next exam</p>
               <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{nextExamLabel}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">{profile?.studyTime || user?.studyTime || "1-2"} study window.</p>
+            </div>
+            <div className="rounded-2xl border border-brand-gold/30 bg-gradient-to-br from-brand-gold/10 to-brand-gold/5 p-4 shadow-sm backdrop-blur dark:border-brand-gold/20 dark:bg-slate-900/80">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-gold dark:text-brand-gold">Target Score</p>
+              <p className="mt-2 text-2xl font-black text-brand-gold">{user?.targetScore ?? 300}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Your UTME goal (0-400).</p>
             </div>
           </section>
 
@@ -397,9 +402,20 @@ export default function UserDashboardPage() {
             <div className="col-span-12 lg:col-span-8 space-y-3 md:space-y-4">
               <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white tracking-tight">Recent Activity</h3>
               <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/90">
-                {(recentActivities.length > 0 ? recentActivities : [
-                  { id: "empty-1", type: "drill", title: "No activity yet", description: "Start a drill or mock exam to populate your dashboard.", actionLabel: "Start", iconKey: "drill" },
-                ]).map((activity) => (
+                {(
+                  recentActivities.length > 0
+                    ? recentActivities
+                    : ([
+                        {
+                          id: "empty-1",
+                          type: "drill",
+                          title: "No activity yet",
+                          description: "Start a drill or mock exam to populate your dashboard.",
+                          actionLabel: "Start",
+                          iconKey: "drill",
+                        },
+                      ] as import("@/types").DashboardRecentActivity[])
+                ).map((activity) => (
                   <ActivityItem key={activity.id} activity={activity} />
                 ))}
               </div>

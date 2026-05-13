@@ -13,12 +13,14 @@ interface SignUpFormData {
   fullName: string;
   email: string;
   password: string;
+  targetScore: number;
 }
 
 interface FormErrors {
   fullName?: string;
   email?: string;
   password?: string;
+  targetScore?: string;
   terms?: string;
   general?: string;
 }
@@ -32,6 +34,7 @@ export default function SignUp() {
     fullName: "",
     email: "",
     password: "",
+    targetScore: 300,
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -57,7 +60,13 @@ export default function SignUp() {
     return undefined;
   };
 
-  const handleInputChange = (field: keyof SignUpFormData, value: string) => {
+  const validateTargetScore = (score: number): string | undefined => {
+    if (isNaN(score)) return "Target score must be a number.";
+    if (score < 0 || score > 400) return "Target UTME score must be between 0 and 400.";
+    return undefined;
+  };
+
+  const handleInputChange = (field: keyof SignUpFormData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
@@ -69,6 +78,7 @@ export default function SignUp() {
       fullName: validateFullName(formData.fullName),
       email: validateEmail(formData.email),
       password: validatePassword(formData.password),
+      targetScore: validateTargetScore(formData.targetScore),
       terms: agreedToTerms ? undefined : "You must agree to the Terms and Privacy Policy.",
     };
 
@@ -95,6 +105,7 @@ export default function SignUp() {
           email: formData.email,
           phoneNumber: "",
           password: formData.password,
+          targetScore: formData.targetScore,
           subjects: [],
         }),
       });
@@ -104,7 +115,7 @@ export default function SignUp() {
         throw new Error(errorBody?.error || "Unable to sign up.");
       }
 
-      let userFromApi: { id?: string; name?: string; fullName?: string; email?: string } | null = null;
+      let userFromApi: { id?: string; name?: string; fullName?: string; email?: string; targetScore?: number; onboardingCompleted?: boolean } | null = null;
       try {
         userFromApi = await response.json();
       } catch {
@@ -118,6 +129,7 @@ export default function SignUp() {
         name: userFromApi?.name ?? userFromApi?.fullName ?? formData.fullName,
         email: userFromApi?.email ?? formData.email.toLowerCase(),
         fullName: userFromApi?.fullName ?? userFromApi?.name,
+        targetScore: userFromApi?.targetScore ?? formData.targetScore,
         onboardingCompleted,
       });
 
@@ -282,6 +294,24 @@ export default function SignUp() {
               {passwordStrength.strength && (
                 <p className={`text-xs mt-1 ${passwordStrength.color}`}>Password strength: {passwordStrength.strength}</p>
               )}
+            </div>
+
+            <div className="relative">
+              <Input
+                id="targetScore"
+                type="number"
+                min="0"
+                max="400"
+                placeholder=" "
+                value={formData.targetScore}
+                onChange={(e) => handleInputChange("targetScore", parseInt(e.target.value) || 300)}
+                className="peer h-12 border-0 border-b-2 border-slate-300 rounded-none px-0 focus-visible:ring-0 focus-visible:border-brand-blue text-base"
+              />
+              <Label htmlFor="targetScore" className="absolute left-0 top-3 text-slate-500 transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-blue peer-[:not(:placeholder-shown)]:-top-4 peer-[:not(:placeholder-shown)]:text-xs">
+                Target UTME Score
+              </Label>
+              <p className="text-xs text-slate-400 mt-1">Your goal JAMB score (0-400). Default: 300</p>
+              {errors.targetScore && <p className="text-sm text-brand-gold mt-1">{errors.targetScore}</p>}
             </div>
 
             <div className="flex items-start gap-3">

@@ -14,10 +14,12 @@ import {
   X,
   Bell,
   UploadCloud,
+  ArrowLeft,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useBrowserHistory } from "@/hooks/use-history";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
 import type { ReactNode } from "react";
 
@@ -30,6 +32,7 @@ export function AdminShell({ children, searchPlaceholder = "Search..." }: AdminS
   const { user, logout } = useAuth();
   const [location] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { goBack } = useBrowserHistory();
 
   const adminNavItems = [
     { label: "Dashboard", icon: TrendingUp, href: "/admin/dashboard" },
@@ -81,28 +84,29 @@ export function AdminShell({ children, searchPlaceholder = "Search..." }: AdminS
 
         <nav className="flex-1 space-y-1">
           {adminNavItems.map((item) => (
-            <Link key={item.label} href={item.href}>
-              <a
-                onClick={() => setIsMobileOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-manrope tracking-wide text-sm font-medium transition-all duration-200 ${
-                  isActiveRoute(item.href)
-                    ? "text-white bg-white/10 border-l-4 border-amber-500 rounded-r-none"
-                    : "text-white/70 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                <item.icon className="w-5 h-5 shrink-0" />
-                {item.label}
-              </a>
+            <Link
+              key={item.label}
+              href={item.href}
+              onClick={() => setIsMobileOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-manrope tracking-wide text-sm font-medium transition-all duration-200 ${
+                isActiveRoute(item.href)
+                  ? "text-white bg-white/10 border-l-4 border-amber-500 rounded-r-none"
+                  : "text-white/70 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              <item.icon className="w-5 h-5 shrink-0" />
+              {item.label}
             </Link>
           ))}
         </nav>
 
         <div className="mt-auto space-y-1 pt-6">
-          <Link href="/admin/dashboard">
-            <a className="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white transition-colors font-manrope tracking-wide text-sm font-medium rounded-xl hover:bg-white/10">
-              <Settings className="w-5 h-5" />
-              Settings
-            </a>
+          <Link
+            href="/admin/dashboard"
+            className="flex items-center gap-3 px-3 py-2.5 text-white/70 hover:text-white transition-colors font-manrope tracking-wide text-sm font-medium rounded-xl hover:bg-white/10"
+          >
+            <Settings className="w-5 h-5" />
+            Settings
           </Link>
           <button
             onClick={() => logout()}
@@ -131,6 +135,16 @@ export function AdminShell({ children, searchPlaceholder = "Search..." }: AdminS
       </aside>
 
       <header className="fixed top-0 right-0 left-0 md:left-64 h-16 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-100/50 flex justify-between items-center px-3 sm:px-4 md:px-8 gap-3 md:gap-4">
+        {/* Back Button */}
+        <button
+          onClick={() => goBack()}
+          className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+          aria-label="Go back to previous page"
+          title="Back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
         <div className="flex items-center gap-4">
           <h2 className="text-base sm:text-lg font-bold text-slate-900">Command Center</h2>
           <div className="hidden sm:block h-4 w-[1px] bg-slate-300"></div>
@@ -154,6 +168,15 @@ export function AdminShell({ children, searchPlaceholder = "Search..." }: AdminS
 
           <button className="hover:text-primary transition-colors p-2 rounded-lg hover:bg-slate-100">
             <Settings className="w-5 h-5" />
+          </button>
+
+          <button 
+            onClick={() => window.location.href = "/user/dashboard"}
+            className="hover:text-primary transition-colors p-2 rounded-lg hover:bg-slate-100"
+            aria-label="Go to user dashboard"
+            title="User Dashboard"
+          >
+            <Users className="w-5 h-5" />
           </button>
         </div>
       </header>

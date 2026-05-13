@@ -199,9 +199,14 @@ const MainContent = ({ user }: { user?: User | null }) => {
     return ["Use of English", "Mathematics", "Physics", "Chemistry"];
   }, [subjectsData]);
 
-  const subjectCards = useMemo(() => buildSubjectCards(selectedSubjects), [selectedSubjects]);
-  const targetInstitution = targetData?.institution || "University of Ibadan";
-  const targetCourse = targetData?.course || "Medicine and Surgery";
+  const subjectCards = useMemo(() => buildFallbackSubjectCards(selectedSubjects), [selectedSubjects]);
+  const targetInstitution = targetData?.institution || user?.targetInstitution || "University of Ibadan";
+  const targetCourse = targetData?.course || user?.targetCourse || "Medicine and Surgery";
+  
+  // Get dynamic data from user's dashboard
+  const targetScore = user?.targetScore ?? 300;
+  const projectedScore = user?.dashboard?.projectedScore ?? 0;
+  const percentile = user?.dashboard?.percentile ?? 0;
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
@@ -212,7 +217,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8 space-y-6 md:space-y-10">
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+        <section className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4">
           <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Study momentum</p>
             <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">78%</p>
@@ -227,6 +232,11 @@ const MainContent = ({ user }: { user?: User | null }) => {
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Next exam</p>
             <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">UTME 2024</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">42 days to go.</p>
+          </div>
+          <div className="rounded-2xl border border-brand-gold/30 bg-gradient-to-br from-brand-gold/10 to-brand-gold/5 p-4 shadow-sm backdrop-blur dark:border-brand-gold/20 dark:bg-slate-900/80">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-gold dark:text-brand-gold">Target Score</p>
+            <p className="mt-2 text-2xl font-black text-brand-gold">{user?.targetScore ?? 300}</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Your UTME goal (0-400).</p>
           </div>
         </section>
 
@@ -250,7 +260,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
                 Welcome back, {user?.name || "Scholar"}
               </h2>
               <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 mt-2 leading-relaxed max-w-md">
-                Your projected score is currently in the top 5th percentile for {targetCourse} candidates.
+                Your projected score is currently {percentile > 0 ? `in the top ${Math.max(1, 100 - percentile)}%` : "starting from zero"} for {targetCourse} candidates.
                 Focus on your weakest subject to improve quickly.
               </p>
             </header>
@@ -262,7 +272,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
 
               <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-10">
                 <div className="w-32 md:w-40 flex-shrink-0">
-                  <CircularProgress percentage={78} />
+                  <CircularProgress percentage={targetScore ? Math.round((projectedScore / targetScore) * 100) : 0} />
                 </div>
 
                 <div className="flex-1 space-y-4 md:space-y-6">
@@ -270,7 +280,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
                     <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">
                       JAMB Score Projection
                     </h3>
-                    <div className="text-3xl md:text-4xl font-bold text-brand-blue mt-2">315 / 400</div>
+                    <div className="text-3xl md:text-4xl font-bold text-brand-blue mt-2">{projectedScore} / {targetScore}</div>
 
                     <div className="mt-3 md:mt-4 rounded-2xl border border-brand-blue/15 bg-brand-blue/5 p-3 md:p-4">
                       <p className="text-xs md:text-sm text-slate-700 dark:text-slate-300">
@@ -428,7 +438,7 @@ const MainContent = ({ user }: { user?: User | null }) => {
             </h3>
 
             <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/90">
-              {RECENT_ACTIVITIES.map((activity) => (
+              {buildDashboardActivities().map((activity) => (
                 <div key={activity.id} className="p-3 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                   <div className="w-10 md:w-12 h-10 md:h-12 bg-blue-50 dark:bg-blue-950/30 rounded-lg flex items-center justify-center text-brand-blue flex-shrink-0">
                     <activity.icon className="w-4 md:w-5 h-4 md:h-5" />

@@ -15,6 +15,7 @@ export interface User {
   phoneNumber?: string | null;
   targetInstitution?: string | null;
   targetCourse?: string | null;
+  targetScore?: number;
   studyTime?: string | null;
   onboardingCompleted?: boolean;
   dashboard?: DashboardSnapshot | null;

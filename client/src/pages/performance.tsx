@@ -78,13 +78,14 @@ export default function PerformancePage() {
   // Mock target data from onboarding
   const targetCourse = user?.targetCourse || "Medicine and Surgery";
   const targetInstitution = user?.targetInstitution || "University of Ibadan";
-  const targetScore = 300;
+  // targetScore is stored as UTME score on a 0-400 scale in user.targetScore
+  const targetScore = user?.targetScore ?? 300; // default to 300 if not provided
 
   // Calculate metrics
   const currentScore = MOCK_MOCK_SESSIONS[MOCK_MOCK_SESSIONS.length - 1].score;
   const previousScore = MOCK_MOCK_SESSIONS[MOCK_MOCK_SESSIONS.length - 2].score;
   const scoreTrend = currentScore >= previousScore;
-  const admissionProbability = Math.round((currentScore / targetScore) * 100);
+  const admissionProbability = targetScore ? Math.round((currentScore / targetScore) * 100) : 0;
   const averageSPQ = 38;
 
   const mockSessionsData = MOCK_MOCK_SESSIONS.map((session) => ({

@@ -81,10 +81,19 @@ export default function AdminLogin() {
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
+        
+        // Check if this is a 403 error (non-admin trying to access admin portal)
+        if (response.status === 403 && errorBody.error?.includes("admin privileges")) {
+          setErrors({
+            general: "This account does not have admin privileges. Please use the regular login portal.",
+          });
+          return;
+        }
+        
         throw new Error(errorBody?.error || "Unable to login.");
       }
 
-      let userFromApi: { id?: string; userId?: string; name?: string; fullName?: string; email?: string; role?: string } | null = null;
+      let userFromApi: { id?: string; userId?: string; name?: string; fullName?: string; email?: string; role?: string; firstName?: string; lastName?: string; status?: string; authProvider?: string; avatarUrl?: string; phoneNumber?: string; targetInstitution?: string; targetCourse?: string; studyTime?: string; dashboard?: unknown; selectedSubjectLabels?: string[]; selectedSubjects?: unknown[]; subjectProgress?: unknown[] } | null = null;
       try {
         userFromApi = await response.json();
       } catch {
@@ -100,14 +109,32 @@ export default function AdminLogin() {
 
       const resolvedUserId = userFromApi?.userId || userFromApi?.id;
 
+      if (!resolvedUserId || !userFromApi?.email) {
+        throw new Error("Login response is missing user identity data.");
+      }
+
       setCurrentAuthUser({
-        id: resolvedUserId ?? `admin-${Date.now()}`,
+        id: resolvedUserId,
         userId: resolvedUserId,
         name: userFromApi?.name ?? userFromApi?.fullName ?? formData.email.split("@")[0],
         email: userFromApi?.email ?? formData.email.toLowerCase(),
+        firstName: userFromApi?.firstName,
+        lastName: userFromApi?.lastName,
         fullName: userFromApi?.fullName ?? userFromApi?.name,
-        role,
+        role: userFromApi?.role,
+        status: userFromApi?.status,
+        authProvider: userFromApi?.authProvider,
+        avatarUrl: userFromApi?.avatarUrl,
+        phoneNumber: userFromApi?.phoneNumber,
+        targetInstitution: userFromApi?.targetInstitution,
+        targetCourse: userFromApi?.targetCourse,
+        targetScore: (userFromApi as any)?.targetScore || 300,
+        studyTime: userFromApi?.studyTime,
         onboardingCompleted: true,
+        dashboard: (userFromApi?.dashboard as any) || null,
+        selectedSubjectLabels: (userFromApi?.selectedSubjectLabels || []) as string[],
+        selectedSubjects: (userFromApi?.selectedSubjects || []) as any[],
+        subjectProgress: (userFromApi?.subjectProgress || []) as any[],
       });
 
       setLocation("/admin/dashboard");

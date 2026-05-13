@@ -109,6 +109,7 @@ const userSchema = new Schema(
     avatarUrl: { type: String, default: null },
     targetInstitution: { type: String, trim: true, default: null },
     targetCourse: { type: String, trim: true, default: null },
+  targetScore: { type: Number, min: 0, max: 400, default: 300 },
     selectedSubjects: [{ type: Schema.Types.ObjectId, ref: "Subject" }],
     selectedSubjectLabels: [{ type: String, trim: true }],
     subjectProgress: [{ type: subjectProgressSchema, default: () => [] }],

@@ -163,6 +163,135 @@ export const mockTopics: Topic[] = [
     summary: "Foundational practical chemistry principles",
   },
   {
+    id: 99,
+    subjectId: 3,
+    name: "Atomic Theory and Chemical Bonding",
+    slug: "atomic-theory-chemical-bonding",
+    isHighYield: true,
+    simpleExplanation: `ATOMIC THEORY AND CHEMICAL BONDING
+
+Reference: Lamlad SSCE & UTME Chemistry by FO Ayinde & FOI Asubiojo
+JAMB Focus: Atomic Structure, Electronic Configuration, Chemical Bonding, Shapes of Molecules
+
+---
+
+DALTON'S ATOMIC THEORY (1808)
+
+John Dalton proposed that all matter is made up of tiny indivisible particles called atoms. Atoms of the same element are identical in mass and properties. Compounds are formed when atoms of different elements combine in fixed ratios. Chemical reactions involve the rearrangement of atoms, not their creation or destruction.
+
+AI EXPLANATION: Imagine you have a bag of white beans and a bag of brown beans. Dalton said each bean represents an atom. All white beans are exactly the same size and weight. You can mix 2 white beans with 1 brown bean to make a small pile (a compound). If you separate them, you still have the same beans. You cannot turn a white bean into a brown bean, and you cannot destroy a bean. This is how atoms behave in chemical reactions.
+
+---
+
+J.J. THOMSON'S MODEL (1897)
+
+Thomson discovered the electron using a cathode ray tube. He proposed the plum pudding model, where negatively charged electrons were embedded in a sphere of positive charge like plums in a pudding.
+
+AI EXPLANATION: Have you ever eaten a Nigerian puff puff? The dough is like the positive charge, and the small pieces of onion or pepper inside are like the negative electrons. Thomson thought the atom was a ball of positive dough with tiny negative particles scattered inside. He discovered this by passing electricity through a glass tube and seeing a ray that bent towards a positive magnet, proving negative particles exist.
+
+JAMB POINT: Thomson discovered the electron but did not discover the nucleus or proton.
+
+---
+
+RUTHERFORD'S MODEL (1911)
+
+Rutherford performed the gold foil experiment. He fired alpha particles (positive) at a very thin gold foil. Most particles passed straight through, but some were deflected and a few even bounced back. He concluded that the atom has a small, dense, positively charged nucleus at its centre, with electrons orbiting around it. Most of the atom is empty space.
+
+AI EXPLANATION: Imagine you are playing football in a dark room. You kick the ball towards the goal. Most of the time the ball goes in because the goal is empty space. But sometimes the ball hits the goalpost and bounces back. That tells you there is something hard and solid there. This is exactly what Rutherford saw. Most alpha particles passed through the gold foil because atoms are mostly empty space. But a few hit something hard (the nucleus) and bounced back. This proved that every atom has a tiny, heavy, positive centre called the nucleus.
+
+JAMB POINT: This experiment proved the existence of the nucleus and that most of the atom is empty space.
+
+---
+
+BOHR'S MODEL (1913)
+
+Bohr proposed that electrons move in fixed circular paths called energy levels or shells around the nucleus. Each shell has a fixed energy. Electrons can jump to higher shells when they gain energy and fall back to lower shells when they lose energy, emitting light.
+
+AI EXPLANATION: Imagine a popular Lagos bus park. The buses (electrons) cannot park just anywhere. They must park in specific rows (shells). Row 1 is closest to the office, Row 2 is farther, Row 3 is farthest. A bus cannot stop between rows. If you give a bus fuel (energy), it can move from Row 1 to Row 3. When it comes back to Row 1, it releases light. This is why when you heat sodium chloride on a fire, it produces a yellow flame.
+
+JAMB POINT: Bohr's model explained the line spectra of hydrogen atoms.
+
+---
+
+SUBATOMIC PARTICLES
+
+The atom consists of three main subatomic particles: protons, neutrons, and electrons. Protons have a positive charge and are found in the nucleus. Neutrons have no charge (neutral) and are also in the nucleus. Electrons have a negative charge and move around the nucleus in shells.
+
+AI EXPLANATION: Think of the nucleus as the engine room of a ship. Inside the engine room, you have two types of workers: protons (positive) and neutrons (neutral). Protons are like strong men who attract electrons. Neutrons are like security guards who keep protons from fighting each other (because protons would repel each other without neutrons). Outside the engine room, the sailors (electrons) run around the deck. How many protons are in the nucleus tells you what element it is. If you have 1 proton, it is hydrogen. If you have 6 protons, it is carbon. If you have 8 protons, it is oxygen.
+
+---
+
+ATOMIC NUMBER AND MASS NUMBER
+
+Atomic number (Z) is the number of protons in the nucleus. It determines the identity of the element. In a neutral atom, the number of electrons equals the number of protons.
+
+Mass number (A) is the total number of protons and neutrons in the nucleus.
+
+Number of neutrons = Mass number - Atomic number
+
+AI EXPLANATION: Every element has a unique ID card called atomic number. If you see a person with ID number 1, you know it is hydrogen. ID number 6 is carbon. ID number 8 is oxygen. You cannot change the atomic number without changing the element. The mass number is like the total weight of the nucleus. To find how many neutrons are inside, you subtract the ID number (protons) from the total weight (mass number). For example, if carbon has mass number 12 and atomic number 6, then neutrons = 12 - 6 = 6 neutrons.
+
+---
+
+ISOTOPES
+
+Isotopes are atoms of the same element that have the same atomic number (same number of protons) but different mass numbers (different numbers of neutrons).
+
+Examples: Carbon-12 (6 protons, 6 neutrons), Carbon-13 (6 protons, 7 neutrons), Carbon-14 (6 protons, 8 neutrons)
+
+Isotopes have similar chemical properties but different physical properties such as density and boiling point.
+
+AI EXPLANATION: Imagine two identical twin brothers. They look exactly the same (same number of protons), so they behave the same way in social situations (chemical properties). But one brother weighs 70 kg and the other weighs 75 kg because one has more muscle (more neutrons). Their different weights affect physical things like how fast they run (physical properties). Carbon-14 is heavier and radioactive. Scientists use Carbon-14 to find the age of old bones and fossils.
+
+JAMB POINT: Isotopes have the same chemical properties because they have the same number of electrons in the outer shell.
+
+---
+
+ELECTRONIC CONFIGURATION
+
+Electrons are arranged in energy levels or shells around the nucleus. The maximum number of electrons in each shell is given by 2n² where n is the shell number.
+
+Shell 1 (K shell): maximum 2 electrons
+Shell 2 (L shell): maximum 8 electrons
+Shell 3 (M shell): maximum 18 electrons
+Shell 4 (N shell): maximum 32 electrons
+
+Electrons fill from the innermost shell outward. The outermost shell is called the valence shell, and the electrons in it are called valence electrons.
+
+AI EXPLANATION: Imagine a bus with seats. The first row (K) has only 2 seats. Once those 2 seats are filled, the next passengers must sit in the second row (L), which has 8 seats. After L is full, they go to the third row (M) with 18 seats. You cannot put a passenger in the third row if the first two rows still have empty seats. Electrons behave the same way. How many electrons are in the last row (valence electrons) determines how the atom will react with other atoms.
+
+JAMB POINT: The group number of an element in the periodic table equals the number of valence electrons.`,
+    highYieldSummary: "Atomic Theory and Chemical Bonding is a priority topic for UTME preparation. Master atomic models, electronic configuration, and bonding types.",
+    summary: "Foundational chemistry covering atomic structure, electron configuration, and chemical bonding types",
+    keyDefinitions: [
+      "Atoms: Tiny indivisible particles that make up all matter",
+      "Electrons: Negatively charged subatomic particles orbiting the nucleus",
+      "Nucleus: The dense, positively charged center of an atom containing protons and neutrons",
+      "Isotopes: Atoms with same protons but different neutrons",
+      "Valence electrons: Electrons in the outermost shell determining chemical properties"
+    ],
+    learningGoals: [
+      "Understand the historical development of atomic models from Dalton to Bohr",
+      "Explain the structure and components of atoms",
+      "Distinguish between atomic number and mass number",
+      "Understand electronic configuration and orbital shells",
+      "Recognize the importance of valence electrons in chemical bonding"
+    ],
+    prerequisites: [
+      "Basic understanding of matter and energy",
+      "Familiarity with the periodic table",
+      "Knowledge of basic chemical notation"
+    ],
+    jambFocus: [
+      "Rutherford's gold foil experiment",
+      "Bohr's atomic model",
+      "Electronic configuration (K, L, M, N shells)",
+      "Valence electrons and group numbers",
+      "Isotopes and their properties",
+      "Mass number and atomic number calculations"
+    ]
+  },
+  {
     id: 13,
     subjectId: 4,
     name: "Ecology",

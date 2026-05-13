@@ -6,6 +6,8 @@ import {
 	uploadPastQuestions,
 	parseTopicNoteUploadMiddleware,
 	parseTopicNoteFile,
+	parseTopicNoteText,
+	autoSolveQuestion,
 } from "../controllers/adminController.js";
 import { createTopic } from "../controllers/topicsController.js";
 import { requireAuth, requireRole } from "../middlewares/auth.js";
@@ -20,7 +22,14 @@ router.post(
 	parseTopicNoteUploadMiddleware,
 	parseTopicNoteFile,
 );
+router.post(
+	"/topics/parse-text",
+	requireAuth,
+	requireRole(["admin", "super-admin", "support", "analyst"]),
+	parseTopicNoteText,
+);
 router.post("/questions/upload", requireAuth, requireRole(["admin", "super-admin", "support", "analyst"]), uploadPastQuestions);
+router.post("/questions/auto-solve", requireAuth, requireRole(["admin", "super-admin", "support", "analyst"]), autoSolveQuestion);
 router.get("/support/tickets", requireAuth, requireRole(["admin", "super-admin", "support"]), listSupportTickets);
 router.get("/revenue/summary", requireAuth, requireRole(["admin", "super-admin", "analyst"]), getRevenueSummary);
 
