@@ -11,6 +11,13 @@ const serverPort = process.env.PORT || "5000";
 const googleCallbackUrl =
   process.env.GOOGLE_CALLBACK_URL || `http://localhost:${serverPort}/api/auth/google/callback`;
 
+// Debug logging
+console.log("[Passport Config] Google OAuth Settings:");
+console.log(`  - Client ID: ${googleClientId ? googleClientId.substring(0, 20) + "..." : "NOT SET"}`);
+console.log(`  - Client Secret: ${googleClientSecret ? "SET" : "NOT SET"}`);
+console.log(`  - Callback URL: ${googleCallbackUrl}`);
+console.log(`  - Port: ${serverPort}`);
+
 if (googleClientId && googleClientSecret) {
   passport.use(
     new GoogleStrategy(
@@ -60,6 +67,10 @@ if (googleClientId && googleClientSecret) {
       },
     ),
   );
+} else {
+  console.error("[Passport Config] ERROR: Google OAuth credentials are missing!");
+  console.error(`  - GOOGLE_CLIENT_ID/CLIENT_ID: ${!googleClientId}`);
+  console.error(`  - GOOGLE_CLIENT_SECRET/CLIENT_SECRET: ${!googleClientSecret}`);
 }
 
 export default passport;
