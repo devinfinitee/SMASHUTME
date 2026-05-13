@@ -113,7 +113,9 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = "/api/auth/google";
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+    const googleAuthUrl = backendUrl ? `${backendUrl}/api/auth/google` : "/api/auth/google";
+    window.location.href = googleAuthUrl;
   };
 
   return (

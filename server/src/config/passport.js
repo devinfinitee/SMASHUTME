@@ -9,7 +9,7 @@ const googleClientSecret =
   process.env.GOOGLE_CLIENT_SECRET || process.env.CLIENT_SECRET || process.env.CLIENTSECRET;
 const serverPort = process.env.PORT || "5000";
 const googleCallbackUrl =
-  process.env.GOOGLE_CALLBACK_URL || `http://localhost:${serverPort}/api/v1/auth/google/callback`;
+  process.env.GOOGLE_CALLBACK_URL || `http://localhost:${serverPort}/api/auth/google/callback`;
 
 if (googleClientId && googleClientSecret) {
   passport.use(
