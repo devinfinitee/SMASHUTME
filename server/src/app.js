@@ -20,6 +20,8 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const corsOrigin = process.env.CORS_ORIGIN
 	? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
+	: process.env.FRONTEND_URL
+	? process.env.FRONTEND_URL.trim()
 	: true;
 
 const apiLimiter = rateLimit({

@@ -12,6 +12,22 @@ function isApiPath(input: RequestInfo | URL): boolean {
   return input.url.startsWith("/api") || input.url.includes("/api/");
 }
 
+function getApiUrl(path: string | RequestInfo | URL): string {
+  const pathStr = typeof path === "string" ? path : path instanceof URL ? path.href : (path as any).url;
+  
+  if (isApiPath(pathStr)) {
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+    const apiPath = typeof pathStr === "string" ? pathStr : pathStr.toString();
+    
+    // If it's a relative path and we have a backend URL, make it absolute
+    if (backendUrl && (apiPath.startsWith("/api") || apiPath.startsWith("api/"))) {
+      return `${backendUrl}${apiPath}`;
+    }
+  }
+  
+  return typeof pathStr === "string" ? pathStr : pathStr.toString();
+}
+
 export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
   const headers = new Headers(init.headers || {});
   const authUser = getCurrentAuthUser();
@@ -21,7 +37,9 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
     headers.set("X-User-Id", resolvedUserId);
   }
 
-  return fetch(input, {
+  const url = getApiUrl(input);
+
+  return fetch(url, {
     credentials: init.credentials || "include",
     ...init,
     headers,
