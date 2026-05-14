@@ -271,7 +271,7 @@ export const handleGoogleCallback = async (req, res) => {
       ? process.env.GOOGLE_AUTH_NEW_USER_REDIRECT || 
         (isProduction ? "https://smashutme.vercel.com/onboarding/target" : "http://localhost:5173/onboarding/target")
       : process.env.GOOGLE_AUTH_SUCCESS_REDIRECT || 
-        (isProduction ? "https://smashutme.vercel.com/dashboard" : "http://localhost:5173/dashboard");
+        (isProduction ? "https://smashutme.vercel.com/user/dashboard" : "http://localhost:5173/user/dashboard");
     return res.redirect(redirectUrl);
   } catch (error) {
     console.error("Google callback error:", error);
