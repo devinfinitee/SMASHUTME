@@ -256,6 +256,7 @@ export const handleGoogleCallback = async (req, res) => {
     const user = req.user;
     const isNewGoogleUser = Boolean(req.authInfo?.isNewUser);
     const isProduction = process.env.NODE_ENV === "production";
+    const userId = user._id.toString();
 
     if (!user) {
       const failureRedirect = process.env.GOOGLE_AUTH_FAILURE_REDIRECT || 
@@ -267,11 +268,17 @@ export const handleGoogleCallback = async (req, res) => {
     setAuthCookie(res, token);
     syncSessionWithAuth(req, user);
 
-    const redirectUrl = isNewGoogleUser || !user.onboarding?.completedAt
-      ? process.env.GOOGLE_AUTH_NEW_USER_REDIRECT || 
-        (isProduction ? "https://smashutme.vercel.com/onboarding/target" : "http://localhost:5173/onboarding/target")
-      : process.env.GOOGLE_AUTH_SUCCESS_REDIRECT || 
-        (isProduction ? "https://smashutme.vercel.com/user/dashboard" : "http://localhost:5173/user/dashboard");
+    let redirectUrl;
+    if (isNewGoogleUser || !user.onboarding?.completedAt) {
+      redirectUrl = process.env.GOOGLE_AUTH_NEW_USER_REDIRECT || 
+        (isProduction ? `https://smashutme.vercel.com/onboarding/target` : `http://localhost:5173/onboarding/target`);
+    } else {
+      // Include userId in the success redirect
+      const baseRedirect = process.env.GOOGLE_AUTH_SUCCESS_REDIRECT || 
+        (isProduction ? `https://smashutme.vercel.com/user/{userId}/dashboard` : `http://localhost:5173/user/{userId}/dashboard`);
+      redirectUrl = baseRedirect.replace("{userId}", userId);
+    }
+    
     return res.redirect(redirectUrl);
   } catch (error) {
     console.error("Google callback error:", error);

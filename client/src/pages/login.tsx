@@ -100,7 +100,8 @@ export default function Login() {
       }
 
       setCurrentAuthUser(data);
-      setLocation("/user/dashboard");
+      const userId = data?.userId || data?.id;
+      setLocation(`/user/${userId}/dashboard`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Login failed.";
       setErrors((prev) => ({

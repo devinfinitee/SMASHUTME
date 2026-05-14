@@ -48,6 +48,12 @@ const CARD_COLORS = [
   { color: "text-amber-600", bgColor: "bg-amber-600/10" },
 ];
 
+// Helper to extract userId from path
+function extractUserIdFromPath(location: string): string | null {
+  const match = location.match(/\/user\/([^/]+)\/dashboard/);
+  return match ? match[1] : null;
+}
+
 function iconForSubject(subjectName: string): typeof BookOpen {
   const normalized = subjectName.toLowerCase();
   if (normalized.includes("math")) return Calculator;
@@ -154,7 +160,20 @@ const ActivityItem = ({ activity }: { activity: DashboardRecentActivity }) => {
 
 export default function UserDashboardPage() {
   const { user, isAuthenticated, isLoading, refetchUser } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  // Validate userId from URL matches authenticated user
+  useEffect(() => {
+    const urlUserId = extractUserIdFromPath(location);
+    
+    // If URL has a specific userId, verify it matches the authenticated user
+    if (urlUserId && isAuthenticated && user?.id) {
+      if (urlUserId !== user.id && urlUserId !== user.userId) {
+        // Unauthorized access - redirect to their own dashboard
+        setLocation(`/user/${user.id}/dashboard`);
+      }
+    }
+  }, [location, isAuthenticated, user, setLocation]);
 
   const dashboardQuery = useQuery<DashboardOverview | null>({
     queryKey: ["/dashboard/overview", user?.id],

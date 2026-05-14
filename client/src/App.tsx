@@ -5,6 +5,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/use-auth";
 
 // Pages
 import UserDashboardPage from "@/pages/user-dashboard";
@@ -47,11 +48,16 @@ function ScrollToTopOnRouteChange() {
 }
 
 function UserDashboardRedirect() {
+  const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    setLocation("/user/dashboard");
-  }, [setLocation]);
+    if (isAuthenticated && user?.id) {
+      setLocation(`/user/${user.id}/dashboard`);
+    } else {
+      setLocation("/user/dashboard");
+    }
+  }, [setLocation, isAuthenticated, user]);
 
   return null;
 }
@@ -72,6 +78,7 @@ function Router() {
       <Route path="/onboarding/review" component={OnboardingReview} />
       <Route path="/dashboard" component={UserDashboardRedirect} />
       <Route path="/user/dashboard" component={UserDashboardPage} />
+      <Route path="/user/:userId/dashboard" component={UserDashboardPage} />
       <Route path="/performance" component={Performance} />
       <Route path="/syllabus" component={SyllabusPage} />
       <Route path="/cbt" component={CbtPage} />

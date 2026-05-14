@@ -133,7 +133,8 @@ export default function SignUp() {
         onboardingCompleted,
       });
 
-      setLocation(onboardingCompleted ? "/user/dashboard" : "/onboarding/target");
+      const userId = userFromApi?.userId || userFromApi?.id;
+      setLocation(onboardingCompleted ? `/user/${userId}/dashboard` : "/onboarding/target");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sign up failed.";
       if (message.toLowerCase().includes("email")) {
