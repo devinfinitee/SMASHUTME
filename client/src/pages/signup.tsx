@@ -148,8 +148,19 @@ export default function SignUp() {
   };
 
   const handleGoogleSignUp = () => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
-    const googleAuthUrl = backendUrl ? `${backendUrl}/api/auth/google` : "/api/auth/google";
+    // Determine backend URL based on environment
+    let backendUrl = import.meta.env.VITE_BACKEND_URL;
+    
+    // If not set or localhost, use production backend for production domain
+    if (!backendUrl || backendUrl.includes("localhost")) {
+      if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
+        backendUrl = "https://smashutme.onrender.com";
+      } else {
+        backendUrl = "http://localhost:5000";
+      }
+    }
+    
+    const googleAuthUrl = `${backendUrl}/api/auth/google`;
     window.location.href = googleAuthUrl;
   };
 

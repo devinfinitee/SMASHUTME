@@ -255,9 +255,12 @@ export const handleGoogleCallback = async (req, res) => {
   try {
     const user = req.user;
     const isNewGoogleUser = Boolean(req.authInfo?.isNewUser);
+    const isProduction = process.env.NODE_ENV === "production";
 
     if (!user) {
-      return res.redirect(process.env.GOOGLE_AUTH_FAILURE_REDIRECT || "http://localhost:5173/login?oauth=failed");
+      const failureRedirect = process.env.GOOGLE_AUTH_FAILURE_REDIRECT || 
+        (isProduction ? "https://smashutme.vercel.com/login?oauth=failed" : "http://localhost:5173/login?oauth=failed");
+      return res.redirect(failureRedirect);
     }
 
     const token = signAuthToken(user._id);
@@ -265,12 +268,16 @@ export const handleGoogleCallback = async (req, res) => {
     syncSessionWithAuth(req, user);
 
     const redirectUrl = isNewGoogleUser || !user.onboarding?.completedAt
-      ? process.env.GOOGLE_AUTH_NEW_USER_REDIRECT || "http://localhost:5173/onboarding/target"
-      : process.env.GOOGLE_AUTH_SUCCESS_REDIRECT || "http://localhost:5173/dashboard";
+      ? process.env.GOOGLE_AUTH_NEW_USER_REDIRECT || 
+        (isProduction ? "https://smashutme.vercel.com/onboarding/target" : "http://localhost:5173/onboarding/target")
+      : process.env.GOOGLE_AUTH_SUCCESS_REDIRECT || 
+        (isProduction ? "https://smashutme.vercel.com/dashboard" : "http://localhost:5173/dashboard");
     return res.redirect(redirectUrl);
   } catch (error) {
     console.error("Google callback error:", error);
-    return res.redirect(process.env.GOOGLE_AUTH_FAILURE_REDIRECT || "http://localhost:5173/login?oauth=failed");
+    const failureRedirect = process.env.GOOGLE_AUTH_FAILURE_REDIRECT || 
+      (process.env.NODE_ENV === "production" ? "https://smashutme.vercel.com/login?oauth=failed" : "http://localhost:5173/login?oauth=failed");
+    return res.redirect(failureRedirect);
   }
 };
 
