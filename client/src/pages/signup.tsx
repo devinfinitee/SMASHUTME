@@ -25,6 +25,16 @@ interface FormErrors {
   general?: string;
 }
 
+interface SignUpResponse {
+  id?: string;
+  userId?: string;
+  name?: string;
+  fullName?: string;
+  email?: string;
+  targetScore?: number;
+  onboardingCompleted?: boolean;
+}
+
 export default function SignUp() {
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
@@ -115,17 +125,18 @@ export default function SignUp() {
         throw new Error(errorBody?.error || "Unable to sign up.");
       }
 
-      let userFromApi: { id?: string; name?: string; fullName?: string; email?: string; targetScore?: number; onboardingCompleted?: boolean } | null = null;
+      let userFromApi: SignUpResponse | null = null;
       try {
         userFromApi = await response.json();
       } catch {
         userFromApi = null;
       }
 
-      const onboardingCompleted = Boolean((userFromApi as { onboardingCompleted?: boolean } | null)?.onboardingCompleted);
+      const onboardingCompleted = Boolean(userFromApi?.onboardingCompleted);
+      const resolvedUserId = userFromApi?.userId || userFromApi?.id || `local-${Date.now()}`;
 
       setCurrentAuthUser({
-        id: userFromApi?.id ?? `local-${Date.now()}`,
+        id: resolvedUserId,
         name: userFromApi?.name ?? userFromApi?.fullName ?? formData.fullName,
         email: userFromApi?.email ?? formData.email.toLowerCase(),
         fullName: userFromApi?.fullName ?? userFromApi?.name,
@@ -133,8 +144,7 @@ export default function SignUp() {
         onboardingCompleted,
       });
 
-      const userId = userFromApi?.userId || userFromApi?.id;
-      setLocation(onboardingCompleted ? `/user/${userId}/dashboard` : "/onboarding/target");
+      setLocation(onboardingCompleted ? `/user/${resolvedUserId}/dashboard` : "/onboarding/target");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Sign up failed.";
       if (message.toLowerCase().includes("email")) {

@@ -7,7 +7,7 @@ import {
   publishQuestion,
   deleteQuestion,
 } from "../controllers/questionsController.js";
-import { requireAuth, requireAdmin } from "../middlewares/auth.js";
+import { requireStrictAuth, requireStrictAdmin } from "../middlewares/auth.js";
 
 const router = Router();
 
@@ -35,8 +35,8 @@ const upload = multer({
  */
 router.post(
   "/upload-pdf",
-  requireAuth,
-  requireAdmin,
+  requireStrictAuth,
+  requireStrictAdmin,
   upload.single("file"),
   uploadPastQuestionsPDF
 );
@@ -47,7 +47,7 @@ router.post(
  * - Requires: authentication, admin role
  * - Returns: list of questions created from PDF uploads
  */
-router.get("/pdf-uploads", requireAuth, requireAdmin, getPDFUploadedQuestions);
+router.get("/pdf-uploads", requireStrictAuth, requireStrictAdmin, getPDFUploadedQuestions);
 
 /**
  * Update question (set options, correct answer, etc.)
@@ -56,7 +56,7 @@ router.get("/pdf-uploads", requireAuth, requireAdmin, getPDFUploadedQuestions);
  * - Body: { options, correctOption, explanation, difficulty, status, sourceMeta }
  * - Returns: updated question
  */
-router.put("/:id", requireAuth, requireAdmin, updateQuestion);
+router.put("/:id", requireStrictAuth, requireStrictAdmin, updateQuestion);
 
 /**
  * Publish question (change from draft to published)
@@ -64,7 +64,7 @@ router.put("/:id", requireAuth, requireAdmin, updateQuestion);
  * - Requires: authentication, admin role
  * - Returns: published question
  */
-router.post("/:id/publish", requireAuth, requireAdmin, publishQuestion);
+router.post("/:id/publish", requireStrictAuth, requireStrictAdmin, publishQuestion);
 
 /**
  * Delete question
@@ -72,6 +72,6 @@ router.post("/:id/publish", requireAuth, requireAdmin, publishQuestion);
  * - Requires: authentication, admin role
  * - Returns: success message
  */
-router.delete("/:id", requireAuth, requireAdmin, deleteQuestion);
+router.delete("/:id", requireStrictAuth, requireStrictAdmin, deleteQuestion);
 
 export default router;

@@ -1,11 +1,11 @@
 import { Router } from "express";
 
 import { createQuizSession, submitQuizSession } from "../controllers/quizController.js";
-import { requireAuth, requireActiveUser, requireOnboardingComplete } from "../middlewares/auth.js";
+import { requireStrictAuth, requireOnboardingComplete } from "../middlewares/auth.js";
 
 const router = Router();
 
-router.post("/sessions", requireAuth, requireActiveUser, requireOnboardingComplete, createQuizSession);
-router.post("/sessions/:sessionId/submit", requireAuth, requireActiveUser, requireOnboardingComplete, submitQuizSession);
+router.post("/sessions", requireStrictAuth, requireOnboardingComplete, createQuizSession);
+router.post("/sessions/:sessionId/submit", requireStrictAuth, requireOnboardingComplete, submitQuizSession);
 
 export default router;
