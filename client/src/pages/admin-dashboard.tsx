@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { AdminShell } from "@/components/admin-shell";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { getDashboardPath } from "@/lib/auth-utils";
 
 
 function StatCard({
@@ -67,7 +68,7 @@ export default function AdminDashboard() {
       user?.role &&
       !["admin", "super-admin", "support", "analyst"].includes(user.role)
     ) {
-      setLocation("/user/dashboard");
+      setLocation(getDashboardPath(user?.id));
     }
   }, [isAuthenticated, isLoading, setLocation, user]);
 

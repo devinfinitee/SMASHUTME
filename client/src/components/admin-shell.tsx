@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrowserHistory } from "@/hooks/use-history";
+import { getDashboardPath } from "@/lib/auth-utils";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
 import type { ReactNode } from "react";
 
@@ -33,6 +34,7 @@ export function AdminShell({ children, searchPlaceholder = "Search..." }: AdminS
   const [location] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { goBack } = useBrowserHistory();
+  const dashboardPath = getDashboardPath(user?.id);
 
   const adminNavItems = [
     { label: "Dashboard", icon: TrendingUp, href: "/admin/dashboard" },
@@ -171,7 +173,7 @@ export function AdminShell({ children, searchPlaceholder = "Search..." }: AdminS
           </button>
 
           <button 
-            onClick={() => window.location.href = "/user/dashboard"}
+            onClick={() => window.location.href = dashboardPath}
             className="hover:text-primary transition-colors p-2 rounded-lg hover:bg-slate-100"
             aria-label="Go to user dashboard"
             title="User Dashboard"

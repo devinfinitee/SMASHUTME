@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 import { useTopic, useUpdateProgress } from "@/hooks/use-topics";
 import { AiHelper } from "@/components/ai-helper";
 import { Button } from "@/components/ui/button";
-import { AppShell } from "@/components/app-shell";
+import { AppShell } from "../components/app-shell";
 import {
   ArrowLeft,
   ArrowRight,
@@ -1035,7 +1035,7 @@ JAMB QUICK TIPS
             </div>
 
             <div className="bg-surface-container px-5 sm:px-8 md:px-12 py-5 md:py-6 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
-              <Link href={subjectSlug ? `/subjects/${subjectSlug}` : "/user/dashboard"}>
+              <Link href={subjectSlug ? `/subjects/${subjectSlug}` : "/dashboard"}>
                 <button className="flex items-center justify-center gap-2 text-on-surface-variant font-bold text-xs uppercase tracking-widest hover:text-primary transition-colors">
                   <ArrowLeft className="w-4 h-4" />
                   Previous Topic

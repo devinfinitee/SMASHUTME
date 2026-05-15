@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
+  ArrowLeft,
   BarChart3,
   Bell,
   BookOpen,
@@ -9,18 +10,17 @@ import {
   LogOut,
   Menu,
   Search,
-  Settings,
   Target,
   TrendingUp,
   User,
   Users,
   X,
-  ArrowLeft,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrowserHistory } from "@/hooks/use-history";
+import { getDashboardPath } from "@/lib/auth-utils";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
 import type { ReactNode } from "react";
 
@@ -29,21 +29,23 @@ type AppShellProps = {
   searchPlaceholder?: string;
 };
 
-function isActiveRoute(currentPath: string, href: string, label: string): boolean {
-  if (href === "/user/dashboard") {
-    // Several placeholder nav items currently route to the user dashboard.
-    // Keep active highlight exclusive to the actual Dashboard item.
-    return label === "Dashboard" && (currentPath === "/user/dashboard" || currentPath === "/dashboard" || currentPath === "/admin/dashboard");
+function isActiveRoute(currentPath: string, href: string, label: string, dashboardPath: string): boolean {
+  if (href === dashboardPath) {
+    return label === "Dashboard" && (currentPath === dashboardPath || currentPath === "/dashboard" || currentPath === "/admin/dashboard");
   }
+
   if (href === "/syllabus") {
     return currentPath === "/syllabus" || currentPath.startsWith("/subjects") || currentPath.startsWith("/topics");
   }
+
   if (href === "/cbt") {
     return currentPath === "/cbt";
   }
+
   if (href === "/admin/question-bank") {
     return currentPath === "/admin/question-bank";
   }
+
   return currentPath === href;
 }
 
@@ -52,15 +54,14 @@ export function AppShell({ children, searchPlaceholder = "Search..." }: AppShell
   const [location, setLocation] = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { goBack } = useBrowserHistory();
+  const dashboardPath = getDashboardPath(user?.id);
 
   const navItems = [
-    { label: "Dashboard", icon: TrendingUp, href: "/user/dashboard" },
+    { label: "Dashboard", icon: TrendingUp, href: dashboardPath },
     { label: "Subjects", icon: BookOpen, href: "/syllabus" },
     { label: "CBT Practice", icon: BarChart3, href: "/cbt" },
     { label: "AI Review", icon: Brain, href: "/ai-review" },
-    ...(location.startsWith("/admin")
-      ? [{ label: "Question Bank", icon: BookOpen, href: "/admin/question-bank" }]
-      : []),
+    ...(location.startsWith("/admin") ? [{ label: "Question Bank", icon: BookOpen, href: "/admin/question-bank" }] : []),
     { label: "Performance", icon: BarChart3, href: "/performance" },
     { label: "Settings", icon: User, href: "/profile" },
   ];
@@ -100,7 +101,7 @@ export function AppShell({ children, searchPlaceholder = "Search..." }: AppShell
               <div
                 onClick={() => setIsMobileOpen(false)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all ${
-                  isActiveRoute(location, item.href, item.label)
+                  isActiveRoute(location, item.href, item.label, dashboardPath)
                     ? "text-brand-blue dark:text-brand-blue bg-white dark:bg-white/5 border-r-4 border-brand-blue"
                     : "text-slate-600 dark:text-slate-400 hover:text-brand-blue dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800"
                 }`}
@@ -138,7 +139,6 @@ export function AppShell({ children, searchPlaceholder = "Search..." }: AppShell
       </aside>
 
       <header className="fixed top-0 right-0 left-0 md:left-64 h-16 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-100/50 dark:border-slate-800/50 flex justify-between items-center px-4 md:px-8 gap-4">
-        {/* Back Button */}
         <button
           onClick={() => goBack()}
           className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all"
@@ -160,7 +160,7 @@ export function AppShell({ children, searchPlaceholder = "Search..." }: AppShell
 
         <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
           <button
-            onClick={() => setLocation("/user/dashboard")}
+            onClick={() => setLocation(dashboardPath)}
             className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all relative"
             aria-label="Open streak overview"
             title="Streak overview"

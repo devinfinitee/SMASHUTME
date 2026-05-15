@@ -15,3 +15,7 @@ export function redirectToLogin(toast?: (options: { title: string; description: 
     window.location.href = "/api/login";
   }, 500);
 }
+
+export function getDashboardPath(userId?: string | null): string {
+  return userId ? `/user/${userId}/dashboard` : "/dashboard";
+}

@@ -3,6 +3,8 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, Building2, GraduationCap, Lightbulb, ArrowRight, ArrowLeft, SkipForward, BarChart3 } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
+import { useAuth } from "@/hooks/use-auth";
+import { getDashboardPath } from "@/lib/auth-utils";
 import { saveOnboardingTarget } from "@/lib/onboarding-api";
 import {
   COMMON_NIGERIAN_COURSES,
@@ -12,6 +14,7 @@ import {
 
 export default function OnboardingTarget() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const [institution, setInstitution] = useState(() => {
     const raw = localStorage.getItem("smashutme-onboarding-target");
     if (!raw) return "";
@@ -67,7 +70,7 @@ export default function OnboardingTarget() {
   };
 
   const handleSkip = () => {
-    setLocation("/user/dashboard");
+    setLocation(getDashboardPath(user?.id));
   };
 
   return (

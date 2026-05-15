@@ -3,6 +3,8 @@ import { useLocation } from "wouter";
 import { HelpCircle, ArrowLeft, BarChart3, SkipForward, CheckCircle2 } from "lucide-react";
 import smashutmeLogo from "@/assets/smashutme-logo.webp";
 import { completeOnboarding } from "@/lib/onboarding-api";
+import { useAuth } from "@/hooks/use-auth";
+import { getDashboardPath } from "@/lib/auth-utils";
 
 type StatusItem = {
   id: "save" | "filter" | "isolate";
@@ -12,6 +14,7 @@ type StatusItem = {
 
 export default function OnboardingReview() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const [progress, setProgress] = useState(84);
 
   useEffect(() => {
@@ -36,12 +39,12 @@ export default function OnboardingReview() {
           console.error("Failed to complete onboarding:", saveError);
         })
         .finally(() => {
-          setLocation("/user/dashboard");
+          setLocation(getDashboardPath(user?.id));
         });
     }, 900);
 
     return () => window.clearTimeout(completeTimer);
-  }, [progress, setLocation]);
+  }, [progress, setLocation, user?.id]);
 
   const statuses: StatusItem[] = useMemo(() => {
     if (progress < 90) {
