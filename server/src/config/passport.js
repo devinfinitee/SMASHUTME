@@ -29,6 +29,7 @@ if (googleClientId && googleClientSecret) {
         clientID: googleClientId,
         clientSecret: googleClientSecret,
         callbackURL: googleCallbackUrl,
+        proxy:true
       },
       async (_accessToken, _refreshToken, profile, done) => {
         try {
